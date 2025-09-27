@@ -214,10 +214,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
   logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
-  const translations={
-    english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"You have successfully submitted!"},
-    greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"Η υποβολή έγινε με επιτυχία!"}
-  };
+  const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"You have successfully submitted!"},greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
 
   function setLanguage(lang){
     currentLang=lang;
@@ -314,9 +311,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       const btn=document.createElement('button');
       btn.className='store-button';
       btn.innerText=letter;
-      btn.onclick=()=>{
-        storeSubmissionsList.innerHTML='';
-        storeTitle.innerText=`Store ${letter}`;
+      btn.onclick=()=>{storeSubmissionsList.innerHTML=''; storeTitle.innerText=`Store ${letter}`;
         pendingSubmissions.filter(s=>s.store===letter).forEach(sub=>{
           const subDiv=document.createElement('div');
           ['name','month','day','shift','store'].forEach(field=>{
@@ -329,15 +324,13 @@ document.addEventListener("DOMContentLoaded",()=>{
           acceptBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click(); // Refresh
-            logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
+            btn.click(); logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
           };
           const declineBtn=document.createElement('button'); declineBtn.className='declineBtn'; declineBtn.innerText=translations[currentLang].declineBtn;
           declineBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click(); // Refresh
-            logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
+            btn.click(); logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
           };
           btnContainer.append(acceptBtn,declineBtn);
           subDiv.appendChild(btnContainer);
@@ -362,6 +355,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
+
+});
+
+// **Call the permission check on page load**
+checkPermission();
 
 });
 </script>
