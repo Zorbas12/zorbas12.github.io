@@ -64,7 +64,7 @@
   .store-button:hover{background:#CFC76D;}
   #submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
 
-  /* ACCEPT AND DECLINE BUTTON COLORS UPDATED */
+  /* ACCEPT AND DECLINE BUTTON COLORS */
   #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.acceptBtn:hover{background:#3D9737;}
@@ -198,9 +198,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   let allowedUsers=JSON.parse(localStorage.getItem('allowedUsers')||"[]");
   let currentLang='english';
 
+  // FORCE deviceId to FULL admin device
   let deviceName = localStorage.getItem('deviceName') || "Raphael";
-  let storedDeviceId = localStorage.getItem('deviceId');
-  let deviceId = storedDeviceId || (Math.floor(Math.random() * 900000000) + 100000000).toString();
+  let deviceId = '247805986';
   localStorage.setItem('deviceId', deviceId);
   localStorage.setItem('deviceName', deviceName);
 
@@ -226,7 +226,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
   const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"You have successfully submitted!"},
-                     greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
+                     greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιο
+
+","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
 
   function setLanguage(lang){
     currentLang=lang;
