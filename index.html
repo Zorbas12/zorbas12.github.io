@@ -63,13 +63,10 @@
   }
   .store-button:hover{background:#CFC76D;}
   #submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
-
-  /* ACCEPT AND DECLINE BUTTON COLORS UPDATED */
   #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.acceptBtn:hover{background:#3D9737;}
   #submissionsList div button.declineBtn:hover{background:#E04B4B;}
-
   #consoleLog{background:#fff;color:#000;padding:15px;width:400px;height:300px;overflow-y:auto;border-radius:10px;text-align:left;font-family:monospace;font-size:14px;border:2px solid black;}
   #consoleInput{background:#fff;color:#000;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc;width:90%;}
   #noPermissionSection{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:1000;}
@@ -193,22 +190,28 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   const monthDays={Ιανουάριος:31,Φεβρουάριος:28,Μάρτιος:31,Απρίλιος:30,Μάιος:31,Ιούνιος:30,Ιούλιος:31,Αύγουστος:31,Σεπτέμβριος:30,Οκτώβριος:31,Νοέμβριος:30,Δεκέμβριος:31,January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
 
-  let admins=JSON.parse(localStorage.getItem('admins')||'["admin"]');
+  // Admin & user storage (store deviceIDs as strings)
+  let admins=JSON.parse(localStorage.getItem('admins')||'["admin"]'); // note: initial "admin" left for compatibility but you can replace with real IDs
+  // If you want admins to be IDs only, you can clear the "admin" default.
   let pendingSubmissions=JSON.parse(localStorage.getItem('pendingSubmissions')||"[]");
   let allowedUsers=JSON.parse(localStorage.getItem('allowedUsers')||"[]");
   let currentLang='english';
 
+  // Device info: persistent deviceId and deviceName
   let deviceName = localStorage.getItem('deviceName') || "Raphael";
   let storedDeviceId = localStorage.getItem('deviceId');
   let deviceId;
   if(storedDeviceId){
     deviceId = storedDeviceId;
   } else {
-    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString();
+    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString(); // 9-digit string ID
     localStorage.setItem('deviceId', deviceId);
   }
+  // persist name (keeps original behavior)
   localStorage.setItem('deviceName', deviceName);
 
+  // Make this device the super-admin (bypass). This sets the current device as the super admin.
+  // If you want a fixed super-admin ID, replace deviceId below with that fixed ID string.
   const SUPER_ADMIN_ID = deviceId;
 
   function logConsoleEvent(msg){
@@ -305,6 +308,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   });
 
+  // Render pending submissions
   function renderSubmissions(){
     const container=document.getElementById('submissionsList');
     container.innerHTML='';
@@ -378,11 +382,13 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
   function updateAdminButtonsVisibility(){
+    // admins array stores deviceIDs as strings; super admin bypasses everything
     const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
     adminButtonsDiv.style.display = (isAdmin || mainFormSection.style.display !== 'none') ? 'flex' : 'none';
   }
 
   function checkPermission(){
+    // allowedUsers stores deviceIDs as strings
     if(!allowedUsers.includes(deviceId.toString()) && deviceId.toString() !== SUPER_ADMIN_ID.toString()){
       showSection(noPermissionSection);
       logConsoleEvent(`<${deviceName} #${deviceId}> tried opening the website`);
@@ -484,12 +490,61 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
-  document.getElementById('backFromConsoleBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('backFromConsoleBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
 
+  // Console input: updated to use deviceID (digits)
+  consoleInput.addEventListener('keypress',e=>{
+    if(e.key==='Enter'){
+      const val=consoleInput.value.trim();
+      const addMatch=val.match(/^add\s+(\d+)$/i);
+      const removeMatch=val.match(/^remove\s+(\d+)$/i);
+      const adminAddMatch=val.match(/^adminadd\s+(\d+)$/i);
+      const adminRemoveMatch=val.match(/^adminremove\s+(\d+)$/i);
+
+      if(addMatch){
+        // store allowedUsers as strings
+        const idToAdd = addMatch[1].toString();
+        if(!allowedUsers.includes(idToAdd)){
+          allowedUsers.push(idToAdd);
+          localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
+          logConsoleEvent(`<${deviceName} #${deviceId}> added device #${idToAdd} to allowedUsers`);
+        } else {
+          logConsoleEvent(`<${deviceName} #${deviceId}> tried to add device #${idToAdd} but it's already in allowedUsers`);
+        }
+      }
+      else if(removeMatch){
+        const idToRemove = removeMatch[1].toString();
+        allowedUsers = allowedUsers.filter(u=>u!==idToRemove);
+        localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
+        logConsoleEvent(`<${deviceName} #${deviceId}> removed device #${idToRemove} from allowedUsers`);
+      }
+      else if(adminAddMatch){
+        const idToAdd = adminAddMatch[1].toString();
+        if(!admins.includes(idToAdd)){
+          admins.push(idToAdd);
+          localStorage.setItem('admins', JSON.stringify(admins));
+          logConsoleEvent(`<${deviceName} #${deviceId}> added device #${idToAdd} to admins`);
+        } else {
+          logConsoleEvent(`<${deviceName} #${deviceId}> tried to add device #${idToAdd} to admins but it's already an admin`);
+        }
+      }
+      else if(adminRemoveMatch){
+        const idToRemove = adminRemoveMatch[1].toString();
+        admins = admins.filter(a=>a!==idToRemove);
+        localStorage.setItem('admins', JSON.stringify(admins));
+        logConsoleEvent(`<${deviceName} #${deviceId}> removed device #${idToRemove} from admins`);
+      }
+
+      consoleInput.value='';
+      updateAdminButtonsVisibility();
+    }
+  });
+
 });
 </script>
+
 </body>
 </html>
