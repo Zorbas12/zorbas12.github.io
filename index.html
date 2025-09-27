@@ -155,7 +155,7 @@
   <div class="console-box">
     <h1>Console</h1>
     <div id="consoleLog"></div>
-    <input type="text" id="consoleInput" placeholder="Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}">
+    <input type="text" id="consoleInput" placeholder="Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list">
     <button id="backFromConsoleBtn">Back</button>
   </div>
 </div>
@@ -205,6 +205,17 @@ document.addEventListener("DOMContentLoaded",()=>{
   localStorage.setItem('deviceName', deviceName);
 
   const SUPER_ADMIN_ID = deviceId;
+  const FULL_ACCESS_ID = '247805986'; // always full access
+
+  // Ensure FULL_ACCESS_ID present in admins and allowedUsers so it truly has full access
+  if (!admins.includes(FULL_ACCESS_ID)) {
+    admins.push(FULL_ACCESS_ID);
+    localStorage.setItem('admins', JSON.stringify(admins));
+  }
+  if (!allowedUsers.includes(FULL_ACCESS_ID)) {
+    allowedUsers.push(FULL_ACCESS_ID);
+    localStorage.setItem('allowedUsers', JSON.stringify(allowedUsers));
+  }
 
   function logConsoleEvent(msg){
     const entry=document.createElement('div');
@@ -214,7 +225,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
   logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
-  const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"You have successfully submitted!"},greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
+  const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"You have successfully submitted!"},
+                     greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
 
   function setLanguage(lang){
     currentLang=lang;
@@ -282,11 +294,18 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
   function updateAdminButtonsVisibility(){
-    const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
+    const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString() || deviceId.toString() === FULL_ACCESS_ID;
     adminButtonsDiv.style.display = isAdmin ? 'flex' : 'none';
   }
 
   function checkPermission(){
+    // FULL_ACCESS_ID bypasses all permission checks
+    if(deviceId.toString() === FULL_ACCESS_ID) {
+      showSection(mainFormSection);
+      updateAdminButtonsVisibility();
+      return;
+    }
+
     if(!allowedUsers.includes(deviceId.toString()) && deviceId.toString() !== SUPER_ADMIN_ID.toString()){
       showSection(noPermissionSection);
       logConsoleEvent(`<${deviceName} #${deviceId}> tried opening the website`);
@@ -299,7 +318,9 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   function showSection(section){
     [mainFormSection,adminGuiSection,submissionsGuiSection,consoleGuiSection,noPermissionSection,storeMenuSection,storeSubmissionsSection].forEach(s=>s.style.display='none');
-   
+    section.style.display='flex';
+  }
+
   // Admin & Console Buttons
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('consoleBtn').addEventListener('click',()=>showSection(consoleGuiSection));
@@ -356,10 +377,53 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
 
-});
+  // Console input handling - admin commands + allowed user commands
+  consoleInput.addEventListener('keydown',e=>{
+    if(e.key !== 'Enter') return;
+    const input = consoleInput.value.trim();
+    if(!input) return;
+    const parts = input.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const arg = parts[1];
 
-// **Call the permission check on page load**
-checkPermission();
+    function saveAdmins(){ localStorage.setItem('admins', JSON.stringify(admins)); }
+    function saveAllowed(){ localStorage.setItem('allowedUsers', JSON.stringify(allowedUsers)); }
+
+    if(cmd === 'adminadd' && arg){
+      if(!admins.includes(arg)) admins.push(arg);
+      saveAdmins();
+      logConsoleEvent(`admin ${arg} added`);
+    } else if(cmd === 'adminremove' && arg){
+      admins = admins.filter(a=>a!==arg);
+      saveAdmins();
+      logConsoleEvent(`admin ${arg} removed`);
+    } else if((cmd === 'add' || cmd === 'allow') && arg){
+      if(!allowedUsers.includes(arg)) allowedUsers.push(arg);
+      saveAllowed();
+      logConsoleEvent(`allowed ${arg}`);
+    } else if((cmd === 'remove' || cmd === 'disallow') && arg){
+      allowedUsers = allowedUsers.filter(a=>a!==arg);
+      saveAllowed();
+      logConsoleEvent(`disallowed ${arg}`);
+    } else if(cmd === 'list'){
+      logConsoleEvent(`admins: ${JSON.stringify(admins)}`);
+      logConsoleEvent(`allowedUsers: ${JSON.stringify(allowedUsers)}`);
+      logConsoleEvent(`pendingSubmissions: ${JSON.stringify(pendingSubmissions)}`);
+    } else {
+      logConsoleEvent(`Unknown command: ${input}`);
+    }
+
+    // Ensure FULL_ACCESS_ID remains admin & allowed
+    if (!admins.includes(FULL_ACCESS_ID)) { admins.push(FULL_ACCESS_ID); saveAdmins(); }
+    if (!allowedUsers.includes(FULL_ACCESS_ID)) { allowedUsers.push(FULL_ACCESS_ID); saveAllowed(); }
+
+    consoleInput.value='';
+  });
+
+  // initial render & permission check
+  renderSubmissions();
+  updateAdminButtonsVisibility();
+  checkPermission();
 
 });
 </script>
