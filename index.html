@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html>  
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -64,7 +64,7 @@
   .store-button:hover{background:#CFC76D;}
   #submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
 
-  /* ACCEPT AND DECLINE BUTTON COLORS */
+  /* ACCEPT AND DECLINE BUTTON COLORS UPDATED */
   #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.acceptBtn:hover{background:#3D9737;}
@@ -155,7 +155,7 @@
   <div class="console-box">
     <h1>Console</h1>
     <div id="consoleLog"></div>
-    <input type="text" id="consoleInput" placeholder="Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list">
+    <input type="text" id="consoleInput" placeholder="Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}">
     <button id="backFromConsoleBtn">Back</button>
   </div>
 </div>
@@ -198,24 +198,18 @@ document.addEventListener("DOMContentLoaded",()=>{
   let allowedUsers=JSON.parse(localStorage.getItem('allowedUsers')||"[]");
   let currentLang='english';
 
-  // FORCE deviceId to FULL admin device
   let deviceName = localStorage.getItem('deviceName') || "Raphael";
-  let deviceId = '247805986';
-  localStorage.setItem('deviceId', deviceId);
+  let storedDeviceId = localStorage.getItem('deviceId');
+  let deviceId;
+  if(storedDeviceId){
+    deviceId = storedDeviceId;
+  } else {
+    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString();
+    localStorage.setItem('deviceId', deviceId);
+  }
   localStorage.setItem('deviceName', deviceName);
 
   const SUPER_ADMIN_ID = deviceId;
-  const FULL_ACCESS_ID = '247805986'; // always full access
-
-  // Ensure FULL_ACCESS_ID present in admins and allowedUsers so it truly has full access
-  if (!admins.includes(FULL_ACCESS_ID)) {
-    admins.push(FULL_ACCESS_ID);
-    localStorage.setItem('admins', JSON.stringify(admins));
-  }
-  if (!allowedUsers.includes(FULL_ACCESS_ID)) {
-    allowedUsers.push(FULL_ACCESS_ID);
-    localStorage.setItem('allowedUsers', JSON.stringify(allowedUsers));
-  }
 
   function logConsoleEvent(msg){
     const entry=document.createElement('div');
@@ -223,12 +217,49 @@ document.addEventListener("DOMContentLoaded",()=>{
     consoleLog.appendChild(entry);
     consoleLog.scrollTop=consoleLog.scrollHeight;
   }
+
   logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
-  const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"You have successfully submitted!"},
-                     greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιο
-
-","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID} / list",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
+  const translations={
+    english:{
+      nameLabel:"Name",
+      namePlaceholder:"Enter your name",
+      monthLabel:"Month",
+      monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],
+      dayLabel:"Day",
+      dayPlaceholder:"Type day",
+      shiftLabel:"Shift",
+      shiftOptions:["Off","6-2","2-10"],
+      storeLabel:"Store",
+      submitBtn:"Submit",
+      seeAllBtn:"See All Submissions",
+      resetAllBtn:"Reset All Submissions",
+      backBtn:"Back",
+      acceptBtn:"Accept",
+      declineBtn:"Decline",
+      consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
+      successMsg:"You have successfully submitted!"
+    },
+    greek:{
+      nameLabel:"Όνομα",
+      namePlaceholder:"Εισάγετε το όνομά σας",
+      monthLabel:"Μήνας",
+      monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],
+      dayLabel:"Ημέρα",
+      dayPlaceholder:"Πληκτρολογήστε την ημέρα",
+      shiftLabel:"Βάρδια",
+      shiftOptions:["Άδεια","6-2","2-10"],
+      storeLabel:"Κατάστημα",
+      submitBtn:"Υποβολή",
+      seeAllBtn:"Δείτε Όλες τις Υποβολές",
+      resetAllBtn:"Επαναφορά Όλων των Υποβολών",
+      backBtn:"Πίσω",
+      acceptBtn:"Αποδοχή",
+      declineBtn:"Απόρριψη",
+      consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
+      successMsg:"Η υποβολή έγινε με επιτυχία!"
+    }
+  };
 
   function setLanguage(lang){
     currentLang=lang;
@@ -271,7 +302,6 @@ document.addEventListener("DOMContentLoaded",()=>{
       successMessage.classList.add('show');
       setTimeout(()=>successMessage.classList.remove('show'),3000);
       e.target.reset();
-      renderSubmissions();
     }
   });
 
@@ -280,34 +310,79 @@ document.addEventListener("DOMContentLoaded",()=>{
     container.innerHTML='';
     pendingSubmissions.forEach((sub,index)=>{
       const subDiv=document.createElement('div');
-      ['name','month','day','shift','store'].forEach(field=>{
+      const makeBoldLabel=(label,value)=>{
         const p=document.createElement('p');
-        p.innerHTML=`<strong>${field.charAt(0).toUpperCase()+field.slice(1)}:</strong> ${sub[field]}`;
-        subDiv.appendChild(p);
-      });
-      const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.gap='10px';
-      const acceptBtn=document.createElement('button'); acceptBtn.className='acceptBtn'; acceptBtn.innerText=translations[currentLang].acceptBtn;
-      acceptBtn.onclick=()=>{ pendingSubmissions.splice(index,1); localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); renderSubmissions(); logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`); };
-      const declineBtn=document.createElement('button'); declineBtn.className='declineBtn'; declineBtn.innerText=translations[currentLang].declineBtn;
-      declineBtn.onclick=()=>{ pendingSubmissions.splice(index,1); localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); renderSubmissions(); logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`); };
-      btnContainer.append(acceptBtn,declineBtn); subDiv.appendChild(btnContainer);
+        p.innerHTML=`<strong>${label}:</strong> ${value}`;
+        p.style.fontSize='16px';
+        return p;
+      };
+      const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+      const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+      const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+      const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+      const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+      const btnContainer=document.createElement('div');
+      btnContainer.style.display='flex';
+      btnContainer.style.gap='10px';
+      const acceptBtn=document.createElement('button');
+      acceptBtn.innerText=translations[currentLang].acceptBtn;
+      acceptBtn.className='acceptBtn';
+      acceptBtn.style.flex='1';
+      acceptBtn.onclick=()=>{
+        pendingSubmissions.splice(index,1);
+        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+        renderSubmissions();
+        showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
+        logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
+      };
+      const declineBtn=document.createElement('button');
+      declineBtn.innerText=translations[currentLang].declineBtn;
+      declineBtn.className='declineBtn';
+      declineBtn.style.flex='1';
+      declineBtn.onclick=()=>{
+        pendingSubmissions.splice(index,1);
+        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+        renderSubmissions();
+        showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
+        logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
+      };
+      btnContainer.appendChild(acceptBtn);
+      btnContainer.appendChild(declineBtn);
+      subDiv.appendChild(nameP);
+      subDiv.appendChild(monthP);
+      subDiv.appendChild(dayP);
+      subDiv.appendChild(shiftP);
+      subDiv.appendChild(storeP);
+      subDiv.appendChild(btnContainer);
       container.appendChild(subDiv);
     });
   }
 
+  function showActionMessage(msg){
+    const actionMessage=document.createElement('div');
+    actionMessage.innerText=msg;
+    actionMessage.style.position='fixed';
+    actionMessage.style.top='50%';
+    actionMessage.style.left='50%';
+    actionMessage.style.transform='translate(-50%,-50%)';
+    actionMessage.style.backgroundColor='#4BB543';
+    actionMessage.style.color='white';
+    actionMessage.style.padding='20px 40px';
+    actionMessage.style.borderRadius='12px';
+    actionMessage.style.fontSize='18px';
+    actionMessage.style.fontWeight='bold';
+    actionMessage.style.boxShadow='0 0 15px rgba(0,0,0,0.2)';
+    actionMessage.style.zIndex=1006;
+    document.body.appendChild(actionMessage);
+    setTimeout(()=>actionMessage.remove(),2500);
+  }
+
   function updateAdminButtonsVisibility(){
-    const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString() || deviceId.toString() === FULL_ACCESS_ID;
-    adminButtonsDiv.style.display = isAdmin ? 'flex' : 'none';
+    const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
+    adminButtonsDiv.style.display = (isAdmin || mainFormSection.style.display !== 'none') ? 'flex' : 'none';
   }
 
   function checkPermission(){
-    // FULL_ACCESS_ID bypasses all permission checks
-    if(deviceId.toString() === FULL_ACCESS_ID) {
-      showSection(mainFormSection);
-      updateAdminButtonsVisibility();
-      return;
-    }
-
     if(!allowedUsers.includes(deviceId.toString()) && deviceId.toString() !== SUPER_ADMIN_ID.toString()){
       showSection(noPermissionSection);
       logConsoleEvent(`<${deviceName} #${deviceId}> tried opening the website`);
@@ -319,11 +394,19 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
   function showSection(section){
-    [mainFormSection,adminGuiSection,submissionsGuiSection,consoleGuiSection,noPermissionSection,storeMenuSection,storeSubmissionsSection].forEach(s=>s.style.display='none');
+    mainFormSection.style.display='none';
+    adminGuiSection.style.display='none';
+    submissionsGuiSection.style.display='none';
+    consoleGuiSection.style.display='none';
+    noPermissionSection.style.display='none';
+    storeMenuSection.style.display='none';
+    storeSubmissionsSection.style.display='none';
     section.style.display='flex';
+    updateAdminButtonsVisibility();
   }
 
-  // Admin & Console Buttons
+  checkPermission();
+
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('consoleBtn').addEventListener('click',()=>showSection(consoleGuiSection));
 
@@ -334,28 +417,54 @@ document.addEventListener("DOMContentLoaded",()=>{
       const btn=document.createElement('button');
       btn.className='store-button';
       btn.innerText=letter;
-      btn.onclick=()=>{storeSubmissionsList.innerHTML=''; storeTitle.innerText=`Store ${letter}`;
-        pendingSubmissions.filter(s=>s.store===letter).forEach(sub=>{
+      btn.onclick=()=>{
+        storeSubmissionsList.innerHTML='';
+        storeTitle.innerText=`Store ${letter}`;
+        pendingSubmissions.filter(s=>s.store===letter).forEach((sub,index)=>{
           const subDiv=document.createElement('div');
-          ['name','month','day','shift','store'].forEach(field=>{
+          const makeBoldLabel=(label,value)=>{
             const p=document.createElement('p');
-            p.innerHTML=`<strong>${field.charAt(0).toUpperCase()+field.slice(1)}:</strong> ${sub[field]}`;
-            subDiv.appendChild(p);
-          });
-          const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.gap='10px';
-          const acceptBtn=document.createElement('button'); acceptBtn.className='acceptBtn'; acceptBtn.innerText=translations[currentLang].acceptBtn;
+            p.innerHTML=`<strong>${label}:</strong> ${value}`;
+            p.style.fontSize='16px';
+            return p;
+          };
+          const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+          const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+          const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+          const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+          const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+          const btnContainer=document.createElement('div');
+          btnContainer.style.display='flex';
+          btnContainer.style.gap='10px';
+          const acceptBtn=document.createElement('button');
+          acceptBtn.innerText=translations[currentLang].acceptBtn;
+          acceptBtn.className='acceptBtn';
+          acceptBtn.style.flex='1';
           acceptBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click(); logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
+            btn.click();
+            showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
+            logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
           };
-          const declineBtn=document.createElement('button'); declineBtn.className='declineBtn'; declineBtn.innerText=translations[currentLang].declineBtn;
+          const declineBtn=document.createElement('button');
+          declineBtn.innerText=translations[currentLang].declineBtn;
+          declineBtn.className='declineBtn';
+          declineBtn.style.flex='1';
           declineBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click(); logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
+            btn.click();
+            showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
+            logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
           };
-          btnContainer.append(acceptBtn,declineBtn);
+          btnContainer.appendChild(acceptBtn);
+          btnContainer.appendChild(declineBtn);
+          subDiv.appendChild(nameP);
+          subDiv.appendChild(monthP);
+          subDiv.appendChild(dayP);
+          subDiv.appendChild(shiftP);
+          subDiv.appendChild(storeP);
           subDiv.appendChild(btnContainer);
           storeSubmissionsList.appendChild(subDiv);
         });
@@ -370,6 +479,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     pendingSubmissions=[];
     localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
     renderSubmissions();
+    showActionMessage(currentLang==='greek'?'Όλες οι υποβολές επαναφέρθηκαν!':'All submissions reset!');
     logConsoleEvent(`<${deviceName} #${deviceId}> reset all submissions`);
   });
 
@@ -378,54 +488,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
-
-  // Console input handling - admin commands + allowed user commands
-  consoleInput.addEventListener('keydown',e=>{
-    if(e.key !== 'Enter') return;
-    const input = consoleInput.value.trim();
-    if(!input) return;
-    const parts = input.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
-    const arg = parts[1];
-
-    function saveAdmins(){ localStorage.setItem('admins', JSON.stringify(admins)); }
-    function saveAllowed(){ localStorage.setItem('allowedUsers', JSON.stringify(allowedUsers)); }
-
-    if(cmd === 'adminadd' && arg){
-      if(!admins.includes(arg)) admins.push(arg);
-      saveAdmins();
-      logConsoleEvent(`admin ${arg} added`);
-    } else if(cmd === 'adminremove' && arg){
-      admins = admins.filter(a=>a!==arg);
-      saveAdmins();
-      logConsoleEvent(`admin ${arg} removed`);
-    } else if((cmd === 'add' || cmd === 'allow') && arg){
-      if(!allowedUsers.includes(arg)) allowedUsers.push(arg);
-      saveAllowed();
-      logConsoleEvent(`allowed ${arg}`);
-    } else if((cmd === 'remove' || cmd === 'disallow') && arg){
-      allowedUsers = allowedUsers.filter(a=>a!==arg);
-      saveAllowed();
-      logConsoleEvent(`disallowed ${arg}`);
-    } else if(cmd === 'list'){
-      logConsoleEvent(`admins: ${JSON.stringify(admins)}`);
-      logConsoleEvent(`allowedUsers: ${JSON.stringify(allowedUsers)}`);
-      logConsoleEvent(`pendingSubmissions: ${JSON.stringify(pendingSubmissions)}`);
-    } else {
-      logConsoleEvent(`Unknown command: ${input}`);
-    }
-
-    // Ensure FULL_ACCESS_ID remains admin & allowed
-    if (!admins.includes(FULL_ACCESS_ID)) { admins.push(FULL_ACCESS_ID); saveAdmins(); }
-    if (!allowedUsers.includes(FULL_ACCESS_ID)) { allowedUsers.push(FULL_ACCESS_ID); saveAllowed(); }
-
-    consoleInput.value='';
-  });
-
-  // initial render & permission check
-  renderSubmissions();
-  updateAdminButtonsVisibility();
-  checkPermission();
 
 });
 </script>
