@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -200,13 +200,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   let deviceName = localStorage.getItem('deviceName') || "Raphael";
   let storedDeviceId = localStorage.getItem('deviceId');
-  let deviceId;
-  if(storedDeviceId){
-    deviceId = storedDeviceId;
-  } else {
-    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString();
-    localStorage.setItem('deviceId', deviceId);
-  }
+  let deviceId = storedDeviceId || (Math.floor(Math.random() * 900000000) + 100000000).toString();
+  localStorage.setItem('deviceId', deviceId);
   localStorage.setItem('deviceName', deviceName);
 
   const SUPER_ADMIN_ID = deviceId;
@@ -217,48 +212,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     consoleLog.appendChild(entry);
     consoleLog.scrollTop=consoleLog.scrollHeight;
   }
-
   logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
   const translations={
-    english:{
-      nameLabel:"Name",
-      namePlaceholder:"Enter your name",
-      monthLabel:"Month",
-      monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],
-      dayLabel:"Day",
-      dayPlaceholder:"Type day",
-      shiftLabel:"Shift",
-      shiftOptions:["Off","6-2","2-10"],
-      storeLabel:"Store",
-      submitBtn:"Submit",
-      seeAllBtn:"See All Submissions",
-      resetAllBtn:"Reset All Submissions",
-      backBtn:"Back",
-      acceptBtn:"Accept",
-      declineBtn:"Decline",
-      consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
-      successMsg:"You have successfully submitted!"
-    },
-    greek:{
-      nameLabel:"Όνομα",
-      namePlaceholder:"Εισάγετε το όνομά σας",
-      monthLabel:"Μήνας",
-      monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],
-      dayLabel:"Ημέρα",
-      dayPlaceholder:"Πληκτρολογήστε την ημέρα",
-      shiftLabel:"Βάρδια",
-      shiftOptions:["Άδεια","6-2","2-10"],
-      storeLabel:"Κατάστημα",
-      submitBtn:"Υποβολή",
-      seeAllBtn:"Δείτε Όλες τις Υποβολές",
-      resetAllBtn:"Επαναφορά Όλων των Υποβολών",
-      backBtn:"Πίσω",
-      acceptBtn:"Αποδοχή",
-      declineBtn:"Απόρριψη",
-      consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
-      successMsg:"Η υποβολή έγινε με επιτυχία!"
-    }
+    english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"You have successfully submitted!"},
+    greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"Η υποβολή έγινε με επιτυχία!"}
   };
 
   function setLanguage(lang){
@@ -302,6 +260,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       successMessage.classList.add('show');
       setTimeout(()=>successMessage.classList.remove('show'),3000);
       e.target.reset();
+      renderSubmissions();
     }
   });
 
@@ -310,76 +269,24 @@ document.addEventListener("DOMContentLoaded",()=>{
     container.innerHTML='';
     pendingSubmissions.forEach((sub,index)=>{
       const subDiv=document.createElement('div');
-      const makeBoldLabel=(label,value)=>{
+      ['name','month','day','shift','store'].forEach(field=>{
         const p=document.createElement('p');
-        p.innerHTML=`<strong>${label}:</strong> ${value}`;
-        p.style.fontSize='16px';
-        return p;
-      };
-      const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
-      const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
-      const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
-      const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
-      const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
-      const btnContainer=document.createElement('div');
-      btnContainer.style.display='flex';
-      btnContainer.style.gap='10px';
-      const acceptBtn=document.createElement('button');
-      acceptBtn.innerText=translations[currentLang].acceptBtn;
-      acceptBtn.className='acceptBtn';
-      acceptBtn.style.flex='1';
-      acceptBtn.onclick=()=>{
-        pendingSubmissions.splice(index,1);
-        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-        renderSubmissions();
-        showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
-        logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
-      };
-      const declineBtn=document.createElement('button');
-      declineBtn.innerText=translations[currentLang].declineBtn;
-      declineBtn.className='declineBtn';
-      declineBtn.style.flex='1';
-      declineBtn.onclick=()=>{
-        pendingSubmissions.splice(index,1);
-        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-        renderSubmissions();
-        showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
-        logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
-      };
-      btnContainer.appendChild(acceptBtn);
-      btnContainer.appendChild(declineBtn);
-      subDiv.appendChild(nameP);
-      subDiv.appendChild(monthP);
-      subDiv.appendChild(dayP);
-      subDiv.appendChild(shiftP);
-      subDiv.appendChild(storeP);
-      subDiv.appendChild(btnContainer);
+        p.innerHTML=`<strong>${field.charAt(0).toUpperCase()+field.slice(1)}:</strong> ${sub[field]}`;
+        subDiv.appendChild(p);
+      });
+      const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.gap='10px';
+      const acceptBtn=document.createElement('button'); acceptBtn.className='acceptBtn'; acceptBtn.innerText=translations[currentLang].acceptBtn;
+      acceptBtn.onclick=()=>{ pendingSubmissions.splice(index,1); localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); renderSubmissions(); logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`); };
+      const declineBtn=document.createElement('button'); declineBtn.className='declineBtn'; declineBtn.innerText=translations[currentLang].declineBtn;
+      declineBtn.onclick=()=>{ pendingSubmissions.splice(index,1); localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); renderSubmissions(); logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`); };
+      btnContainer.append(acceptBtn,declineBtn); subDiv.appendChild(btnContainer);
       container.appendChild(subDiv);
     });
   }
 
-  function showActionMessage(msg){
-    const actionMessage=document.createElement('div');
-    actionMessage.innerText=msg;
-    actionMessage.style.position='fixed';
-    actionMessage.style.top='50%';
-    actionMessage.style.left='50%';
-    actionMessage.style.transform='translate(-50%,-50%)';
-    actionMessage.style.backgroundColor='#4BB543';
-    actionMessage.style.color='white';
-    actionMessage.style.padding='20px 40px';
-    actionMessage.style.borderRadius='12px';
-    actionMessage.style.fontSize='18px';
-    actionMessage.style.fontWeight='bold';
-    actionMessage.style.boxShadow='0 0 15px rgba(0,0,0,0.2)';
-    actionMessage.style.zIndex=1006;
-    document.body.appendChild(actionMessage);
-    setTimeout(()=>actionMessage.remove(),2500);
-  }
-
   function updateAdminButtonsVisibility(){
     const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
-    adminButtonsDiv.style.display = (isAdmin || mainFormSection.style.display !== 'none') ? 'flex' : 'none';
+    adminButtonsDiv.style.display = isAdmin ? 'flex' : 'none';
   }
 
   function checkPermission(){
@@ -394,19 +301,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
   function showSection(section){
-    mainFormSection.style.display='none';
-    adminGuiSection.style.display='none';
-    submissionsGuiSection.style.display='none';
-    consoleGuiSection.style.display='none';
-    noPermissionSection.style.display='none';
-    storeMenuSection.style.display='none';
-    storeSubmissionsSection.style.display='none';
-    section.style.display='flex';
-    updateAdminButtonsVisibility();
-  }
-
-  checkPermission();
-
+    [mainFormSection,adminGuiSection,submissionsGuiSection,consoleGuiSection,noPermissionSection,storeMenuSection,storeSubmissionsSection].forEach(s=>s.style.display='none');
+   
+  // Admin & Console Buttons
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('consoleBtn').addEventListener('click',()=>showSection(consoleGuiSection));
 
@@ -420,51 +317,29 @@ document.addEventListener("DOMContentLoaded",()=>{
       btn.onclick=()=>{
         storeSubmissionsList.innerHTML='';
         storeTitle.innerText=`Store ${letter}`;
-        pendingSubmissions.filter(s=>s.store===letter).forEach((sub,index)=>{
+        pendingSubmissions.filter(s=>s.store===letter).forEach(sub=>{
           const subDiv=document.createElement('div');
-          const makeBoldLabel=(label,value)=>{
+          ['name','month','day','shift','store'].forEach(field=>{
             const p=document.createElement('p');
-            p.innerHTML=`<strong>${label}:</strong> ${value}`;
-            p.style.fontSize='16px';
-            return p;
-          };
-          const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
-          const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
-          const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
-          const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
-          const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
-          const btnContainer=document.createElement('div');
-          btnContainer.style.display='flex';
-          btnContainer.style.gap='10px';
-          const acceptBtn=document.createElement('button');
-          acceptBtn.innerText=translations[currentLang].acceptBtn;
-          acceptBtn.className='acceptBtn';
-          acceptBtn.style.flex='1';
+            p.innerHTML=`<strong>${field.charAt(0).toUpperCase()+field.slice(1)}:</strong> ${sub[field]}`;
+            subDiv.appendChild(p);
+          });
+          const btnContainer=document.createElement('div'); btnContainer.style.display='flex'; btnContainer.style.gap='10px';
+          const acceptBtn=document.createElement('button'); acceptBtn.className='acceptBtn'; acceptBtn.innerText=translations[currentLang].acceptBtn;
           acceptBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click();
-            showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
+            btn.click(); // Refresh
             logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
           };
-          const declineBtn=document.createElement('button');
-          declineBtn.innerText=translations[currentLang].declineBtn;
-          declineBtn.className='declineBtn';
-          declineBtn.style.flex='1';
+          const declineBtn=document.createElement('button'); declineBtn.className='declineBtn'; declineBtn.innerText=translations[currentLang].declineBtn;
           declineBtn.onclick=()=>{
             pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
             localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            btn.click();
-            showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
+            btn.click(); // Refresh
             logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
           };
-          btnContainer.appendChild(acceptBtn);
-          btnContainer.appendChild(declineBtn);
-          subDiv.appendChild(nameP);
-          subDiv.appendChild(monthP);
-          subDiv.appendChild(dayP);
-          subDiv.appendChild(shiftP);
-          subDiv.appendChild(storeP);
+          btnContainer.append(acceptBtn,declineBtn);
           subDiv.appendChild(btnContainer);
           storeSubmissionsList.appendChild(subDiv);
         });
@@ -479,7 +354,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     pendingSubmissions=[];
     localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
     renderSubmissions();
-    showActionMessage(currentLang==='greek'?'Όλες οι υποβολές επαναφέρθηκαν!':'All submissions reset!');
     logConsoleEvent(`<${deviceName} #${deviceId}> reset all submissions`);
   });
 
