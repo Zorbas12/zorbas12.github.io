@@ -76,11 +76,13 @@ let translations = {
   en: {title: 'Zorbas Submissions', name: 'Name', month: 'Month', day: 'Day', shift: 'Shift', submit: 'Submit'},
   gr: {title: 'Υποβολές Ζορμπά', name: 'Όνομα', month: 'Μήνας', day: 'Ημέρα', shift: 'Βάρδια', submit: 'Υποβολή'}
 };
-let userId = localStorage.getItem('userId') || Math.floor(Math.random()*1000000);
+
+// FIX: use a fixed ID for GitHub Pages
+let userId = '684319'; 
 localStorage.setItem('userId', userId);
 
-// Hardcode your ID to always have admin on GitHub
-let isAdmin = userId == '684319';
+// Admin only for your device
+let isAdmin = userId === '684319';
 if(isAdmin) document.getElementById('admin-btns').style.display='flex';
 
 let deviceName = 'Raphael';
@@ -137,16 +139,19 @@ function openAdminGUI() {
 
 document.getElementById('admin-gui-btn').onclick = openAdminGUI;
 
+// Open console GUI
 document.getElementById('console-btn').onclick = ()=>{
   document.getElementById('main-container').style.display = 'none';
   document.getElementById('console-gui').style.display = 'block';
 }
 
+// Back button
 document.getElementById('back-btn').onclick = ()=>{
   document.getElementById('console-gui').style.display = 'none';
   document.getElementById('main-container').style.display = 'block';
 }
 
+// Console commands
 document.getElementById('console-input').addEventListener('keydown', e=>{
   if(e.key==='Enter'){
     let val = e.target.value.trim();
