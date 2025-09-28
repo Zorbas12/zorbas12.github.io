@@ -1,46 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zorbas Submissions</title>
 <style>
-body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
-#mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
-.language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
-.language-switcher button{padding:5px 10px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-.language-switcher button:hover{background-color:#CFC76D;}
-h1{font-family:'Algerian',serif;font-size:48px;color:#333;margin-bottom:30px;text-align:center;}
-form,#adminGuiSection .admin-gui-box,#submissionsGuiSection .console-box,#usersGuiSection .users-gui-box{display:flex;flex-direction:column;gap:20px;text-align:center;}
-form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{background-color:#fff;padding:30px;border-radius:15px;width:350px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
-form>div,#adminGuiSection .admin-gui-box>div,#submissionsGuiSection>div,#usersGuiSection .users-gui-box>div{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-label{font-weight:bold;margin-bottom:5px;}
-input,select,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;width:80%;box-sizing:border-box;}
-button[type="submit"]{background-color:#E4D882;font-weight:bold;}
-button[type="submit"]:hover{background-color:#CFC76D;}
-.admin-buttons{position:fixed;bottom:20px;right:20px;display:none;gap:10px;}
-.admin-buttons button{padding:10px 15px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-.admin-buttons button:hover{background-color:#CFC76D;}
-.success-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#4BB543;color:white;padding:25px 40px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.2);opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:1005;}
-.success-message.show{opacity:1;pointer-events:auto;}
-#adminGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{position:fixed;top:0;left:0;width:100%;height:100vh;background-color:rgba(0,0,0,0.1);align-items:center;justify-content:center;z-index:1003;}
-#submissionsGuiSection{flex-direction:column;align-items:center;justify-content:flex-start;width:100%;padding:20px;background-color:#DAD9D7;min-height:100vh;box-sizing:border-box;z-index:1001;}
-#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{background-color:#fff;padding:40px 60px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:25px;box-shadow:0 5px 20px rgba(0,0,0,0.2);text-align:center;}
-#adminGuiSection .admin-gui-box h1,#usersGuiSection .users-gui-box h1{font-size:36px;margin-bottom:20px;}
-#adminGuiSection .admin-gui-box button,#usersGuiSection .users-gui-box button{width:250px;padding:15px 0;font-size:18px;border-radius:10px;border:none;cursor:pointer;background-color:#E4D882;font-weight:bold;transition:0.3s;}
-#adminGuiSection .admin-gui-box button:hover,#usersGuiSection .users-gui-box button:hover{background-color:#CFC76D;}
-#adminGuiSection #backBtn,#submissionsGuiSection #backFromSubmissionsBtn,#storeMenuSection #backFromStoreMenuBtn,#storeSubmissionsSection #backFromStoreSubmissionsBtn,#usersGuiSection #backFromUsersBtn{background-color:#FF5C5C;color:white;width:auto;padding:10px 25px;font-size:16px;border-radius:8px;}
-#adminGuiSection #backBtn:hover,#submissionsGuiSection #backFromSubmissionsBtn:hover,#storeMenuSection #backFromStoreMenuBtn:hover,#storeSubmissionsSection #backFromStoreSubmissionsBtn:hover,#usersGuiSection #backFromUsersBtn:hover{background-color:#E04B4B;}
-#submissionsList,#storeSubmissionsList,#usersList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin:0 auto;}
-#storeButtonsDiv{flex:1;display:flex;flex-direction:column;gap:10px;align-items:center;margin-right:20px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:transparent;border-radius:8px;max-height:80vh;width:200px;}
-.store-button{flex:0 0 auto;width:180px;height:50px;border-radius:8px;border:none;background:#E4D882;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;}
-.store-button:hover{background:#CFC76D;}
-#submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
-#submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
-#submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
-#submissionsList div button.acceptBtn:hover{background:#3D9737;}
-#submissionsList div button.declineBtn:hover{background:#E04B4B;}
-@media (max-width:640px){h1{font-size:34px;}#mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}#storeButtonsDiv{width:90%;}.store-button{width:100%;}}
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background-color:#DAD9D7;
+  position:relative;
+  height:100vh;
+  overflow-x:hidden;
+}
+#mainFormSection,#adminGuiSection,#usersGuiSection {
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+.language-switcher {
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:flex;
+  gap:10px;
+}
+.language-switcher button {
+  padding:5px 10px;
+  font-size:14px;
+  border-radius:5px;
+  border:1px solid #ccc;
+  cursor:pointer;
+  background-color:#E4D882;
+  font-weight:bold;
+}
+.language-switcher button:hover {
+  background-color:#CFC76D;
+}
+h1 {
+  font-family:'Algerian',serif;
+  font-size:48px;
+  color:#333;
+  margin-bottom:30px;
+  text-align:center;
+}
+form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  text-align:center;
+}
+form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box {
+  background-color:#fff;
+  padding:30px;
+  border-radius:15px;
+  width:350px;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+form>div,#adminGuiSection .admin-gui-box>div,#usersGuiSection .users-gui-box>div {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+label {
+  font-weight:bold;
+  margin-bottom:5px;
+}
+input,select,button {
+  padding:10px;
+  font-size:16px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  width:80%;
+  box-sizing:border-box;
+}
+button[type="submit"] {
+  background-color:#E4D882;
+  font-weight:bold;
+}
+button[type="submit"]:hover {
+  background-color:#CFC76D;
+}
+.admin-buttons {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:none;
+  gap:10px;
+}
+.admin-buttons button {
+  padding:10px 15px;
+  font-size:14px;
+  border-radius:5px;
+  border:1px solid #ccc;
+  cursor:pointer;
+  background-color:#E4D882;
+  font-weight:bold;
+}
+.admin-buttons button:hover {
+  background-color:#CFC76D;
+}
+.success-message {
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background-color:#4BB543;
+  color:white;
+  padding:25px 40px;
+  border-radius:12px;
+  font-size:20px;
+  font-weight:bold;
+  box-shadow:0 0 15px rgba(0,0,0,0.2);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.5s ease;
+  z-index:1005;
+}
+.success-message.show {
+  opacity:1;
+  pointer-events:auto;
+}
+#adminGuiSection,#usersGuiSection {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100vh;
+  background-color:rgba(0,0,0,0.1);
+  align-items:center;
+  justify-content:center;
+  z-index:1003;
+}
+#usersList {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+  max-width:400px;
+  margin:0 auto;
+}
+#usersList div {
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+#usersList div button {
+  margin-top:5px;
+  padding:5px 10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
@@ -53,27 +171,27 @@ button[type="submit"]:hover{background-color:#CFC76D;}
   <h1>Zorbas Submissions</h1>
   <form id="submissionForm">
     <div>
-      <label for="name" id="nameLabel"><strong>Name</strong></label>
+      <label for="name"><strong>Name</strong></label>
       <input type="text" id="name" required placeholder="Enter your name">
     </div>
     <div>
-      <label for="month" id="monthLabel">Month</label>
+      <label for="month">Month</label>
       <select id="month" required></select>
     </div>
     <div>
-      <label for="day" id="dayLabel"><strong>Day</strong></label>
+      <label for="day"><strong>Day</strong></label>
       <input type="text" id="day" placeholder="Type day" required>
     </div>
     <div>
-      <label for="shift" id="shiftLabel">Shift</label>
+      <label for="shift">Shift</label>
       <select id="shift" required></select>
     </div>
     <div>
-      <label for="store" id="storeLabel">Store</label>
+      <label for="store">Store</label>
       <select id="store" required></select>
     </div>
     <div>
-      <button type="submit" id="submitBtn">Submit</button>
+      <button type="submit">Submit</button>
     </div>
   </form>
 </div>
@@ -81,8 +199,6 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 <div id="adminGuiSection">
   <div class="admin-gui-box">
     <h1>Admin GUI</h1>
-    <button id="seeAllBtn">See All Submissions</button>
-    <button id="resetAllBtn">Reset All Submissions</button>
     <button id="usersGuiBtn">Users</button>
     <button id="backBtn">Back</button>
   </div>
@@ -101,6 +217,7 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 </div>
 
 <div class="success-message" id="successMessage">You have successfully submitted!</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -108,40 +225,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ Firebase Setup ------------------
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyD_2QiORiAdBpfLe9Dzxv6KJX46HLqbALc",
     authDomain: "zorbas12.firebaseapp.com",
     databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "zorbas12",
     storageBucket: "zorbas12.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    messagingSenderId: "643468962153",
+    appId: "1:643468962153:web:20695d324d8fd0abd635f8",
+    measurementId: "G-84Q60WY6FC"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
   // ------------------ Elements ------------------
-  const monthSelect = document.getElementById('month');
-  const shiftSelect = document.getElementById('shift');
-  const storeSelect = document.getElementById('store');
-  const dayInput = document.getElementById('day');
-  const englishBtn = document.getElementById('englishBtn');
-  const greekBtn = document.getElementById('greekBtn');
   const mainFormSection = document.getElementById('mainFormSection');
   const adminGuiSection = document.getElementById('adminGuiSection');
   const usersGuiSection = document.getElementById('usersGuiSection');
   const adminButtonsDiv = document.getElementById('adminButtons');
-  const successMessage = document.getElementById('successMessage');
-  const submissionsListDiv = document.getElementById('submissionsList');
   const usersListDiv = document.getElementById('usersList');
-
-  const monthDays = {
-    "January":31,"February":28,"March":31,"April":30,"May":31,"June":30,
-    "July":31,"August":31,"September":30,"October":31,"November":30,"December":31,
-    "Ιανουάριος":31,"Φεβρουάριος":28,"Μάρτιος":31,"Απρίλιος":30,"Μάιος":31,
-    "Ιούνιος":30,"Ιούλιος":31,"Αύγουστος":31,"Σεπτέμβριος":30,"Οκτώβριος":31,"Νοέμβριος":30,"Δεκέμβριος":31
-  };
-
-  let currentLang = 'english';
+  const successMessage = document.getElementById('successMessage');
 
   // ------------------ Device Registration ------------------
   let deviceId = localStorage.getItem('deviceId');
@@ -150,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem('deviceId', deviceId);
   }
 
-  let deviceName = localStorage.getItem('deviceName') || "Unknown";
+  let deviceName = localStorage.getItem('deviceName') || "Device";
   localStorage.setItem('deviceName', deviceName);
 
   const deviceRef = db.ref('devices/' + deviceId);
@@ -165,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Make first device admin
+  // Make first device admin automatically
   db.ref('devices').once('value').then(snap=>{
     const devices = snap.val() || {};
     if(Object.keys(devices).length === 1){
@@ -173,6 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ------------------ Admin Buttons Visibility ------------------
   function updateAdminButtonsVisibility(){
     deviceRef.once('value').then(snap=>{
       const data = snap.val();
@@ -184,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ------------------ Show Sections ------------------
   function showSection(section){
     mainFormSection.style.display='none';
     adminGuiSection.style.display='none';
@@ -194,42 +298,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   showSection(mainFormSection);
 
-  // ------------------ Submissions Handling ------------------
-  const submissionsRef = db.ref('submissions');
-
-  document.getElementById('submissionForm').addEventListener('submit', e=>{
-    e.preventDefault();
-    if(e.target.checkValidity()){
-      const submission = {
-        name: document.getElementById('name').value,
-        month: monthSelect.value,
-        day: dayInput.value,
-        shift: shiftSelect.value,
-        store: storeSelect.value
-      };
-      submissionsRef.push(submission);
-      successMessage.classList.add('show');
-      setTimeout(()=>successMessage.classList.remove('show'),3000);
-      e.target.reset();
-    }
-  });
-
   // ------------------ Users GUI ------------------
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
+  function updateUsersList(){
     usersListDiv.innerHTML = '';
-    db.ref('devices').once('value').then(snapshot => {
+    db.ref('devices').once('value').then(snapshot=>{
       const devices = snapshot.val() || {};
-      Object.entries(devices).forEach(([id, data])=>{
+      Object.entries(devices).forEach(([id,data])=>{
         const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '10px';
-        box.style.marginBottom = '10px';
         box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role||'none'}`;
 
         const userBtn = document.createElement('button');
         userBtn.innerText = 'User';
-        userBtn.style.marginRight = '10px';
         userBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('user'); updateUsersList(); };
 
         const adminBtn = document.createElement('button');
@@ -241,193 +320,317 @@ document.addEventListener("DOMContentLoaded", () => {
         usersListDiv.appendChild(box);
       });
     });
-    showSection(usersGuiSection);
-  });
-
-  function updateUsersList(){
-    document.getElementById('usersGuiBtn').click();
   }
 
-  // ------------------ Admin GUI ------------------
+  // ------------------ Button Events ------------------
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('usersGuiBtn').addEventListener('click',()=>{ updateUsersList(); showSection(usersGuiSection); });
   document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
 
   // ------------------ Realtime Updates ------------------
   db.ref('devices').on('value', updateUsersList);
+
+  // Initial admin visibility
   updateAdminButtonsVisibility();
 
 });
 </script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ------------------ Firebase Setup ------------------
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "zorbas12.firebaseapp.com",
-    databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "zorbas12",
-    storageBucket: "zorbas12.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  const submissionsRef = db.ref('submissions');
+  const submissionsListDiv = document.getElementById('submissionsList');
+  const submissionForm = document.getElementById('submissionForm');
+  const successMessage = document.getElementById('successMessage');
 
-  // ------------------ Elements ------------------
-  const monthSelect = document.getElementById('month');
-  const shiftSelect = document.getElementById('shift');
-  const storeSelect = document.getElementById('store');
-  const dayInput = document.getElementById('day');
-  const englishBtn = document.getElementById('englishBtn');
-  const greekBtn = document.getElementById('greekBtn');
-  const mainFormSection = document.getElementById('mainFormSection');
+  // ------------------ Form Submission ------------------
+  submissionForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    if(e.target.checkValidity()){
+      const submission = {
+        name: document.getElementById('name').value,
+        month: document.getElementById('month').value,
+        day: document.getElementById('day').value,
+        shift: document.getElementById('shift').value,
+        store: document.getElementById('store').value
+      };
+      submissionsRef.push(submission);
+      successMessage.classList.add('show');
+      setTimeout(()=>successMessage.classList.remove('show'),3000);
+      submissionForm.reset();
+    }
+  });
+
+  // ------------------ Render Submissions ------------------
+  function renderSubmissions(){
+    submissionsListDiv.innerHTML = '';
+    submissionsRef.once('value').then(snapshot=>{
+      const submissions = snapshot.val() || {};
+      Object.entries(submissions).forEach(([key, sub])=>{
+        const subDiv = document.createElement('div');
+        subDiv.style.background = '#fff';
+        subDiv.style.padding = '15px';
+        subDiv.style.borderRadius = '10px';
+        subDiv.style.marginBottom = '10px';
+
+        const makeLine = (label,value)=>{
+          const p = document.createElement('p');
+          p.innerHTML = `<strong>${label}:</strong> ${value}`;
+          p.style.fontSize='16px';
+          return p;
+        };
+
+        subDiv.appendChild(makeLine('Name', sub.name));
+        subDiv.appendChild(makeLine('Month', sub.month));
+        subDiv.appendChild(makeLine('Day', sub.day));
+        subDiv.appendChild(makeLine('Shift', sub.shift));
+        subDiv.appendChild(makeLine('Store', sub.store));
+
+        const btnContainer = document.createElement('div');
+        btnContainer.style.display='flex';
+        btnContainer.style.gap='10px';
+
+        const acceptBtn = document.createElement('button');
+        acceptBtn.innerText='Accept';
+        acceptBtn.style.flex='1';
+        acceptBtn.onclick = ()=>{ submissionsRef.child(key).remove(); renderSubmissions(); };
+
+        const declineBtn = document.createElement('button');
+        declineBtn.innerText='Decline';
+        declineBtn.style.flex='1';
+        declineBtn.onclick = ()=>{ submissionsRef.child(key).remove(); renderSubmissions(); };
+
+        btnContainer.appendChild(acceptBtn);
+        btnContainer.appendChild(declineBtn);
+        subDiv.appendChild(btnContainer);
+
+        submissionsListDiv.appendChild(subDiv);
+      });
+    });
+  }
+
+  // ------------------ Realtime Updates ------------------
+  submissionsRef.on('value', renderSubmissions);
+
+  // ------------------ Reset Submissions ------------------
+  document.getElementById('resetAllBtn').addEventListener('click', ()=>{
+    submissionsRef.remove();
+    renderSubmissions();
+  });
+
+  // Initial render
+  renderSubmissions();
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const usersListDiv = document.getElementById('usersList');
+  const usersGuiBtn = document.getElementById('usersGuiBtn');
+  const usersGuiSection = document.getElementById('usersGuiSection');
   const adminGuiSection = document.getElementById('adminGuiSection');
+  const backFromUsersBtn = document.getElementById('backFromUsersBtn');
+
+  const deviceRef = db.ref('devices/' + localStorage.getItem('deviceId'));
+  const adminButtonsDiv = document.getElementById('adminButtons');
+
+  function updateUsersList(){
+    usersListDiv.innerHTML = '';
+    db.ref('devices').once('value').then(snapshot=>{
+      const devices = snapshot.val() || {};
+      Object.entries(devices).forEach(([id, data])=>{
+        const box = document.createElement('div');
+        box.style.background='#fff';
+        box.style.padding='15px';
+        box.style.borderRadius='10px';
+        box.style.marginBottom='10px';
+        box.innerHTML=`<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role||'none'}`;
+
+        const userBtn = document.createElement('button');
+        userBtn.innerText='User';
+        userBtn.style.marginRight='10px';
+        userBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('user'); updateUsersList(); };
+
+        const adminBtn = document.createElement('button');
+        adminBtn.innerText='Admin';
+        adminBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('admin'); updateUsersList(); };
+
+        box.appendChild(userBtn);
+        box.appendChild(adminBtn);
+        usersListDiv.appendChild(box);
+      });
+    });
+  }
+
+  usersGuiBtn.addEventListener('click', ()=>{
+    updateUsersList();
+    showSection(usersGuiSection);
+  });
+
+  backFromUsersBtn.addEventListener('click', ()=>showSection(adminGuiSection));
+
+  // ------------------ Admin Buttons Visibility ------------------
+  function updateAdminButtonsVisibility(){
+    deviceRef.once('value').then(snap=>{
+      const data = snap.val();
+      adminButtonsDiv.style.display = (data && data.role === "admin") ? 'flex' : 'none';
+    });
+  }
+
+  // ------------------ Realtime Users Listener ------------------
+  db.ref('devices').on('value', updateUsersList);
+  updateAdminButtonsVisibility();
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const submissionsListDiv = document.getElementById('submissionsList');
+  const submissionsRef = db.ref('submissions');
+
+  function renderSubmissions(){
+    submissionsListDiv.innerHTML = '';
+    submissionsRef.once('value').then(snapshot=>{
+      const submissions = snapshot.val() || {};
+      Object.entries(submissions).forEach(([key, sub])=>{
+        const subDiv = document.createElement('div');
+        subDiv.style.background='#fff';
+        subDiv.style.padding='15px';
+        subDiv.style.borderRadius='10px';
+        subDiv.style.marginBottom='10px';
+
+        const makeLine = (label, value) => {
+          const p = document.createElement('p');
+          p.innerHTML = `<strong>${label}:</strong> ${value}`;
+          p.style.fontSize='16px';
+          return p;
+        };
+
+        subDiv.appendChild(makeLine('Name', sub.name));
+        subDiv.appendChild(makeLine('Month', sub.month));
+        subDiv.appendChild(makeLine('Day', sub.day));
+        subDiv.appendChild(makeLine('Shift', sub.shift));
+        subDiv.appendChild(makeLine('Store', sub.store));
+
+        const btnContainer = document.createElement('div');
+        btnContainer.style.display='flex';
+        btnContainer.style.gap='10px';
+
+        const acceptBtn = document.createElement('button');
+        acceptBtn.innerText='Accept';
+        acceptBtn.style.flex='1';
+        acceptBtn.onclick = () => {
+          submissionsRef.child(key).remove();
+          renderSubmissions();
+        };
+
+        const declineBtn = document.createElement('button');
+        declineBtn.innerText='Decline';
+        declineBtn.style.flex='1';
+        declineBtn.onclick = () => {
+          submissionsRef.child(key).remove();
+          renderSubmissions();
+        };
+
+        btnContainer.appendChild(acceptBtn);
+        btnContainer.appendChild(declineBtn);
+        subDiv.appendChild(btnContainer);
+
+        submissionsListDiv.appendChild(subDiv);
+      });
+    });
+  }
+
+  submissionsRef.on('value', renderSubmissions);
+  renderSubmissions();
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const storeButtonsDiv = document.getElementById('storeButtonsDiv');
+  const storeSubmissionsList = document.getElementById('storeSubmissionsList');
+  const seeAllBtn = document.getElementById('seeAllBtn');
+
+  seeAllBtn.addEventListener('click', () => {
+    storeButtonsDiv.innerHTML = '';
+    for (let i = 65; i <= 90; i++) {
+      const letter = String.fromCharCode(i);
+      const btn = document.createElement('button');
+      btn.className = 'store-button';
+      btn.innerText = letter;
+      btn.onclick = () => {
+        storeSubmissionsList.innerHTML = '';
+        db.ref('submissions').once('value').then(snapshot => {
+          const submissions = snapshot.val() || {};
+          Object.entries(submissions)
+            .filter(([k, sub]) => sub.store === letter)
+            .forEach(([k, sub]) => {
+              const subDiv = document.createElement('div');
+              subDiv.style.background = '#fff';
+              subDiv.style.padding = '15px';
+              subDiv.style.borderRadius = '10px';
+              subDiv.style.marginBottom = '10px';
+
+              const makeLine = (label, value) => {
+                const p = document.createElement('p');
+                p.innerHTML = `<strong>${label}:</strong> ${value}`;
+                p.style.fontSize = '16px';
+                return p;
+              };
+
+              subDiv.appendChild(makeLine('Name', sub.name));
+              subDiv.appendChild(makeLine('Month', sub.month));
+              subDiv.appendChild(makeLine('Day', sub.day));
+              subDiv.appendChild(makeLine('Shift', sub.shift));
+              subDiv.appendChild(makeLine('Store', sub.store));
+
+              const btnContainer = document.createElement('div');
+              btnContainer.style.display = 'flex';
+              btnContainer.style.gap = '10px';
+
+              const acceptBtn = document.createElement('button');
+              acceptBtn.innerText = 'Accept';
+              acceptBtn.style.flex = '1';
+              acceptBtn.onclick = () => { db.ref('submissions/' + k).remove(); btn.click(); };
+
+              const declineBtn = document.createElement('button');
+              declineBtn.innerText = 'Decline';
+              declineBtn.style.flex = '1';
+              declineBtn.onclick = () => { db.ref('submissions/' + k).remove(); btn.click(); };
+
+              btnContainer.appendChild(acceptBtn);
+              btnContainer.appendChild(declineBtn);
+              subDiv.appendChild(btnContainer);
+
+              storeSubmissionsList.appendChild(subDiv);
+            });
+        });
+        showSection(storeSubmissionsSection);
+      };
+      storeButtonsDiv.appendChild(btn);
+    }
+    showSection(storeMenuSection);
+  });
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const usersListDiv = document.getElementById('usersList');
+  const usersGuiBtn = document.getElementById('usersGuiBtn');
   const usersGuiSection = document.getElementById('usersGuiSection');
   const adminButtonsDiv = document.getElementById('adminButtons');
-  const successMessage = document.getElementById('successMessage');
-  const submissionsListDiv = document.getElementById('submissionsList');
-  const usersListDiv = document.getElementById('usersList');
-
-  const monthDays = {
-    "January":31,"February":28,"March":31,"April":30,"May":31,"June":30,
-    "July":31,"August":31,"September":30,"October":31,"November":30,"December":31,
-    "Ιανουάριος":31,"Φεβρουάριος":28,"Μάρτιος":31,"Απρίλιος":30,"Μάιος":31,
-    "Ιούνιος":30,"Ιούλιος":31,"Αύγουστος":31,"Σεπτέμβριος":30,"Οκτώβριος":31,"Νοέμβριος":30,"Δεκέμβριος":31
-  };
-
-  let currentLang = 'english';
-
-  // ------------------ Device Registration ------------------
-  let deviceId = localStorage.getItem('deviceId');
-  if(!deviceId){
-    deviceId = (Math.floor(Math.random()*900000000)+100000000).toString();
-    localStorage.setItem('deviceId', deviceId);
-  }
-
-  let deviceName = localStorage.getItem('deviceName') || "Unknown";
-  localStorage.setItem('deviceName', deviceName);
-
   const deviceRef = db.ref('devices/' + deviceId);
 
-  deviceRef.get().then(snapshot => {
-    if(!snapshot.exists()){
-      deviceRef.set({
-        name: deviceName,
-        type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-        role: null
-      });
-    }
-  });
-
-  // Make first device admin
-  db.ref('devices').once('value').then(snap=>{
-    const devices = snap.val() || {};
-    if(Object.keys(devices).length === 1){
-      deviceRef.update({role:"admin"});
-    }
-  });
-
-  function updateAdminButtonsVisibility(){
-    deviceRef.once('value').then(snap=>{
-      const data = snap.val();
-      if(data && data.role === "admin"){
-        adminButtonsDiv.style.display='flex';
-      } else {
-        adminButtonsDiv.style.display='none';
-      }
-    });
-  }
-
-  function showSection(section){
-    mainFormSection.style.display='none';
-    adminGuiSection.style.display='none';
-    usersGuiSection.style.display='none';
-    section.style.display='flex';
-    updateAdminButtonsVisibility();
-  }
-
-  showSection(mainFormSection);
-
-  // ------------------ Submissions Handling ------------------
-  const submissionsRef = db.ref('submissions');
-
-  document.getElementById('submissionForm').addEventListener('submit', e=>{
-    e.preventDefault();
-    if(e.target.checkValidity()){
-      const submission = {
-        name: document.getElementById('name').value,
-        month: monthSelect.value,
-        day: dayInput.value,
-        shift: shiftSelect.value,
-        store: storeSelect.value
-      };
-      submissionsRef.push(submission);
-      successMessage.classList.add('show');
-      setTimeout(()=>successMessage.classList.remove('show'),3000);
-      e.target.reset();
-    }
-  });
-
-  // ------------------ Users GUI ------------------
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
+  function updateUsersList() {
     usersListDiv.innerHTML = '';
     db.ref('devices').once('value').then(snapshot => {
-      const devices = snapshot.val() || {};
-      Object.entries(devices).forEach(([id, data])=>{
-        const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '10px';
-        box.style.marginBottom = '10px';
-        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role||'none'}`;
-
-        const userBtn = document.createElement('button');
-        userBtn.innerText = 'User';
-        userBtn.style.marginRight = '10px';
-        userBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('user'); updateUsersList(); };
-
-        const adminBtn = document.createElement('button');
-        adminBtn.innerText = 'Admin';
-        adminBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('admin'); updateUsersList(); };
-
-        box.appendChild(userBtn);
-        box.appendChild(adminBtn);
-        usersListDiv.appendChild(box);
-      });
-    });
-    showSection(usersGuiSection);
-  });
-
-  function updateUsersList(){
-    document.getElementById('usersGuiBtn').click();
-  }
-
-  // ------------------ Admin GUI ------------------
-  document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
-  document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
-  document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
-
-  // ------------------ Realtime Updates ------------------
-  db.ref('devices').on('value', updateUsersList);
-  updateAdminButtonsVisibility();
-
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  const usersListDiv = document.getElementById('usersList');
-  const deviceRef = firebase.database().ref('devices');
-  const adminButtonsDiv = document.getElementById('adminButtons');
-
-  // ------------------ Update Users List ------------------
-  function updateUsersList(){
-    usersListDiv.innerHTML = '';
-    deviceRef.once('value').then(snapshot => {
       const devices = snapshot.val() || {};
       Object.entries(devices).forEach(([id, data]) => {
         const box = document.createElement('div');
@@ -435,16 +638,22 @@ document.addEventListener("DOMContentLoaded", () => {
         box.style.padding = '15px';
         box.style.borderRadius = '10px';
         box.style.marginBottom = '10px';
-        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role||'none'}`;
+        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role || 'none'}`;
 
         const userBtn = document.createElement('button');
         userBtn.innerText = 'User';
         userBtn.style.marginRight = '10px';
-        userBtn.onclick = () => { deviceRef.child(id+'/role').set('user'); updateUsersList(); };
+        userBtn.onclick = () => {
+          db.ref('devices/' + id + '/role').set('user');
+          updateUsersList();
+        };
 
         const adminBtn = document.createElement('button');
         adminBtn.innerText = 'Admin';
-        adminBtn.onclick = () => { deviceRef.child(id+'/role').set('admin'); updateUsersList(); };
+        adminBtn.onclick = () => {
+          db.ref('devices/' + id + '/role').set('admin');
+          updateUsersList();
+        };
 
         box.appendChild(userBtn);
         box.appendChild(adminBtn);
@@ -453,19 +662,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
+  usersGuiBtn.addEventListener('click', () => {
     updateUsersList();
     showSection(usersGuiSection);
   });
 
-  // ------------------ Admin Buttons Visibility ------------------
-  function updateAdminButtonsVisibility(){
-    const currentDeviceId = localStorage.getItem('deviceId');
-    if(!currentDeviceId) return;
-
-    firebase.database().ref('devices/' + currentDeviceId).once('value').then(snap => {
+  function updateAdminButtonsVisibility() {
+    deviceRef.once('value').then(snap => {
       const data = snap.val();
-      if(data && data.role === 'admin'){
+      if (data && data.role === 'admin') {
         adminButtonsDiv.style.display = 'flex';
       } else {
         adminButtonsDiv.style.display = 'none';
@@ -473,18 +678,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ------------------ Admin Button Clicks ------------------
-  document.getElementById('adminGuiBtn').addEventListener('click', () => showSection(adminGuiSection));
-  document.getElementById('backBtn').addEventListener('click', () => showSection(mainFormSection));
-  document.getElementById('backFromUsersBtn').addEventListener('click', () => showSection(adminGuiSection));
-
-  // ------------------ Realtime Users Listener ------------------
-  deviceRef.on('value', updateUsersList);
-
-  // Initial admin check
+  db.ref('devices').on('value', updateUsersList);
   updateAdminButtonsVisibility();
 
 });
 </script>
-</body>
+  <!-- Closing for body and html -->
+  </body>
 </html>
