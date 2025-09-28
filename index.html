@@ -1,3 +1,4 @@
+a
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
   englishBtn.addEventListener('click',()=>setLanguage('english'));
   greekBtn.addEventListener('click',()=>setLanguage('greek'));
   setLanguage('english');
-
   // ------------------ Device Registration ------------------
   const deviceRef = db.ref('devices/' + deviceId);
 
@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
       deviceRef.set({
         name: deviceName,
         type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-        role: null
+        role: null // default role null
       });
     }
   });
@@ -281,6 +281,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
   showSection(mainFormSection);
 
+  // ------------------ Users GUI ------------------
+  document.getElementById('usersGuiBtn').addEventListener('click', () => {
+    usersListDiv.innerHTML = '';
+    db.ref('devices').once('value').then(snapshot => {
+      const devices = snapshot.val() || {};
+      Object.entries(devices).forEach(([id, data])=>{
+        const box = document.createElement('div');
+        box.style.background = '#fff';
+        box.style.padding = '15px';
+        box.style.borderRadius = '10px';
+        box.style.marginBottom = '10px';
+        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}<br>Role: ${data.role || 'user'}`;
+
+        const userBtn = document.createElement('button');
+        userBtn.innerText = 'User';
+        userBtn.style.marginRight = '10px';
+        userBtn.onclick = ()=>{ db.ref('devices/'+id).update({role:'user'}); updateUsersList(); };
+
+        const adminBtn = document.createElement('button');
+        adminBtn.innerText = 'Admin';
+        adminBtn.onclick = ()=>{ db.ref('devices/'+id).update({role:'admin'}); updateUsersList(); };
+
+        box.appendChild(userBtn);
+        box.appendChild(adminBtn);
+        usersListDiv.appendChild(box);
+      });
+    });
+    showSection(usersGuiSection);
+  });
+
+  function updateUsersList(){
+    document.getElementById('usersGuiBtn').click();
+  }
+
+  // ------------------ Back Buttons ------------------
+  document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
+  document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
+
   // ------------------ Submission Handling ------------------
   const submissionsRef = db.ref('submissions');
 
@@ -301,45 +340,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.target.reset();
     }
   });
-
-  // ------------------ Users GUI ------------------
-  function renderUsers(){
-    usersListDiv.innerHTML = '';
-    db.ref('devices').once('value').then(snapshot => {
-      const devices = snapshot.val() || {};
-      Object.entries(devices).forEach(([id, data])=>{
-        const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '10px';
-        box.style.marginBottom = '10px';
-        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type} | Role: ${data.role || 'none'}`;
-
-        const userBtn = document.createElement('button');
-        userBtn.innerText = 'User';
-        userBtn.style.marginRight = '10px';
-        userBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('user'); renderUsers(); };
-
-        const adminBtn = document.createElement('button');
-        adminBtn.innerText = 'Admin';
-        adminBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('admin'); renderUsers(); };
-
-        box.appendChild(userBtn);
-        box.appendChild(adminBtn);
-        usersListDiv.appendChild(box);
-      });
-    });
-  }
-
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
-    renderUsers();
-    showSection(usersGuiSection);
-  });
-
-  // ------------------ Back Buttons ------------------
-  document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
-  document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
-  document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
 
   // ------------------ Render Submissions ------------------
   function renderSubmissions(){
@@ -384,6 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ Admin GUI Buttons ------------------
   document.getElementById('seeAllBtn').addEventListener('click', ()=>{
+    // Show store selection
     storeButtonsDiv.innerHTML='';
     for(let i=65;i<=90;i++){
       const letter = String.fromCharCode(i);
@@ -448,10 +449,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ------------------ Realtime Updates ------------------
   submissionsRef.on('value', renderSubmissions);
-  db.ref('devices').on('value', renderUsers);
+  db.ref('devices').on('value', updateUsersList);
 
   updateAdminButtonsVisibility();
-
 });
 </script>
 </body>
