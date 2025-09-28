@@ -1,430 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Φούρνοι Ζορπάς</title>
-  <style>
-    body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
-    #mainFormSection,#noPermissionSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{
-      display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;
-    }
-    .language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
-    .language-switcher button{padding:5px 10px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-    .language-switcher button:hover{background-color:#CFC76D;}
-    h1{font-family:'Algerian',serif;font-size:48px;color:#333;margin-bottom:30px;text-align:center;}
-    form,#adminGuiSection .admin-gui-box,#submissionsGuiSection .console-box,#usersGuiSection .users-box{
-      display:flex;flex-direction:column;gap:20px;text-align:center;
-    }
-    form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-box{
-      background-color:#fff;padding:30px;border-radius:15px;width:350px;box-shadow:0 0 10px rgba(0,0,0,0.1);
-    }
-    form>div,#adminGuiSection .admin-gui-box>div,#submissionsGuiSection>div,#usersGuiSection>div{
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-    }
-    label{font-weight:bold;margin-bottom:5px;}
-    input,select,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;width:80%;box-sizing:border-box;}
-    button[type="submit"]{background-color:#E4D882;font-weight:bold;}
-    button[type="submit"]:hover{background-color:#CFC76D;}
-    .admin-buttons{position:fixed;bottom:20px;right:20px;display:none;gap:10px;}
-    .admin-buttons button{padding:10px 15px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-    .admin-buttons button:hover{background-color:#CFC76D;}
-    .success-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#4BB543;color:white;padding:25px 40px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.2);opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:1005;}
-    .success-message.show{opacity:1;pointer-events:auto;}
-    #adminGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{
-      position:fixed;top:0;left:0;width:100%;height:100vh;background-color:rgba(0,0,0,0.1);align-items:center;justify-content:center;z-index:1003;
-    }
-    #submissionsGuiSection{flex-direction:column;align-items:center;justify-content:flex-start;width:100%;padding:20px;background-color:#DAD9D7;min-height:100vh;box-sizing:border-box;z-index:1001;}
-    #adminGuiSection .admin-gui-box,#usersGuiSection .users-box{
-      background-color:#fff;padding:40px 60px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:25px;box-shadow:0 5px 20px rgba(0,0,0,0.2);text-align:center;
-    }
-    #adminGuiSection .admin-gui-box h1,#usersGuiSection .users-box h1{font-size:36px;margin-bottom:20px;}
-    #adminGuiSection .admin-gui-box button,#usersGuiSection .users-box button{
-      width:250px;padding:15px 0;font-size:18px;border-radius:10px;border:none;cursor:pointer;background-color:#E4D882;font-weight:bold;transition:0.3s;
-    }
-    #adminGuiSection .admin-gui-box button:hover,#usersGuiSection .users-box button:hover{background-color:#CFC76D;}
-    #adminGuiSection #backBtn,#submissionsGuiSection #backFromSubmissionsBtn,#storeMenuSection #backFromStoreMenuBtn,#storeSubmissionsSection #backFromStoreSubmissionsBtn,#usersGuiSection #backFromUsersBtn{
-      background-color:#FF5C5C;color:white;width:auto;padding:10px 25px;font-size:16px;border-radius:8px;
-    }
-    #adminGuiSection #backBtn:hover,#submissionsGuiSection #backFromSubmissionsBtn:hover,#storeMenuSection #backFromStoreMenuBtn:hover,#storeSubmissionsSection #backFromStoreSubmissionsBtn:hover,#usersGuiSection #backFromUsersBtn:hover{
-      background-color:#E04B4B;
-    }
-    #submissionsList,#storeSubmissionsList,#usersList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin:0 auto;}
-    #storeButtonsDiv{flex:1;display:flex;flex-direction:column;gap:10px;align-items:center;margin-right:20px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:transparent;border-radius:8px;max-height:80vh;width:200px;}
-    .store-button{flex:0 0 auto;width:180px;height:50px;border-radius:8px;border:none;background:#E4D882;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;}
-    .store-button:hover{background:#CFC76D;}
-    #submissionsList div,#storeSubmissionsList div,#usersList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
-    .userBtn{background:#ddd;}
-    .adminBtn{background:#4caf50;color:white;}
-    #noPermissionSection{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:1000;}
-    #noPermissionSection h1{font-size:48px;margin-bottom:20px;text-shadow:2px 2px 5px black;}
-    #noPermissionSection p{font-size:24px;text-shadow:1px 1px 3px black;}
-    @media (max-width:640px){
-      h1{font-size:34px;}
-      #mainFormSection form, #adminGuiSection .admin-gui-box, #usersGuiSection .users-box{width:90%;}
-      #storeButtonsDiv{width:90%;}
-      .store-button{width:100%;}
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Φούρνοι Ζορπάς</title>
+<style>
+  body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
+  #mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
+  .language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
+  .language-switcher button{padding:5px 10px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
+  .language-switcher button:hover{background-color:#CFC76D;}
+  h1{font-family:'Algerian',serif;font-size:48px;color:#333;margin-bottom:30px;text-align:center;}
+  form,#adminGuiSection .admin-gui-box,#submissionsGuiSection .console-box,#usersGuiSection .users-gui-box{display:flex;flex-direction:column;gap:20px;text-align:center;}
+  form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{background-color:#fff;padding:30px;border-radius:15px;width:350px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
+  form>div,#adminGuiSection .admin-gui-box>div,#submissionsGuiSection>div,#usersGuiSection .users-gui-box>div{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  label{font-weight:bold;margin-bottom:5px;}
+  input,select,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;width:80%;box-sizing:border-box;}
+  button[type="submit"]{background-color:#E4D882;font-weight:bold;}
+  button[type="submit"]:hover{background-color:#CFC76D;}
+  .admin-buttons{position:fixed;bottom:20px;right:20px;display:none;gap:10px;}
+  .admin-buttons button{padding:10px 15px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
+  .admin-buttons button:hover{background-color:#CFC76D;}
+  .success-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#4BB543;color:white;padding:25px 40px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.2);opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:1005;}
+  .success-message.show{opacity:1;pointer-events:auto;}
+  #adminGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{position:fixed;top:0;left:0;width:100%;height:100vh;background-color:rgba(0,0,0,0.1);align-items:center;justify-content:center;z-index:1003;}
+  #submissionsGuiSection{flex-direction:column;align-items:center;justify-content:flex-start;width:100%;padding:20px;background-color:#DAD9D7;min-height:100vh;box-sizing:border-box;z-index:1001;}
+  #adminGuiSection .admin-gui-box{background-color:#fff;padding:40px 60px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:25px;box-shadow:0 5px 20px rgba(0,0,0,0.2);text-align:center;}
+  #adminGuiSection .admin-gui-box h1{font-size:36px;margin-bottom:20px;}
+  #adminGuiSection .admin-gui-box button{width:250px;padding:15px 0;font-size:18px;border-radius:10px;border:none;cursor:pointer;background-color:#E4D882;font-weight:bold;transition:0.3s;}
+  #adminGuiSection .admin-gui-box button:hover{background-color:#CFC76D;}
+  #adminGuiSection #backBtn,#submissionsGuiSection #backFromSubmissionsBtn,#storeMenuSection #backFromStoreMenuBtn,#storeSubmissionsSection #backFromStoreSubmissionsBtn,#usersGuiSection #backFromUsersBtn{background-color:#FF5C5C;color:white;width:auto;padding:10px 25px;font-size:16px;border-radius:8px;}
+  #adminGuiSection #backBtn:hover,#submissionsGuiSection #backFromSubmissionsBtn:hover,#storeMenuSection #backFromStoreMenuBtn:hover,#storeSubmissionsSection #backFromStoreSubmissionsBtn:hover,#usersGuiSection #backFromUsersBtn:hover{background-color:#E04B4B;}
+  #submissionsList,#storeSubmissionsList,#usersList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin:0 auto;}
+  #storeButtonsDiv{flex:1;display:flex;flex-direction:column;gap:10px;align-items:center;margin-right:20px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:transparent;border-radius:8px;max-height:80vh;width:200px;}
+  .store-button{flex:0 0 auto;width:180px;height:50px;border-radius:8px;border:none;background:#E4D882;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;}
+  .store-button:hover{background:#CFC76D;}
+  #submissionsList div,#storeSubmissionsList div,#usersList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
+  #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
+  #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
+  #submissionsList div button.acceptBtn:hover{background:#3D9737;}
+  #submissionsList div button.declineBtn:hover{background:#E04B4B;}
+  @media (max-width:640px){
+    h1{font-size:34px;}
+    #mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}
+    #storeButtonsDiv{width:90%;}
+    .store-button{width:100%;}
+  }
+</style>
 </head>
 <body>
-  <div class="language-switcher">
-    <button id="englishBtn">English</button>
-    <button id="greekBtn">Greek</button>
-  </div>
+<div class="language-switcher">
+  <button id="englishBtn">English</button>
+  <button id="greekBtn">Greek</button>
+</div>
 
-  <div id="noPermissionSection">
-    <h1>You do not have permission to access this website</h1>
-    <p>Please contact an admin.</p>
-  </div>
-
-  <div id="mainFormSection">
-    <h1>Zorbas Submissions</h1>
-    <form id="submissionForm">
-      <div>
-        <label for="name" id="nameLabel"><strong>Name</strong></label>
-        <input type="text" id="name" required placeholder="Enter your name">
-      </div>
-      <div>
-        <label for="month" id="monthLabel">Month</label>
-        <select id="month" required>
-          <option value="">Select Month</option>
-        </select>
-      </div>
-      <div>
-        <label for="day" id="dayLabel"><strong>Day</strong></label>
-        <input type="text" id="day" class="type-input" placeholder="Type day" required>
-      </div>
-      <div>
-        <label for="shift" id="shiftLabel">Shift</label>
-        <select id="shift" required>
-          <option value="">Select Shift</option>
-        </select>
-      </div>
-      <div>
-        <label for="store" id="storeLabel">Store</label>
-        <select id="store" required>
-          <option value="">Select Store</option>
-        </select>
-      </div>
-      <div>
-        <button type="submit" id="submitBtn">Submit</button>
-      </div>
-    </form>
-  </div>
-
-  <div id="adminGuiSection">
-    <div class="admin-gui-box">
-      <h1>Admin GUI</h1>
-      <button id="seeAllBtn">See All Submissions</button>
-      <button id="resetAllBtn">Reset All Submissions</button>
-      <button id="usersBtn">Users</button>
-      <button id="backBtn">Back</button>
+<div id="mainFormSection">
+  <h1>Zorbas Submissions</h1>
+  <form id="submissionForm">
+    <div>
+      <label for="name" id="nameLabel"><strong>Name</strong></label>
+      <input type="text" id="name" required placeholder="Enter your name">
     </div>
-  </div>
-
-  <div id="submissionsGuiSection">
-    <h1>Pending Submissions</h1>
-    <div id="submissionsList"></div>
-    <button id="backFromSubmissionsBtn">Back</button>
-  </div>
-
-  <div id="storeMenuSection">
-    <h1>Select Store</h1>
-    <div id="storeButtonsDiv" role="toolbar" aria-label="Store letters"></div>
-    <button id="backFromStoreMenuBtn">Back</button>
-  </div>
-
-  <div id="storeSubmissionsSection">
-    <h1 id="storeTitle"></h1>
-    <div id="storeSubmissionsList"></div>
-    <button id="backFromStoreSubmissionsBtn">Back</button>
-  </div>
-
-  <div id="usersGuiSection">
-    <div class="users-box">
-      <h1>Users</h1>
-      <div id="usersList"></div>
-      <button id="backFromUsersBtn">Back</button>
+    <div>
+      <label for="month" id="monthLabel">Month</label>
+      <select id="month" required><option value="">Select Month</option></select>
     </div>
+    <div>
+      <label for="day" id="dayLabel"><strong>Day</strong></label>
+      <input type="text" id="day" class="type-input" placeholder="Type day" required>
+    </div>
+    <div>
+      <label for="shift" id="shiftLabel">Shift</label>
+      <select id="shift" required><option value="">Select Shift</option></select>
+    </div>
+    <div>
+      <label for="store" id="storeLabel">Store</label>
+      <select id="store" required><option value="">Select Store</option></select>
+    </div>
+    <div>
+      <button type="submit" id="submitBtn">Submit</button>
+    </div>
+  </form>
+</div>
+
+<div id="adminGuiSection">
+  <div class="admin-gui-box">
+    <h1>Admin GUI</h1>
+    <button id="seeAllBtn">See All Submissions</button>
+    <button id="resetAllBtn">Reset All Submissions</button>
+    <button id="usersGuiBtn">Users</button>
+    <button id="backBtn">Back</button>
   </div>
+</div>
 
-  <div class="admin-buttons" id="adminButtons">
-    <button id="adminGuiBtn">Admin GUI</button>
+<div id="submissionsGuiSection">
+  <h1>Pending Submissions</h1>
+  <div id="submissionsList"></div>
+  <button id="backFromSubmissionsBtn">Back</button>
+</div>
+
+<div id="storeMenuSection">
+  <h1>Select Store</h1>
+  <div id="storeButtonsDiv" role="toolbar" aria-label="Store letters"></div>
+  <button id="backFromStoreMenuBtn">Back</button>
+</div>
+
+<div id="storeSubmissionsSection">
+  <h1 id="storeTitle"></h1>
+  <div id="storeSubmissionsList"></div>
+  <button id="backFromStoreSubmissionsBtn">Back</button>
+</div>
+
+<div id="usersGuiSection">
+  <div class="users-gui-box">
+    <h1>Users</h1>
+    <div id="usersList"></div>
+    <button id="backFromUsersBtn">Back</button>
   </div>
+</div>
 
-  <div class="success-message" id="successMessage">You have successfully submitted!</div>
-  <script>
-    document.addEventListener("DOMContentLoaded",()=>{
+<div class="admin-buttons" id="adminButtons">
+  <button id="adminGuiBtn">Admin GUI</button>
+</div>
 
-      const monthSelect=document.getElementById('month');
-      const shiftSelect=document.getElementById('shift');
-      const storeSelect=document.getElementById('store');
-      const dayInput=document.getElementById('day');
-      const englishBtn=document.getElementById('englishBtn');
-      const greekBtn=document.getElementById('greekBtn');
-      const adminButtonsDiv=document.getElementById('adminButtons');
-      const mainFormSection=document.getElementById('mainFormSection');
-      const adminGuiSection=document.getElementById('adminGuiSection');
-      const submissionsGuiSection=document.getElementById('submissionsGuiSection');
-      const usersGuiSection=document.getElementById('usersGuiSection');
-      const successMessage=document.getElementById('successMessage');
-      const noPermissionSection=document.getElementById('noPermissionSection');
-      const storeMenuSection=document.getElementById('storeMenuSection');
-      const storeSubmissionsSection=document.getElementById('storeSubmissionsSection');
-      const storeButtonsDiv=document.getElementById('storeButtonsDiv');
-      const storeSubmissionsList=document.getElementById('storeSubmissionsList');
-      const storeTitle=document.getElementById('storeTitle');
-      const usersList=document.getElementById('usersList');
+<div class="success-message" id="successMessage">You have successfully submitted!</div>
 
-      const monthDays={Ιανουάριος:31,Φεβρουάριος:28,Μάρτιος:31,Απρίλιος:30,Μάιος:31,Ιούνιος:30,Ιούλιος:31,Αύγουστος:31,Σεπτέμβριος:30,Οκτώβριος:31,Νοέμβριος:30,Δεκέμβριος:31,January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", ()=>{
 
-      let admins=JSON.parse(localStorage.getItem('admins')||'["admin"]');
-      let pendingSubmissions=JSON.parse(localStorage.getItem('pendingSubmissions')||"[]");
-      let allowedUsers=JSON.parse(localStorage.getItem('allowedUsers')||"[]");
-      let registeredUsers=JSON.parse(localStorage.getItem('registeredUsers')||"[]");
-      let currentLang='english';
+  // --- Firebase Setup ---
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "zorbas12.firebaseapp.com",
+    databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "zorbas12",
+    storageBucket: "zorbas12.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-      // Device registration
-      let deviceName=localStorage.getItem('deviceName')||"User";
-      let storedDeviceId=localStorage.getItem('deviceId');
-      let deviceId;
-      if(storedDeviceId){ deviceId=storedDeviceId; }
-      else{
-        deviceId=(Math.floor(Math.random()*900000000)+100000000).toString();
-        localStorage.setItem('deviceId',deviceId);
-      }
-      localStorage.setItem('deviceName',deviceName);
+  // --- Elements ---
+  const monthSelect = document.getElementById('month');
+  const shiftSelect = document.getElementById('shift');
+  const storeSelect = document.getElementById('store');
+  const dayInput = document.getElementById('day');
+  const englishBtn = document.getElementById('englishBtn');
+  const greekBtn = document.getElementById('greekBtn');
+  const adminButtonsDiv = document.getElementById('adminButtons');
+  const mainFormSection = document.getElementById('mainFormSection');
+  const adminGuiSection = document.getElementById('adminGuiSection');
+  const submissionsGuiSection = document.getElementById('submissionsGuiSection');
+  const usersGuiSection = document.getElementById('usersGuiSection');
+  const successMessage = document.getElementById('successMessage');
+  const storeMenuSection = document.getElementById('storeMenuSection');
+  const storeSubmissionsSection = document.getElementById('storeSubmissionsSection');
+  const storeButtonsDiv = document.getElementById('storeButtonsDiv');
+  const storeSubmissionsList = document.getElementById('storeSubmissionsList');
+  const storeTitle = document.getElementById('storeTitle');
+  const usersList = document.getElementById('usersList');
 
-      function getDeviceType(){
-        const ua=navigator.userAgent;
-        if(/mobile/i.test(ua)) return "phone";
-        if(/tablet/i.test(ua)) return "tablet";
-        return "pc";
-      }
-      const deviceType=getDeviceType();
+  const monthDays = {Ιανουάριος:31,Φεβρουάριος:28,Μάρτιος:31,Απρίλιος:30,Μάιος:31,Ιούνιος:30,Ιούλιος:31,Αύγουστος:31,Σεπτέμβριος:30,Οκτώβριος:31,Νοέμβριος:30,Δεκέμβριος:31,January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
 
-      // Register new device if not exists
-      if(!registeredUsers.find(u=>u.id===deviceId)){
-        const username=prompt("Enter your name:")||deviceName;
-        registeredUsers.push({id:deviceId,name:username,device:deviceType});
-        localStorage.setItem('registeredUsers',JSON.stringify(registeredUsers));
-      }
+  let pendingSubmissions = JSON.parse(localStorage.getItem('pendingSubmissions')||"[]");
+  let currentLang='english';
 
-      const SUPER_ADMIN_ID=deviceId;
+  // --- Device Info ---
+  let deviceName = localStorage.getItem('deviceName') || "Device";
+  let storedDeviceId = localStorage.getItem('deviceId');
+  let deviceId = storedDeviceId || (Math.floor(Math.random()*900000000)+100000000).toString();
+  localStorage.setItem('deviceId', deviceId);
+  localStorage.setItem('deviceName', deviceName);
+  const deviceType = /Mobi|Android/i.test(navigator.userAgent)?'phone':'pc';
 
-      const translations={
-        english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",successMsg:"You have successfully submitted!"},
-        greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",successMsg:"Η υποβολή έγινε με επιτυχία!"}
-      };
+  // --- Translations ---
+  const translations={
+    english:{
+      nameLabel:"Name",
+      namePlaceholder:"Enter your name",
+      monthLabel:"Month",
+      monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],
+      dayLabel:"Day",
+      dayPlaceholder:"Type day",
+      shiftLabel:"Shift",
+      shiftOptions:["Off","6-2","2-10"],
+      storeLabel:"Store",
+      submitBtn:"Submit",
+      seeAllBtn:"See All Submissions",
+      resetAllBtn:"Reset All Submissions",
+      usersBtn:"Users",
+      backBtn:"Back",
+      acceptBtn:"Accept",
+      declineBtn:"Decline",
+      successMsg:"You have successfully submitted!"
+    },
+    greek:{
+      nameLabel:"Όνομα",
+      namePlaceholder:"Εισάγετε το όνομά σας",
+      monthLabel:"Μήνας",
+      monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],
+      dayLabel:"Ημέρα",
+      dayPlaceholder:"Πληκτρολογήστε την ημέρα",
+      shiftLabel:"Βάρδια",
+      shiftOptions:["Άδεια","6-2","2-10"],
+      storeLabel:"Κατάστημα",
+      submitBtn:"Υποβολή",
+      seeAllBtn:"Δείτε Όλες τις Υποβολές",
+      resetAllBtn:"Επαναφορά Όλων των Υποβολών",
+      usersBtn:"Χρήστες",
+      backBtn:"Πίσω",
+      acceptBtn:"Αποδοχή",
+      declineBtn:"Απόρριψη",
+      successMsg:"Η υποβολή έγινε με επιτυχία!"
+    }
+  };
+// --- Language Switching ---
+function setLanguage(lang){
+  currentLang = lang;
+  const t = translations[lang];
+  document.getElementById('nameLabel').innerHTML = `<strong>${t.nameLabel}</strong>`;
+  document.getElementById('name').placeholder = t.namePlaceholder;
+  document.getElementById('monthLabel').innerText = t.monthLabel;
+  monthSelect.innerHTML = `<option value="">${lang==='greek'?'Επιλέξτε Μήνα':'Select Month'}</option>` + t.monthOptions.map(m=>`<option>${m}</option>`).join('');
+  document.getElementById('dayLabel').innerHTML = `<strong>${t.dayLabel}</strong>`;
+  document.getElementById('day').placeholder = t.dayPlaceholder;
+  document.getElementById('shiftLabel').innerText = t.shiftLabel;
+  shiftSelect.innerHTML = `<option value="">${lang==='greek'?'Επιλέξτε Βάρδια':'Select Shift'}</option>` + t.shiftOptions.map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('storeLabel').innerText = t.storeLabel;
+  const storeOptions = Array.from({length:26},(_,i)=>String.fromCharCode(65+i));
+  storeSelect.innerHTML = `<option value="">${lang==='greek'?'Επιλέξτε Κατάστημα':'Select Store'}</option>` + storeOptions.map(l=>`<option>${l}</option>`).join('');
+  document.getElementById('submitBtn').innerText = t.submitBtn;
+  document.getElementById('seeAllBtn').innerText = t.seeAllBtn;
+  document.getElementById('resetAllBtn').innerText = t.resetAllBtn;
+  document.getElementById('usersGuiBtn').innerText = t.usersBtn;
+  document.getElementById('backBtn').innerText = t.backBtn;
+  document.getElementById('backFromSubmissionsBtn').innerText = t.backBtn;
+  document.getElementById('backFromUsersBtn').innerText = t.backBtn;
+  document.getElementById('successMessage').innerText = t.successMsg;
+  renderSubmissions();
+}
+englishBtn.addEventListener('click',()=>setLanguage('english'));
+greekBtn.addEventListener('click',()=>setLanguage('greek'));
+setLanguage('english');
 
-      function setLanguage(lang){
-        currentLang=lang;
-        const t=translations[lang];
-        document.getElementById('nameLabel').innerHTML=`<strong>${t.nameLabel}</strong>`;
-        document.getElementById('name').placeholder=t.namePlaceholder;
-        document.getElementById('monthLabel').innerText=t.monthLabel;
-        monthSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Μήνα':'Select Month'}</option>`+t.monthOptions.map(m=>`<option>${m}</option>`).join('');
-        document.getElementById('dayLabel').innerHTML=`<strong>${t.dayLabel}</strong>`;
-        dayInput.placeholder=t.dayPlaceholder;
-        document.getElementById('shiftLabel').innerText=t.shiftLabel;
-        shiftSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Βάρδια':'Select Shift'}</option>`+t.shiftOptions.map(s=>`<option>${s}</option>`).join('');
-        document.getElementById('storeLabel').innerText=t.storeLabel;
-        const storeOptions=Array.from({length:26},(_,i)=>String.fromCharCode(65+i));
-        storeSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Κατάστημα':'Select Store'}</option>`+storeOptions.map(letter=>`<option>${letter}</option>`).join('');
-        document.getElementById('submitBtn').innerText=t.submitBtn;
-        document.getElementById('seeAllBtn').innerText=t.seeAllBtn;
-        document.getElementById('resetAllBtn').innerText=t.resetAllBtn;
-        document.getElementById('backBtn').innerText=t.backBtn;
-        document.getElementById('backFromSubmissionsBtn').innerText=t.backBtn;
-        document.getElementById('backFromUsersBtn').innerText=t.backBtn;
-        document.getElementById('successMessage').innerText=t.successMsg;
-        renderSubmissions();
-      }
+// --- Input Validation ---
+dayInput.addEventListener("input",()=>{dayInput.value=dayInput.value.replace(/[^0-9\- ]/g,"");});
+monthSelect.addEventListener('change',()=>{const max=monthDays[monthSelect.value]||31;if(/^\d+$/.test(dayInput.value)&&parseInt(dayInput.value)>max) dayInput.value=max;});
 
-      englishBtn.addEventListener('click',()=>setLanguage('english'));
-      greekBtn.addEventListener('click',()=>setLanguage('greek'));
-      setLanguage('english');
+// --- Submission Form ---
+document.getElementById('submissionForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.checkValidity()){
+    const playerName = document.getElementById('name').value;
+    pendingSubmissions.push({name:playerName,month:monthSelect.value,day:dayInput.value,shift:shiftSelect.value,store:storeSelect.value});
+    localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+    successMessage.classList.add('show');
+    setTimeout(()=>successMessage.classList.remove('show'),3000);
+    e.target.reset();
+  }
+});
 
-      dayInput.addEventListener("input",()=>{dayInput.value=dayInput.value.replace(/[^0-9\- ]/g,"");});
-      monthSelect.addEventListener('change',()=>{const max=monthDays[monthSelect.value]||31;if(/^\d+$/.test(dayInput.value)&&parseInt(dayInput.value)>max) dayInput.value=max;});
+// --- Render Submissions ---
+function renderSubmissions(){
+  const container = document.getElementById('submissionsList');
+  container.innerHTML = '';
+  pendingSubmissions.forEach((sub,index)=>{
+    const subDiv = document.createElement('div');
+    const makeBoldLabel = (label,value)=>{const p=document.createElement('p');p.innerHTML=`<strong>${label}:</strong> ${value}`;p.style.fontSize='16px';return p;};
+    const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+    const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+    const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+    const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+    const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+    const btnContainer=document.createElement('div');btnContainer.style.display='flex';btnContainer.style.gap='10px';
+    const acceptBtn=document.createElement('button');acceptBtn.innerText=translations[currentLang].acceptBtn;acceptBtn.className='acceptBtn';acceptBtn.style.flex='1';
+    acceptBtn.onclick=()=>{pendingSubmissions.splice(index,1);localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));renderSubmissions();};
+    const declineBtn=document.createElement('button');declineBtn.innerText=translations[currentLang].declineBtn;declineBtn.className='declineBtn';declineBtn.style.flex='1';
+    declineBtn.onclick=()=>{pendingSubmissions.splice(index,1);localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));renderSubmissions();};
+    btnContainer.appendChild(acceptBtn);btnContainer.appendChild(declineBtn);
+    subDiv.appendChild(nameP);subDiv.appendChild(monthP);subDiv.appendChild(dayP);subDiv.appendChild(shiftP);subDiv.appendChild(storeP);subDiv.appendChild(btnContainer);
+    container.appendChild(subDiv);
+  });
+}
 
-      document.getElementById('submissionForm').addEventListener('submit',e=>{
-        e.preventDefault();
-        if(e.target.checkValidity()){
-          const playerName=document.getElementById('name').value;
-          pendingSubmissions.push({name:playerName,month:monthSelect.value,day:dayInput.value,shift:shiftSelect.value,store:storeSelect.value});
-          localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-          successMessage.classList.add('show');
-          setTimeout(()=>successMessage.classList.remove('show'),3000);
-          e.target.reset();
-        }
+// --- Show/Hide Sections ---
+function showSection(section){
+  mainFormSection.style.display='none';
+  adminGuiSection.style.display='none';
+  submissionsGuiSection.style.display='none';
+  storeMenuSection.style.display='none';
+  storeSubmissionsSection.style.display='none';
+  usersGuiSection.style.display='none';
+  section.style.display='flex';
+  updateAdminButtonsVisibility();
+}
+
+// --- Admin Buttons Visibility ---
+function updateAdminButtonsVisibility(){
+  const deviceRef = db.ref('devices/'+deviceId);
+  deviceRef.once('value').then(snapshot=>{
+    const role = snapshot.val()?.role || 'user';
+    adminButtonsDiv.style.display = (role==='admin') ? 'flex' : 'none';
+  });
+}
+
+// --- Admin GUI ---
+document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
+document.getElementById('seeAllBtn').addEventListener('click',()=>{
+  storeButtonsDiv.innerHTML='';
+  for(let i=65;i<=90;i++){
+    const letter=String.fromCharCode(i);
+    const btn=document.createElement('button');btn.className='store-button';btn.innerText=letter;
+    btn.onclick=()=>{
+      storeSubmissionsList.innerHTML='';
+      storeTitle.innerText=`Store ${letter}`;
+      pendingSubmissions.filter(s=>s.store===letter).forEach((sub,index)=>{
+        const subDiv=document.createElement('div');
+        const makeBoldLabel=(label,value)=>{const p=document.createElement('p');p.innerHTML=`<strong>${label}:</strong> ${value}`;p.style.fontSize='16px';return p;};
+        const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+        const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+        const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+        const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+        const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+        const btnContainer=document.createElement('div');btnContainer.style.display='flex';btnContainer.style.gap='10px';
+        const acceptBtn=document.createElement('button');acceptBtn.innerText=translations[currentLang].acceptBtn;acceptBtn.style.flex='1';
+        acceptBtn.onclick=()=>{pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));btn.click();};
+        const declineBtn=document.createElement('button');declineBtn.innerText=translations[currentLang].declineBtn;declineBtn.style.flex='1';
+        declineBtn.onclick=()=>{pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));btn.click();};
+        btnContainer.appendChild(acceptBtn);btnContainer.appendChild(declineBtn);
+        subDiv.appendChild(nameP);subDiv.appendChild(monthP);subDiv.appendChild(dayP);subDiv.appendChild(shiftP);subDiv.appendChild(storeP);subDiv.appendChild(btnContainer);
+        storeSubmissionsList.appendChild(subDiv);
       });
-      // Render pending submissions
-      function renderSubmissions(){
-        const container=document.getElementById('submissionsList');
-        container.innerHTML='';
-        pendingSubmissions.forEach((sub,index)=>{
-          const subDiv=document.createElement('div');
-          const makeBoldLabel=(label,value)=>{
-            const p=document.createElement('p');
-            p.innerHTML=`<strong>${label}:</strong> ${value}`;
-            p.style.fontSize='16px';
-            return p;
-          };
-          const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
-          const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
-          const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
-          const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
-          const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
-          const btnContainer=document.createElement('div');
-          btnContainer.style.display='flex';
-          btnContainer.style.gap='10px';
-          const acceptBtn=document.createElement('button');
-          acceptBtn.innerText=translations[currentLang].acceptBtn;
-          acceptBtn.className='acceptBtn';
-          acceptBtn.style.flex='1';
-          acceptBtn.onclick=()=>{
-            pendingSubmissions.splice(index,1);
-            localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            renderSubmissions();
-          };
-          const declineBtn=document.createElement('button');
-          declineBtn.innerText=translations[currentLang].declineBtn;
-          declineBtn.className='declineBtn';
-          declineBtn.style.flex='1';
-          declineBtn.onclick=()=>{
-            pendingSubmissions.splice(index,1);
-            localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-            renderSubmissions();
-          };
-          btnContainer.appendChild(acceptBtn);
-          btnContainer.appendChild(declineBtn);
-          subDiv.appendChild(nameP);
-          subDiv.appendChild(monthP);
-          subDiv.appendChild(dayP);
-          subDiv.appendChild(shiftP);
-          subDiv.appendChild(storeP);
-          subDiv.appendChild(btnContainer);
-          container.appendChild(subDiv);
-        });
-      }
+      showSection(storeSubmissionsSection);
+    };
+    storeButtonsDiv.appendChild(btn);
+  }
+  showSection(storeMenuSection);
+});
 
-      // Users GUI
-      function renderUsers(){
-        usersList.innerHTML='';
-        registeredUsers.forEach(user=>{
-          const div=document.createElement('div');
-          const pName=document.createElement('p');
-          pName.innerHTML=`<strong>${user.name}</strong>`;
-          const pDevice=document.createElement('p');
-          pDevice.innerHTML=`Device: ${user.device}`;
-          const btnContainer=document.createElement('div');
-          btnContainer.style.display='flex';
-          btnContainer.style.gap='10px';
-          const userBtn=document.createElement('button');
-          userBtn.innerText='User';
-          userBtn.className='userBtn';
-          userBtn.onclick=()=>{
-            if(!allowedUsers.includes(user.id)) allowedUsers.push(user.id);
-            admins=admins.filter(a=>a!==user.id);
-            saveUsers();
-          };
-          const adminBtn=document.createElement('button');
-          adminBtn.innerText='Admin';
-          adminBtn.className='adminBtn';
-          adminBtn.onclick=()=>{
-            if(!admins.includes(user.id)) admins.push(user.id);
-            allowedUsers.push(user.id);
-            saveUsers();
-          };
-          btnContainer.appendChild(userBtn);
-          btnContainer.appendChild(adminBtn);
-          div.appendChild(pName);
-          div.appendChild(pDevice);
-          div.appendChild(btnContainer);
-          usersList.appendChild(div);
-        });
-      }
+document.getElementById('resetAllBtn').addEventListener('click',()=>{
+  pendingSubmissions=[];localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));renderSubmissions();
+});
+document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
+document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
+document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
+document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
+// --- Users GUI ---
+document.getElementById('usersGuiBtn').addEventListener('click',()=>showSection(usersGuiSection));
+document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
 
-      function saveUsers(){
-        localStorage.setItem('admins',JSON.stringify(admins));
-        localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
-        renderUsers();
-      }
-
-      function updateAdminButtonsVisibility(){
-        const isAdmin=admins.includes(deviceId.toString())||deviceId.toString()===SUPER_ADMIN_ID.toString();
-        adminButtonsDiv.style.display=(isAdmin||mainFormSection.style.display!=='none')?'flex':'none';
-      }
-
-      function showSection(section){
-        mainFormSection.style.display='none';
-        adminGuiSection.style.display='none';
-        submissionsGuiSection.style.display='none';
-        noPermissionSection.style.display='none';
-        storeMenuSection.style.display='none';
-        storeSubmissionsSection.style.display='none';
-        usersGuiSection.style.display='none';
-        section.style.display='flex';
-        updateAdminButtonsVisibility();
-      }
-
-      function checkPermission(){
-        if(!allowedUsers.includes(deviceId.toString()) && deviceId.toString()!==SUPER_ADMIN_ID.toString()){
-          showSection(noPermissionSection);
-          adminButtonsDiv.style.display='flex';
-        } else {
-          showSection(mainFormSection);
-          updateAdminButtonsVisibility();
-        }
-      }
-
-      checkPermission();
-
-      // Buttons
-      document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
-      document.getElementById('seeAllBtn').addEventListener('click',()=>{ 
-        storeButtonsDiv.innerHTML='';
-        for(let i=65;i<=90;i++){
-          const letter=String.fromCharCode(i);
-          const btn=document.createElement('button');
-          btn.className='store-button';
-          btn.innerText=letter;
-          btn.onclick=()=>{
-            storeSubmissionsList.innerHTML='';
-            storeTitle.innerText=`Store ${letter}`;
-            pendingSubmissions.filter(s=>s.store===letter).forEach(sub=>{
-              const subDiv=document.createElement('div');
-              ['name','month','day','shift','store'].forEach(field=>{
-                const p=document.createElement('p');
-                p.innerHTML=`<strong>${field}:</strong> ${sub[field]}`;
-                subDiv.appendChild(p);
-              });
-              storeSubmissionsList.appendChild(subDiv);
-            });
-            showSection(storeSubmissionsSection);
-          };
-          storeButtonsDiv.appendChild(btn);
-        }
-        showSection(storeMenuSection);
+// --- Register device in Firebase if new ---
+const deviceRef = db.ref('devices/' + deviceId);
+deviceRef.once('value').then(snapshot=>{
+  if(!snapshot.exists()){
+    // If no devices exist, this is the first device -> make admin
+    db.ref('devices').once('value').then(allDevices=>{
+      const isFirst = !allDevices.exists();
+      deviceRef.set({
+        name: deviceName,
+        type: deviceType,
+        role: isFirst ? 'admin' : 'user'
       });
-      document.getElementById('resetAllBtn').addEventListener('click',()=>{
-        pendingSubmissions=[];
-        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
-        renderSubmissions();
-      });
-      document.getElementById('usersBtn').addEventListener('click',()=>{
-        renderUsers();
-        showSection(usersGuiSection);
-      });
-      document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
-      document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
-      document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
-      document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
-      document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
-
+      loadUsers();
     });
-  </script>
-</body>
-</html>
+  } else {
+    loadUsers();
+  }
+});
+
+// --- Load all users into Users GUI ---
+function loadUsers(){
+  const usersRef = db.ref('devices');
+  usersRef.once('value').then(snapshot=>{
+    usersList.innerHTML = '';
+    snapshot.forEach(userSnap=>{
+      const data = userSnap.val();
+      const uid = userSnap.key;
+      const userDiv = document.createElement('div');
+      userDiv.style.background = '#fff';
+      userDiv.style.padding = '15px';
+      userDiv.style.borderRadius = '10px';
+      userDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+      userDiv.style.marginBottom = '10px';
+      const nameP = document.createElement('p'); nameP.innerHTML = `<strong>${data.name}</strong>`;
+      const typeP = document.createElement('p'); typeP.innerText = `device: ${data.type}`;
+      const roleDiv = document.createElement('div'); roleDiv.style.display='flex'; roleDiv.style.gap='10px';
+      const userBtn = document.createElement('button'); userBtn.innerText='User'; userBtn.style.flex='1';
+      const adminBtn = document.createElement('button'); adminBtn.innerText='Admin'; adminBtn.style.flex='1';
+      userBtn.onclick = ()=>{ db.ref('devices/'+uid+'/role').set('user').then(loadUsers); };
+      adminBtn.onclick = ()=>{ db.ref('devices/'+uid+'/role').set('admin').then(loadUsers); };
+      roleDiv.appendChild(userBtn); roleDiv.appendChild(adminBtn);
+      userDiv.appendChild(nameP); userDiv.appendChild(typeP); userDiv.appendChild(roleDiv);
+      usersList.appendChild(userDiv);
+    });
+    updateAdminButtonsVisibility();
+  });
+}
+
+// --- Initial Section Show ---
+showSection(mainFormSection);
+updateAdminButtonsVisibility();
+});
+</script>
