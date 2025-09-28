@@ -72,19 +72,22 @@ input, select { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid
 <input type="text" id="console-input" placeholder="Enter command">
 </div>
 <script>
+// Translations
 let translations = {
   en: {title: 'Zorbas Submissions', name: 'Name', month: 'Month', day: 'Day', shift: 'Shift', submit: 'Submit'},
   gr: {title: 'Υποβολές Ζορμπά', name: 'Όνομα', month: 'Μήνας', day: 'Ημέρα', shift: 'Βάρδια', submit: 'Υποβολή'}
 };
 
-// FIX: use a fixed ID for GitHub Pages
-let userId = '684319'; 
+// Fixed ID for GitHub Pages so you always see admin
+let userId = '684319';
 localStorage.setItem('userId', userId);
 
-// Admin only for your device
-let isAdmin = userId === '684319';
-if(isAdmin) document.getElementById('admin-btns').style.display='flex';
+// Force admin buttons to always appear on GitHub Pages
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('admin-btns').style.display = 'flex';
+});
 
+// Device name and console logging
 let deviceName = 'Raphael';
 function logConsole(msg){
   let log = document.getElementById('console-log');
@@ -95,6 +98,10 @@ function logConsole(msg){
 }
 logConsole(`${deviceName} opened the app with ID ${userId}`);
 
+// Translation buttons
+document.getElementById('btn-en').onclick = ()=>translate('en');
+document.getElementById('btn-gr').onclick = ()=>translate('gr');
+
 function translate(lang){
   document.getElementById('title').innerText = translations[lang].title;
   document.getElementById('lbl-name').innerText = translations[lang].name;
@@ -104,9 +111,7 @@ function translate(lang){
   document.getElementById('submit-btn').innerText = translations[lang].submit;
 }
 
-document.getElementById('btn-en').onclick = ()=>translate('en');
-document.getElementById('btn-gr').onclick = ()=>translate('gr');
-
+// Submission functionality
 document.getElementById('submit-btn').onclick = ()=>{
   let name = document.getElementById('name').value;
   let month = document.getElementById('month').value;
@@ -118,6 +123,7 @@ document.getElementById('submit-btn').onclick = ()=>{
   alert('Submitted!');
 }
 
+// Admin GUI
 function openAdminGUI() {
   let submissions = JSON.parse(localStorage.getItem('submissions')||'[]');
   let container = document.getElementById('submissions');
@@ -139,13 +145,11 @@ function openAdminGUI() {
 
 document.getElementById('admin-gui-btn').onclick = openAdminGUI;
 
-// Open console GUI
+// Console GUI
 document.getElementById('console-btn').onclick = ()=>{
   document.getElementById('main-container').style.display = 'none';
   document.getElementById('console-gui').style.display = 'block';
 }
-
-// Back button
 document.getElementById('back-btn').onclick = ()=>{
   document.getElementById('console-gui').style.display = 'none';
   document.getElementById('main-container').style.display = 'block';
