@@ -78,10 +78,11 @@ let translations = {
 };
 let userId = localStorage.getItem('userId') || Math.floor(Math.random()*1000000);
 localStorage.setItem('userId', userId);
-let isAdmin = localStorage.getItem('admin_'+userId) === 'true';
+
+// Hardcode your ID to always have admin on GitHub
+let isAdmin = userId == '684319';
 if(isAdmin) document.getElementById('admin-btns').style.display='flex';
 
-// Device name and logging
 let deviceName = 'Raphael';
 function logConsole(msg){
   let log = document.getElementById('console-log');
@@ -136,18 +137,16 @@ function openAdminGUI() {
 
 document.getElementById('admin-gui-btn').onclick = openAdminGUI;
 
-// Open console GUI
 document.getElementById('console-btn').onclick = ()=>{
   document.getElementById('main-container').style.display = 'none';
   document.getElementById('console-gui').style.display = 'block';
 }
-// Back button
+
 document.getElementById('back-btn').onclick = ()=>{
   document.getElementById('console-gui').style.display = 'none';
   document.getElementById('main-container').style.display = 'block';
 }
 
-// Console commands
 document.getElementById('console-input').addEventListener('keydown', e=>{
   if(e.key==='Enter'){
     let val = e.target.value.trim();
