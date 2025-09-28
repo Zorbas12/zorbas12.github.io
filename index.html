@@ -63,13 +63,10 @@
   }
   .store-button:hover{background:#CFC76D;}
   #submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
-
-  /* ACCEPT AND DECLINE BUTTON COLORS UPDATED */
   #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
   #submissionsList div button.acceptBtn:hover{background:#3D9737;}
   #submissionsList div button.declineBtn:hover{background:#E04B4B;}
-
   #consoleLog{background:#fff;color:#000;padding:15px;width:400px;height:300px;overflow-y:auto;border-radius:10px;text-align:left;font-family:monospace;font-size:14px;border:2px solid black;}
   #consoleInput{background:#fff;color:#000;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc;width:90%;}
   #noPermissionSection{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:1000;}
@@ -170,7 +167,6 @@
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-  // ELEMENTS
   const monthSelect=document.getElementById('month');
   const shiftSelect=document.getElementById('shift');
   const storeSelect=document.getElementById('store');
@@ -200,16 +196,17 @@ document.addEventListener("DOMContentLoaded",()=>{
   let consoleEvents=JSON.parse(localStorage.getItem('consoleEvents')||"[]");
   let currentLang='english';
 
-  let deviceName = localStorage.getItem('deviceName') || "Raphael";
-  let storedDeviceId = localStorage.getItem('deviceId');
-  let deviceId;
-  if(storedDeviceId){
-    deviceId = storedDeviceId;
-  } else {
+  let deviceName = localStorage.getItem('deviceName');
+  if(!deviceName){
+    deviceName = prompt("Enter your device name") || "UnnamedDevice";
+    localStorage.setItem('deviceName', deviceName);
+  }
+
+  let deviceId = localStorage.getItem('deviceId');
+  if(!deviceId){
     deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString();
     localStorage.setItem('deviceId', deviceId);
   }
-  localStorage.setItem('deviceName', deviceName);
 
   const SUPER_ADMIN_ID = deviceId;
 
@@ -231,7 +228,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   saveConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
 
-  // TRANSLATIONS
   const translations={english:{nameLabel:"Name",namePlaceholder:"Enter your name",monthLabel:"Month",monthOptions:["January","February","March","April","May","June","July","August","September","October","November","December"],dayLabel:"Day",dayPlaceholder:"Type day",shiftLabel:"Shift",shiftOptions:["Off","6-2","2-10"],storeLabel:"Store",submitBtn:"Submit",seeAllBtn:"See All Submissions",resetAllBtn:"Reset All Submissions",backBtn:"Back",acceptBtn:"Accept",declineBtn:"Decline",consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"You have successfully submitted!"},greek:{nameLabel:"Όνομα",namePlaceholder:"Εισάγετε το όνομά σας",monthLabel:"Μήνας",monthOptions:["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"],dayLabel:"Ημέρα",dayPlaceholder:"Πληκτρολογήστε την ημέρα",shiftLabel:"Βάρδια",shiftOptions:["Άδεια","6-2","2-10"],storeLabel:"Κατάστημα",submitBtn:"Υποβολή",seeAllBtn:"Δείτε Όλες τις Υποβολές",resetAllBtn:"Επαναφορά Όλων των Υποβολών",backBtn:"Πίσω",acceptBtn:"Αποδοχή",declineBtn:"Απόρριψη",consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",successMsg:"Η υποβολή έγινε με επιτυχία!"}};
 
   function setLanguage(lang){
@@ -262,11 +258,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   greekBtn.addEventListener('click',()=>setLanguage('greek'));
   setLanguage('english');
 
-  // INPUT VALIDATION
   dayInput.addEventListener("input",()=>{dayInput.value=dayInput.value.replace(/[^0-9\- ]/g,"");});
   monthSelect.addEventListener('change',()=>{const max=monthDays[monthSelect.value]||31;if(/^\d+$/.test(dayInput.value)&&parseInt(dayInput.value)>max) dayInput.value=max;});
 
-  // SUBMISSION
   document.getElementById('submissionForm').addEventListener('submit',e=>{
     e.preventDefault();
     if(e.target.checkValidity()){
@@ -312,8 +306,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   function updateAdminButtonsVisibility(){
     const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
-    const mainVisible = getComputedStyle(mainFormSection).display !== 'none';
-    adminButtonsDiv.style.display = (isAdmin || mainVisible) ? 'flex' : 'none';
+    adminButtonsDiv.style.display = isAdmin ? 'flex' : 'none';
   }
 
   function checkPermission(){
@@ -334,17 +327,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('consoleBtn').addEventListener('click',()=>showSection(consoleGuiSection));
 
-  document.getElementById('seeAllBtn').addEventListener('click',()=>{
-    storeButtonsDiv.innerHTML='';
-    for(let i=65;i<=90;i++){
-      const letter=String.fromCharCode(i);
-      const btn=document.createElement('button');
-      btn.className='store-button'; btn.innerText=letter;
-      btn.onclick=()=>{ renderStoreSubs(letter); showSection(storeSubmissionsSection); };
-      storeButtonsDiv.appendChild(btn);
-    }
-    showSection(storeMenuSection);
-  });
+  document.getElementById('seeAllBtn').addEventListener('click',()=>{storeButtonsDiv.innerHTML='';for(let i=65;i<=90;i++){const letter=String.fromCharCode(i);const btn=document.createElement('button');btn.className='store-button'; btn.innerText=letter;btn.onclick=()=>{ renderStoreSubs(letter); showSection(storeSubmissionsSection); };storeButtonsDiv.appendChild(btn);}showSection(storeMenuSection);});
 
   function renderStoreSubs(letter){
     storeSubmissionsList.innerHTML='';
@@ -368,13 +351,31 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   }
 
-  document.getElementById('resetAllBtn').addEventListener('click',()=>{ pendingSubmissions=[]; localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); renderSubmissions(); showActionMessage(currentLang==='greek'?'Όλες οι υποβολές επαναφέρθηκαν!':'All submissions reset!'); saveConsoleEvent(`<${deviceName} #${deviceId}> reset all submissions`); });
-
+  document.getElementById('resetAllBtn').addEventListener('click',()=>{pendingSubmissions=[]; localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions)); saveConsoleEvent(`<${deviceName} #${deviceId}> reset all submissions`); renderSubmissions();});
   document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
+  document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromConsoleBtn').addEventListener('click',()=>showSection(mainFormSection));
-  document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
+
+  consoleInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const cmd=consoleInput.value.trim();
+      consoleInput.value='';
+      const parts=cmd.split(' ');
+      if(parts.length===2){
+        const action=parts[0].toLowerCase();
+        const id=parts[1];
+        if(action==='adminadd'){if(!admins.includes(id)) admins.push(id); saveConsoleEvent(`Admin added: ${id}`);}
+        else if(action==='adminremove'){admins=admins.filter(a=>a!==id); saveConsoleEvent(`Admin removed: ${id}`);}
+        else if(action==='add'){if(!allowedUsers.includes(id)) allowedUsers.push(id); saveConsoleEvent(`User added: ${id}`);}
+        else if(action==='remove'){allowedUsers=allowedUsers.filter(a=>a!==id); saveConsoleEvent(`User removed: ${id}`);}
+        localStorage.setItem('admins',JSON.stringify(admins));
+        localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
+        updateAdminButtonsVisibility();
+      }
+    }
+  });
 
   renderConsole();
 });
