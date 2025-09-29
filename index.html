@@ -1,53 +1,97 @@
-<!DOCTYPE html>
+<!DOCTYPE html>  
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Φούρνοι Ζορπάς</title>
 <style>
-body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
-#mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
-.language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
-.language-switcher button{padding:5px 10px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-.language-switcher button:hover{background-color:#CFC76D;}
-h1{font-family:'Algerian',serif;font-size:48px;color:#333;margin-bottom:30px;text-align:center;}
-form,#adminGuiSection .admin-gui-box,#submissionsGuiSection .console-box,#usersGuiSection .users-gui-box{display:flex;flex-direction:column;gap:20px;text-align:center;}
-form,#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{background-color:#fff;padding:30px;border-radius:15px;width:350px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
-form>div,#adminGuiSection .admin-gui-box>div,#submissionsGuiSection>div,#usersGuiSection .users-gui-box>div{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-label{font-weight:bold;margin-bottom:5px;}
-input,select,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;width:80%;box-sizing:border-box;}
-button[type="submit"]{background-color:#E4D882;font-weight:bold;}
-button[type="submit"]:hover{background-color:#CFC76D;}
-.admin-buttons{position:fixed;bottom:20px;right:20px;display:none;gap:10px;}
-.admin-buttons button{padding:10px 15px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
-.admin-buttons button:hover{background-color:#CFC76D;}
-.success-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#4BB543;color:white;padding:25px 40px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.2);opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:1005;}
-.success-message.show{opacity:1;pointer-events:auto;}
-#adminGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{position:fixed;top:0;left:0;width:100%;height:100vh;background-color:rgba(0,0,0,0.1);align-items:center;justify-content:center;z-index:1003;}
-#submissionsGuiSection{flex-direction:column;align-items:center;justify-content:flex-start;width:100%;padding:20px;background-color:#DAD9D7;min-height:100vh;box-sizing:border-box;z-index:1001;}
-#adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{background-color:#fff;padding:40px 60px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:25px;box-shadow:0 5px 20px rgba(0,0,0,0.2);text-align:center;}
-#adminGuiSection .admin-gui-box h1,#usersGuiSection .users-gui-box h1{font-size:36px;margin-bottom:20px;}
-#adminGuiSection .admin-gui-box button,#usersGuiSection .users-gui-box button{width:250px;padding:15px 0;font-size:18px;border-radius:10px;border:none;cursor:pointer;background-color:#E4D882;font-weight:bold;transition:0.3s;}
-#adminGuiSection .admin-gui-box button:hover,#usersGuiSection .users-gui-box button:hover{background-color:#CFC76D;}
-#adminGuiSection #backBtn,#submissionsGuiSection #backFromSubmissionsBtn,#storeMenuSection #backFromStoreMenuBtn,#storeSubmissionsSection #backFromStoreSubmissionsBtn,#usersGuiSection #backFromUsersBtn{background-color:#FF5C5C;color:white;width:auto;padding:10px 25px;font-size:16px;border-radius:8px;}
-#adminGuiSection #backBtn:hover,#submissionsGuiSection #backFromSubmissionsBtn:hover,#storeMenuSection #backFromStoreMenuBtn:hover,#storeSubmissionsSection #backFromStoreSubmissionsBtn:hover,#usersGuiSection #backFromUsersBtn:hover{background-color:#E04B4B;}
-#submissionsList,#storeSubmissionsList,#usersList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin:0 auto;}
-#storeButtonsDiv{flex:1;display:flex;flex-direction:column;gap:10px;align-items:center;margin-right:20px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:transparent;border-radius:8px;max-height:80vh;width:200px;}
-.store-button{flex:0 0 auto;width:180px;height:50px;border-radius:8px;border:none;background:#E4D882;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;}
-.store-button:hover{background:#CFC76D;}
-#submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
-#submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
-#submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
-#submissionsList div button.acceptBtn:hover{background:#3D9737;}
-#submissionsList div button.declineBtn:hover{background:#E04B4B;}
-@media (max-width:640px){h1{font-size:34px;}#mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}#storeButtonsDiv{width:90%;}.store-button{width:100%;}}
+  body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
+  #mainFormSection,#noPermissionSection,#adminGuiSection,#submissionsGuiSection,#consoleGuiSection,#storeMenuSection,#storeSubmissionsSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
+  .language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
+  .language-switcher button{padding:5px 10px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
+  .language-switcher button:hover{background-color:#CFC76D;}
+  h1{font-family:'Algerian',serif;font-size:48px;color:#333;margin-bottom:30px;text-align:center;}
+  form,#adminGuiSection .admin-gui-box,#submissionsGuiSection,#consoleGuiSection .console-box{display:flex;flex-direction:column;gap:20px;text-align:center;}
+  form,#adminGuiSection .admin-gui-box{background-color:#fff;padding:30px;border-radius:15px;width:350px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
+  form>div,#adminGuiSection .admin-gui-box>div,#submissionsGuiSection>div,#consoleGuiSection .console-box>div{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  label{font-weight:bold;margin-bottom:5px;}
+  input,select,button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;width:80%;box-sizing:border-box;}
+  button[type="submit"]{background-color:#E4D882;font-weight:bold;}
+  button[type="submit"]:hover{background-color:#CFC76D;}
+  .admin-buttons{position:fixed;bottom:20px;right:20px;display:none;gap:10px;}
+  .admin-buttons button{padding:10px 15px;font-size:14px;border-radius:5px;border:1px solid #ccc;cursor:pointer;background-color:#E4D882;font-weight:bold;}
+  .admin-buttons button:hover{background-color:#CFC76D;}
+  .success-message{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#4BB543;color:white;padding:25px 40px;border-radius:12px;font-size:20px;font-weight:bold;box-shadow:0 0 15px rgba(0,0,0,0.2);opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:1005;}
+  .success-message.show{opacity:1;pointer-events:auto;}
+  #adminGuiSection,#consoleGuiSection,#storeMenuSection,#storeSubmissionsSection{position:fixed;top:0;left:0;width:100%;height:100vh;background-color:rgba(0,0,0,0.1);align-items:center;justify-content:center;z-index:1003;}
+  #submissionsGuiSection{flex-direction:column;align-items:center;justify-content:flex-start;width:100%;padding:20px;background-color:#DAD9D7;min-height:100vh;box-sizing:border-box;z-index:1001;}
+  #adminGuiSection .admin-gui-box,#consoleGuiSection .console-box{background-color:#fff;padding:40px 60px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:25px;box-shadow:0 5px 20px rgba(0,0,0,0.2);text-align:center;}
+  #adminGuiSection .admin-gui-box h1,#consoleGuiSection .console-box h1{font-size:36px;margin-bottom:20px;}
+  #adminGuiSection .admin-gui-box button,#consoleGuiSection .console-box button{width:250px;padding:15px 0;font-size:18px;border-radius:10px;border:none;cursor:pointer;background-color:#E4D882;font-weight:bold;transition:0.3s;}
+  #adminGuiSection .admin-gui-box button:hover,#consoleGuiSection .console-box button:hover{background-color:#CFC76D;}
+  #adminGuiSection #backBtn,#consoleGuiSection #backFromConsoleBtn,#submissionsGuiSection #backFromSubmissionsBtn,#storeMenuSection #backFromStoreMenuBtn,#storeSubmissionsSection #backFromStoreSubmissionsBtn{background-color:#FF5C5C;color:white;width:auto;padding:10px 25px;font-size:16px;border-radius:8px;}
+  #adminGuiSection #backBtn:hover,#consoleGuiSection #backFromConsoleBtn:hover,#submissionsGuiSection #backFromSubmissionsBtn:hover,#storeMenuSection #backFromStoreMenuBtn:hover,#storeSubmissionsSection #backFromStoreSubmissionsBtn:hover{background-color:#E04B4B;}
+  #submissionsList,#storeSubmissionsList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin:0 auto;}
+  #storeButtonsDiv{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+    margin-right:20px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+    background:transparent;
+    border-radius:8px;
+    max-height:80vh;
+    width:200px;
+  }
+  .store-button{
+    flex:0 0 auto;
+    width:180px;
+    height:50px;
+    border-radius:8px;
+    border:none;
+    background:#E4D882;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    cursor:pointer;
+  }
+  .store-button:hover{background:#CFC76D;}
+  #submissionsList div,#storeSubmissionsList div{display:flex;flex-direction:column;gap:5px;background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);width:100%;}
+  #submissionsList div button.acceptBtn{background-color:#4BB543;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
+  #submissionsList div button.declineBtn{background-color:#FF5C5C;color:white;border:none;padding:10px;border-radius:5px;flex:1;font-weight:bold;cursor:pointer;}
+  #submissionsList div button.acceptBtn:hover{background:#3D9737;}
+  #submissionsList div button.declineBtn:hover{background:#E04B4B;}
+  #consoleLog{background:#fff;color:#000;padding:15px;width:400px;height:300px;overflow-y:auto;border-radius:10px;text-align:left;font-family:monospace;font-size:14px;border:2px solid black;}
+  #consoleInput{background:#fff;color:#000;padding:8px;margin-top:10px;border-radius:5px;border:1px solid #ccc;width:90%;}
+  #noPermissionSection{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:1000;}
+  #noPermissionSection h1{font-size:48px;margin-bottom:20px;text-shadow:2px 2px 5px black;}
+  #noPermissionSection p{font-size:24px;text-shadow:1px 1px 3px black;}
+  @media (max-width:640px){
+    h1{font-size:34px;}
+    #mainFormSection form, #adminGuiSection .admin-gui-box{width:90%;}
+    #storeButtonsDiv{width:90%;}
+    .store-button{width:100%;}
+  }
 </style>
 </head>
 <body>
+
 <div class="language-switcher">
   <button id="englishBtn">English</button>
   <button id="greekBtn">Greek</button>
 </div>
+
+<div id="noPermissionSection">
+  <h1>You do not have permission to access this website</h1>
+  <p>Please contact an admin.</p>
+</div>
+
 <div id="mainFormSection">
   <h1>Zorbas Submissions</h1>
   <form id="submissionForm">
@@ -76,97 +120,110 @@ button[type="submit"]:hover{background-color:#CFC76D;}
     </div>
   </form>
 </div>
+
 <div id="adminGuiSection">
   <div class="admin-gui-box">
     <h1>Admin GUI</h1>
     <button id="seeAllBtn">See All Submissions</button>
     <button id="resetAllBtn">Reset All Submissions</button>
-    <button id="usersGuiBtn">Users</button>
     <button id="backBtn">Back</button>
   </div>
 </div>
-<div id="usersGuiSection">
-  <div class="users-gui-box">
-    <h1>Manage Users</h1>
-    <div id="usersList"></div>
-    <button id="backFromUsersBtn">Back</button>
-  </div>
-</div>
+
 <div id="submissionsGuiSection">
   <h1>Pending Submissions</h1>
   <div id="submissionsList"></div>
   <button id="backFromSubmissionsBtn">Back</button>
 </div>
+
 <div id="storeMenuSection">
   <h1>Select Store</h1>
   <div id="storeButtonsDiv" role="toolbar" aria-label="Store letters"></div>
   <button id="backFromStoreMenuBtn">Back</button>
 </div>
+
 <div id="storeSubmissionsSection">
   <h1 id="storeTitle"></h1>
   <div id="storeSubmissionsList"></div>
   <button id="backFromStoreSubmissionsBtn">Back</button>
 </div>
+
+<div id="consoleGuiSection">
+  <div class="console-box">
+    <h1>Console</h1>
+    <div id="consoleLog"></div>
+    <input type="text" id="consoleInput" placeholder="Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}">
+    <button id="backFromConsoleBtn">Back</button>
+  </div>
+</div>
+
 <div class="admin-buttons" id="adminButtons">
   <button id="adminGuiBtn">Admin GUI</button>
+  <button id="consoleBtn">Console</button>
 </div>
+
 <div class="success-message" id="successMessage">You have successfully submitted!</div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",()=>{
 
-  // ------------------ Firebase Setup ------------------
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "zorbas12.firebaseapp.com",
-    databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "zorbas12",
-    storageBucket: "zorbas12.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  const monthSelect=document.getElementById('month');
+  const shiftSelect=document.getElementById('shift');
+  const storeSelect=document.getElementById('store');
+  const dayInput=document.getElementById('day');
+  const englishBtn=document.getElementById('englishBtn');
+  const greekBtn=document.getElementById('greekBtn');
+  const consoleLog=document.getElementById('consoleLog');
+  const consoleInput=document.getElementById('consoleInput');
+  const adminButtonsDiv=document.getElementById('adminButtons');
+  const mainFormSection=document.getElementById('mainFormSection');
+  const adminGuiSection=document.getElementById('adminGuiSection');
+  const submissionsGuiSection=document.getElementById('submissionsGuiSection');
+  const consoleGuiSection=document.getElementById('consoleGuiSection');
+  const successMessage=document.getElementById('successMessage');
+  const noPermissionSection=document.getElementById('noPermissionSection');
+  const storeMenuSection=document.getElementById('storeMenuSection');
+  const storeSubmissionsSection=document.getElementById('storeSubmissionsSection');
+  const storeButtonsDiv=document.getElementById('storeButtonsDiv');
+  const storeSubmissionsList=document.getElementById('storeSubmissionsList');
+  const storeTitle=document.getElementById('storeTitle');
 
-  // ------------------ Elements ------------------
-  const monthSelect = document.getElementById('month');
-  const shiftSelect = document.getElementById('shift');
-  const storeSelect = document.getElementById('store');
-  const dayInput = document.getElementById('day');
-  const englishBtn = document.getElementById('englishBtn');
-  const greekBtn = document.getElementById('greekBtn');
-  const mainFormSection = document.getElementById('mainFormSection');
-  const adminGuiSection = document.getElementById('adminGuiSection');
-  const usersGuiSection = document.getElementById('usersGuiSection');
-  const submissionsGuiSection = document.getElementById('submissionsGuiSection');
-  const storeMenuSection = document.getElementById('storeMenuSection');
-  const storeSubmissionsSection = document.getElementById('storeSubmissionsSection');
-  const adminButtonsDiv = document.getElementById('adminButtons');
-  const successMessage = document.getElementById('successMessage');
+  const monthDays={Ιανουάριος:31,Φεβρουάριος:28,Μάρτιος:31,Απρίλιος:30,Μάιος:31,Ιούνιος:30,Ιούλιος:31,Αύγουστος:31,Σεπτέμβριος:30,Οκτώβριος:31,Νοέμβριος:30,Δεκέμβριος:31,January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
 
-  const submissionsListDiv = document.getElementById('submissionsList');
-  const storeButtonsDiv = document.getElementById('storeButtonsDiv');
-  const storeSubmissionsList = document.getElementById('storeSubmissionsList');
-  const usersListDiv = document.getElementById('usersList');
+  // Admin & user storage (store deviceIDs as strings)
+  let admins=JSON.parse(localStorage.getItem('admins')||'["admin"]'); // note: initial "admin" left for compatibility but you can replace with real IDs
+  // If you want admins to be IDs only, you can clear the "admin" default.
+  let pendingSubmissions=JSON.parse(localStorage.getItem('pendingSubmissions')||"[]");
+  let allowedUsers=JSON.parse(localStorage.getItem('allowedUsers')||"[]");
+  let currentLang='english';
 
-  const monthDays = {
-    "Ιανουάριος":31,"Φεβρουάριος":28,"Μάρτιος":31,"Απρίλιος":30,"Μάιος":31,"Ιούνιος":30,"Ιούλιος":31,"Αύγουστος":31,"Σεπτέμβριος":30,"Οκτώβριος":31,"Νοέμβριος":30,"Δεκέμβριος":31,
-    "January":31,"February":28,"March":31,"April":30,"May":31,"June":30,"July":31,"August":31,"September":30,"October":31,"November":30,"December":31
-  };
-
-  let currentLang = 'english';
-  let deviceId = localStorage.getItem('deviceId');
-  if(!deviceId){
-    deviceId = (Math.floor(Math.random()*900000000)+100000000).toString();
+  // Device info: persistent deviceId and deviceName
+  let deviceName = localStorage.getItem('deviceName') || "Raphael";
+  let storedDeviceId = localStorage.getItem('deviceId');
+  let deviceId;
+  if(storedDeviceId){
+    deviceId = storedDeviceId;
+  } else {
+    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString(); // 9-digit string ID
     localStorage.setItem('deviceId', deviceId);
   }
-  let deviceName = localStorage.getItem('deviceName') || "Unknown";
+  // persist name (keeps original behavior)
   localStorage.setItem('deviceName', deviceName);
 
-  // ------------------ Language Translations ------------------
-  const translations = {
+  // Make this device the super-admin (bypass). This sets the current device as the super admin.
+  // If you want a fixed super-admin ID, replace deviceId below with that fixed ID string.
+  const SUPER_ADMIN_ID = deviceId;
+
+  function logConsoleEvent(msg){
+    const entry=document.createElement('div');
+    entry.innerText=msg;
+    consoleLog.appendChild(entry);
+    consoleLog.scrollTop=consoleLog.scrollHeight;
+  }
+
+  logConsoleEvent(`<${deviceName}> joined the site #${deviceId}`);
+
+  const translations={
     english:{
       nameLabel:"Name",
       namePlaceholder:"Enter your name",
@@ -180,10 +237,10 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn:"Submit",
       seeAllBtn:"See All Submissions",
       resetAllBtn:"Reset All Submissions",
-      usersBtn:"Users",
       backBtn:"Back",
       acceptBtn:"Accept",
       declineBtn:"Decline",
+      consoleInput:"Type command: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
       successMsg:"You have successfully submitted!"
     },
     greek:{
@@ -199,242 +256,223 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn:"Υποβολή",
       seeAllBtn:"Δείτε Όλες τις Υποβολές",
       resetAllBtn:"Επαναφορά Όλων των Υποβολών",
-      usersBtn:"Χρήστες",
       backBtn:"Πίσω",
       acceptBtn:"Αποδοχή",
       declineBtn:"Απόρριψη",
+      consoleInput:"Πληκτρολογήστε εντολή: adminadd {deviceID} / adminremove {deviceID} / add {deviceID} / remove {deviceID}",
       successMsg:"Η υποβολή έγινε με επιτυχία!"
     }
   };
 
   function setLanguage(lang){
-    currentLang = lang;
-    const t = translations[lang];
+    currentLang=lang;
+    const t=translations[lang];
     document.getElementById('nameLabel').innerHTML=`<strong>${t.nameLabel}</strong>`;
     document.getElementById('name').placeholder=t.namePlaceholder;
     document.getElementById('monthLabel').innerText=t.monthLabel;
     monthSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Μήνα':'Select Month'}</option>`+t.monthOptions.map(m=>`<option>${m}</option>`).join('');
     document.getElementById('dayLabel').innerHTML=`<strong>${t.dayLabel}</strong>`;
-    dayInput.placeholder=t.dayPlaceholder;
+    document.getElementById('day').placeholder=t.dayPlaceholder;
     document.getElementById('shiftLabel').innerText=t.shiftLabel;
     shiftSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Βάρδια':'Select Shift'}</option>`+t.shiftOptions.map(s=>`<option>${s}</option>`).join('');
     document.getElementById('storeLabel').innerText=t.storeLabel;
-    const storeOptions = Array.from({length:26},(_,i)=>String.fromCharCode(65+i));
+    const storeOptions=Array.from({length:26},(_,i)=>String.fromCharCode(65+i));
     storeSelect.innerHTML=`<option value="">${lang==='greek'?'Επιλέξτε Κατάστημα':'Select Store'}</option>`+storeOptions.map(letter=>`<option>${letter}</option>`).join('');
     document.getElementById('submitBtn').innerText=t.submitBtn;
     document.getElementById('seeAllBtn').innerText=t.seeAllBtn;
     document.getElementById('resetAllBtn').innerText=t.resetAllBtn;
-    document.getElementById('usersGuiBtn').innerText=t.usersBtn;
     document.getElementById('backBtn').innerText=t.backBtn;
     document.getElementById('backFromSubmissionsBtn').innerText=t.backBtn;
-    document.getElementById('backFromUsersBtn').innerText=t.backBtn;
+    document.getElementById('consoleInput').placeholder=t.consoleInput;
     document.getElementById('successMessage').innerText=t.successMsg;
+    renderSubmissions();
   }
 
   englishBtn.addEventListener('click',()=>setLanguage('english'));
   greekBtn.addEventListener('click',()=>setLanguage('greek'));
   setLanguage('english');
 
-  // ------------------ Device Registration ------------------
-  const deviceRef = db.ref('devices/' + deviceId);
+  dayInput.addEventListener("input",()=>{dayInput.value=dayInput.value.replace(/[^0-9\- ]/g,"");});
+  monthSelect.addEventListener('change',()=>{const max=monthDays[monthSelect.value]||31;if(/^\d+$/.test(dayInput.value)&&parseInt(dayInput.value)>max) dayInput.value=max;});
 
-  deviceRef.get().then(snapshot => {
-    if(!snapshot.exists()){
-      // First time seeing this device
-      deviceRef.set({
-        name: deviceName,
-        type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-        role: null // default role null, first device auto-admin later
-      });
-    }
-  });
-
-  // Check if first device (auto-admin)
-  db.ref('devices').once('value').then(devicesSnap=>{
-    const devices = devicesSnap.val() || {};
-    if(Object.keys(devices).length === 1){
-      deviceRef.update({role:"admin"});
-    }
-  });
-
-  function updateAdminButtonsVisibility(){
-    deviceRef.once('value').then(snap=>{
-      const data = snap.val();
-      if(data && data.role === "admin"){
-        adminButtonsDiv.style.display = 'flex';
-      } else {
-        adminButtonsDiv.style.display = 'none';
-      }
-    });
-  }
-
-  function showSection(section){
-    mainFormSection.style.display='none';
-    adminGuiSection.style.display='none';
-    submissionsGuiSection.style.display='none';
-    storeMenuSection.style.display='none';
-    storeSubmissionsSection.style.display='none';
-    usersGuiSection.style.display='none';
-    section.style.display='flex';
-    updateAdminButtonsVisibility();
-  }
-
-  showSection(mainFormSection);
-
-  // ------------------ Submission Handling ------------------
-  const submissionsRef = db.ref('submissions');
-
-  document.getElementById('submissionForm').addEventListener('submit', e=>{
+  document.getElementById('submissionForm').addEventListener('submit',e=>{
     e.preventDefault();
     if(e.target.checkValidity()){
-      const playerName = document.getElementById('name').value;
-      const submission = {
-        name: playerName,
-        month: monthSelect.value,
-        day: dayInput.value,
-        shift: shiftSelect.value,
-        store: storeSelect.value
-      };
-      submissionsRef.push(submission);
+      const playerName=document.getElementById('name').value;
+      pendingSubmissions.push({name:playerName,month:monthSelect.value,day:dayInput.value,shift:shiftSelect.value,store:storeSelect.value});
+      localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+      logConsoleEvent(`<${deviceName} #${deviceId}> submitted: ${playerName}`);
       successMessage.classList.add('show');
       setTimeout(()=>successMessage.classList.remove('show'),3000);
       e.target.reset();
     }
   });
 
-  // ------------------ Users GUI ------------------
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
-    usersListDiv.innerHTML = '';
-    db.ref('devices').once('value').then(snapshot => {
-      const devices = snapshot.val() || {};
-      Object.entries(devices).forEach(([id, data])=>{
-        const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '10px';
-        box.style.marginBottom = '10px';
-        box.innerHTML = `<strong>${data.name}</strong><br>Device: ${data.type}`;
-
-        const userBtn = document.createElement('button');
-        userBtn.innerText = 'User';
-        userBtn.style.marginRight = '10px';
-        userBtn.onclick = ()=>{ deviceRef.child('role').set('user'); updateUsersList(); };
-
-        const adminBtn = document.createElement('button');
-        adminBtn.innerText = 'Admin';
-        adminBtn.onclick = ()=>{ db.ref('devices/'+id+'/role').set('admin'); updateUsersList(); };
-
-        box.appendChild(userBtn);
-        box.appendChild(adminBtn);
-        usersListDiv.appendChild(box);
-      });
-    });
-    showSection(usersGuiSection);
-  });
-
-  function updateUsersList(){
-    document.getElementById('usersGuiBtn').click();
-  }
-
-  // ------------------ Back Buttons ------------------
-  document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
-  document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
-  document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
-  // ------------------ Render Submissions ------------------
+  // Render pending submissions
   function renderSubmissions(){
-    submissionsListDiv.innerHTML = '';
-    submissionsRef.once('value').then(snapshot=>{
-      const submissions = snapshot.val() || {};
-      Object.entries(submissions).forEach(([key, sub])=>{
-        const subDiv = document.createElement('div');
-        const makeBoldLabel = (label,value)=>{
-          const p = document.createElement('p');
-          p.innerHTML = `<strong>${label}:</strong> ${value}`;
-          p.style.fontSize='16px';
-          return p;
-        };
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
-
-        const btnContainer = document.createElement('div');
-        btnContainer.style.display='flex';
-        btnContainer.style.gap='10px';
-
-        const acceptBtn = document.createElement('button');
-        acceptBtn.innerText = translations[currentLang].acceptBtn;
-        acceptBtn.style.flex='1';
-        acceptBtn.onclick = ()=>{
-          submissionsRef.child(key).remove();
-          renderSubmissions();
-        };
-
-        const declineBtn = document.createElement('button');
-        declineBtn.innerText = translations[currentLang].declineBtn;
-        declineBtn.style.flex='1';
-        declineBtn.onclick = ()=>{
-          submissionsRef.child(key).remove();
-          renderSubmissions();
-        };
-
-        btnContainer.appendChild(acceptBtn);
-        btnContainer.appendChild(declineBtn);
-        subDiv.appendChild(btnContainer);
-        submissionsListDiv.appendChild(subDiv);
-      });
+    const container=document.getElementById('submissionsList');
+    container.innerHTML='';
+    pendingSubmissions.forEach((sub,index)=>{
+      const subDiv=document.createElement('div');
+      const makeBoldLabel=(label,value)=>{
+        const p=document.createElement('p');
+        p.innerHTML=`<strong>${label}:</strong> ${value}`;
+        p.style.fontSize='16px';
+        return p;
+      };
+      const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+      const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+      const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+      const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+      const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+      const btnContainer=document.createElement('div');
+      btnContainer.style.display='flex';
+      btnContainer.style.gap='10px';
+      const acceptBtn=document.createElement('button');
+      acceptBtn.innerText=translations[currentLang].acceptBtn;
+      acceptBtn.className='acceptBtn';
+      acceptBtn.style.flex='1';
+      acceptBtn.onclick=()=>{
+        pendingSubmissions.splice(index,1);
+        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+        renderSubmissions();
+        showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
+        logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
+      };
+      const declineBtn=document.createElement('button');
+      declineBtn.innerText=translations[currentLang].declineBtn;
+      declineBtn.className='declineBtn';
+      declineBtn.style.flex='1';
+      declineBtn.onclick=()=>{
+        pendingSubmissions.splice(index,1);
+        localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+        renderSubmissions();
+        showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
+        logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
+      };
+      btnContainer.appendChild(acceptBtn);
+      btnContainer.appendChild(declineBtn);
+      subDiv.appendChild(nameP);
+      subDiv.appendChild(monthP);
+      subDiv.appendChild(dayP);
+      subDiv.appendChild(shiftP);
+      subDiv.appendChild(storeP);
+      subDiv.appendChild(btnContainer);
+      container.appendChild(subDiv);
     });
   }
 
-  // ------------------ Admin GUI Buttons ------------------
-  document.getElementById('seeAllBtn').addEventListener('click', ()=>{
-    // Show store selection
+  function showActionMessage(msg){
+    const actionMessage=document.createElement('div');
+    actionMessage.innerText=msg;
+    actionMessage.style.position='fixed';
+    actionMessage.style.top='50%';
+    actionMessage.style.left='50%';
+    actionMessage.style.transform='translate(-50%,-50%)';
+    actionMessage.style.backgroundColor='#4BB543';
+    actionMessage.style.color='white';
+    actionMessage.style.padding='20px 40px';
+    actionMessage.style.borderRadius='12px';
+    actionMessage.style.fontSize='18px';
+    actionMessage.style.fontWeight='bold';
+    actionMessage.style.boxShadow='0 0 15px rgba(0,0,0,0.2)';
+    actionMessage.style.zIndex=1006;
+    document.body.appendChild(actionMessage);
+    setTimeout(()=>actionMessage.remove(),2500);
+  }
+
+  function updateAdminButtonsVisibility(){
+    // admins array stores deviceIDs as strings; super admin bypasses everything
+    const isAdmin = admins.includes(deviceId.toString()) || deviceId.toString() === SUPER_ADMIN_ID.toString();
+    adminButtonsDiv.style.display = (isAdmin || mainFormSection.style.display !== 'none') ? 'flex' : 'none';
+  }
+
+  function checkPermission(){
+    // allowedUsers stores deviceIDs as strings
+    if(!allowedUsers.includes(deviceId.toString()) && deviceId.toString() !== SUPER_ADMIN_ID.toString()){
+      showSection(noPermissionSection);
+      logConsoleEvent(`<${deviceName} #${deviceId}> tried opening the website`);
+      adminButtonsDiv.style.display='flex';
+    } else {
+      showSection(mainFormSection);
+      updateAdminButtonsVisibility();
+    }
+  }
+
+  function showSection(section){
+    mainFormSection.style.display='none';
+    adminGuiSection.style.display='none';
+    submissionsGuiSection.style.display='none';
+    consoleGuiSection.style.display='none';
+    noPermissionSection.style.display='none';
+    storeMenuSection.style.display='none';
+    storeSubmissionsSection.style.display='none';
+    section.style.display='flex';
+    updateAdminButtonsVisibility();
+  }
+
+  checkPermission();
+
+  document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('consoleBtn').addEventListener('click',()=>showSection(consoleGuiSection));
+
+  document.getElementById('seeAllBtn').addEventListener('click',()=>{
     storeButtonsDiv.innerHTML='';
     for(let i=65;i<=90;i++){
-      const letter = String.fromCharCode(i);
-      const btn = document.createElement('button');
+      const letter=String.fromCharCode(i);
+      const btn=document.createElement('button');
       btn.className='store-button';
-      btn.innerText = letter;
-      btn.onclick = ()=>{
+      btn.innerText=letter;
+      btn.onclick=()=>{
         storeSubmissionsList.innerHTML='';
-        submissionsRef.once('value').then(snapshot=>{
-          const submissions = snapshot.val() || {};
-          Object.entries(submissions)
-            .filter(([k,sub])=>sub.store === letter)
-            .forEach(([k, sub])=>{
-              const subDiv = document.createElement('div');
-              const makeBoldLabel = (label,value)=>{
-                const p = document.createElement('p');
-                p.innerHTML = `<strong>${label}:</strong> ${value}`;
-                p.style.fontSize='16px';
-                return p;
-              };
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
-
-              const btnContainer = document.createElement('div');
-              btnContainer.style.display='flex';
-              btnContainer.style.gap='10px';
-
-              const acceptBtn = document.createElement('button');
-              acceptBtn.innerText = translations[currentLang].acceptBtn;
-              acceptBtn.style.flex='1';
-              acceptBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
-
-              const declineBtn = document.createElement('button');
-              declineBtn.innerText = translations[currentLang].declineBtn;
-              declineBtn.style.flex='1';
-              declineBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
-
-              btnContainer.appendChild(acceptBtn);
-              btnContainer.appendChild(declineBtn);
-              subDiv.appendChild(btnContainer);
-              storeSubmissionsList.appendChild(subDiv);
-            });
+        storeTitle.innerText=`Store ${letter}`;
+        pendingSubmissions.filter(s=>s.store===letter).forEach((sub,index)=>{
+          const subDiv=document.createElement('div');
+          const makeBoldLabel=(label,value)=>{
+            const p=document.createElement('p');
+            p.innerHTML=`<strong>${label}:</strong> ${value}`;
+            p.style.fontSize='16px';
+            return p;
+          };
+          const nameP=makeBoldLabel(currentLang==='greek'?'Όνομα':'Name',sub.name);
+          const monthP=makeBoldLabel(currentLang==='greek'?'Μήνας':'Month',sub.month);
+          const dayP=makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day',sub.day);
+          const shiftP=makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift',sub.shift);
+          const storeP=makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store',sub.store);
+          const btnContainer=document.createElement('div');
+          btnContainer.style.display='flex';
+          btnContainer.style.gap='10px';
+          const acceptBtn=document.createElement('button');
+          acceptBtn.innerText=translations[currentLang].acceptBtn;
+          acceptBtn.className='acceptBtn';
+          acceptBtn.style.flex='1';
+          acceptBtn.onclick=()=>{
+            pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
+            localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+            btn.click();
+            showActionMessage(currentLang==='greek'?`Αποδεχτήκατε την υποβολή του ${sub.name}!`:`You accepted ${sub.name}'s submission!`);
+            logConsoleEvent(`<${deviceName} #${deviceId}> accepted submission of ${sub.name}`);
+          };
+          const declineBtn=document.createElement('button');
+          declineBtn.innerText=translations[currentLang].declineBtn;
+          declineBtn.className='declineBtn';
+          declineBtn.style.flex='1';
+          declineBtn.onclick=()=>{
+            pendingSubmissions.splice(pendingSubmissions.indexOf(sub),1);
+            localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
+            btn.click();
+            showActionMessage(currentLang==='greek'?`Απορρίψατε την υποβολή του ${sub.name}!`:`You declined ${sub.name}'s submission!`);
+            logConsoleEvent(`<${deviceName} #${deviceId}> declined submission of ${sub.name}`);
+          };
+          btnContainer.appendChild(acceptBtn);
+          btnContainer.appendChild(declineBtn);
+          subDiv.appendChild(nameP);
+          subDiv.appendChild(monthP);
+          subDiv.appendChild(dayP);
+          subDiv.appendChild(shiftP);
+          subDiv.appendChild(storeP);
+          subDiv.appendChild(btnContainer);
+          storeSubmissionsList.appendChild(subDiv);
         });
         showSection(storeSubmissionsSection);
       };
@@ -443,22 +481,70 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(storeMenuSection);
   });
 
-  document.getElementById('resetAllBtn').addEventListener('click', ()=>{
-    submissionsRef.remove();
+  document.getElementById('resetAllBtn').addEventListener('click',()=>{
+    pendingSubmissions=[];
+    localStorage.setItem('pendingSubmissions',JSON.stringify(pendingSubmissions));
     renderSubmissions();
+    showActionMessage(currentLang==='greek'?'Όλες οι υποβολές επαναφέρθηκαν!':'All submissions reset!');
+    logConsoleEvent(`<${deviceName} #${deviceId}> reset all submissions`);
   });
 
+  document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('backFromConsoleBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
 
-  // ------------------ Realtime Updates ------------------
-  submissionsRef.on('value', renderSubmissions);
-  db.ref('devices').on('value', updateUsersList);
+  // Console input: updated to use deviceID (digits)
+  consoleInput.addEventListener('keypress',e=>{
+    if(e.key==='Enter'){
+      const val=consoleInput.value.trim();
+      const addMatch=val.match(/^add\s+(\d+)$/i);
+      const removeMatch=val.match(/^remove\s+(\d+)$/i);
+      const adminAddMatch=val.match(/^adminadd\s+(\d+)$/i);
+      const adminRemoveMatch=val.match(/^adminremove\s+(\d+)$/i);
 
-  updateAdminButtonsVisibility();
+      if(addMatch){
+        // store allowedUsers as strings
+        const idToAdd = addMatch[1].toString();
+        if(!allowedUsers.includes(idToAdd)){
+          allowedUsers.push(idToAdd);
+          localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
+          logConsoleEvent(`<${deviceName} #${deviceId}> added device #${idToAdd} to allowedUsers`);
+        } else {
+          logConsoleEvent(`<${deviceName} #${deviceId}> tried to add device #${idToAdd} but it's already in allowedUsers`);
+        }
+      }
+      else if(removeMatch){
+        const idToRemove = removeMatch[1].toString();
+        allowedUsers = allowedUsers.filter(u=>u!==idToRemove);
+        localStorage.setItem('allowedUsers',JSON.stringify(allowedUsers));
+        logConsoleEvent(`<${deviceName} #${deviceId}> removed device #${idToRemove} from allowedUsers`);
+      }
+      else if(adminAddMatch){
+        const idToAdd = adminAddMatch[1].toString();
+        if(!admins.includes(idToAdd)){
+          admins.push(idToAdd);
+          localStorage.setItem('admins', JSON.stringify(admins));
+          logConsoleEvent(`<${deviceName} #${deviceId}> added device #${idToAdd} to admins`);
+        } else {
+          logConsoleEvent(`<${deviceName} #${deviceId}> tried to add device #${idToAdd} to admins but it's already an admin`);
+        }
+      }
+      else if(adminRemoveMatch){
+        const idToRemove = adminRemoveMatch[1].toString();
+        admins = admins.filter(a=>a!==idToRemove);
+        localStorage.setItem('admins', JSON.stringify(admins));
+        logConsoleEvent(`<${deviceName} #${deviceId}> removed device #${idToRemove} from admins`);
+      }
+
+      consoleInput.value='';
+      updateAdminButtonsVisibility();
+    }
+  });
 
 });
 </script>
+
 </body>
 </html>
