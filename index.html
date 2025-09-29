@@ -259,9 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
+  // Always render users when opening the users GUI section
   document.getElementById('usersGuiBtn').addEventListener('click', () => {
-      renderUsers();
       showSection(usersGuiSection);
+      renderUsers();
   });
 
   db.ref('devices').on('value', () => {
@@ -454,10 +455,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
         showSection(storeSubmissionsSection);
+        // Patch: Ensure submissions are always rendered after showing the section
+        // This guarantees updates even if the section is shown without clicking a store button
+        renderSubmissions();
       };
       storeButtonsDiv.appendChild(btn);
     }
     showSection(storeMenuSection);
+    // Patch: Always render submissions when showing store menu
+    renderSubmissions();
   });
 
   document.getElementById('resetAllBtn').addEventListener('click', ()=>{ submissionsRef.remove(); renderSubmissions(); });
