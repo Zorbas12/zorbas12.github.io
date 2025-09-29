@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-180x180.png Φούρνοι Ζορπάς</title>
 <style>
-/* ... your unchanged CSS ... */
 body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
 #mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
 .language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
@@ -43,6 +42,24 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 #submissionsList div button.declineBtn:hover{background:#E04B4B;}
 @media (max-width:640px){h1{font-size:34px;}#mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}#storeButtonsDiv{width:90%;}.store-button{width:100%;}}
 </style>
+<!-- Firebase scripts and config BEGIN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyCbi22trhSCDRxsccDLE1-5SmHxm__qXlk",
+    authDomain: "zorbas12-9afee.firebaseapp.com",
+    databaseURL: "https://zorbas12-9afee-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "zorbas12-9afee",
+    storageBucket: "zorbas12-9afee.appspot.com",
+    messagingSenderId: "476293611811",
+    appId: "1:476293611811:web:cd640d278034b0689e8c96",
+    measurementId: "G-F6CBFV2DVX"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
+</script>
+<!-- Firebase scripts and config END -->
 </head>
 <body>
 <div class="language-switcher">
