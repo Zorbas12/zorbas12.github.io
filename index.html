@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-180x180.png Φούρνοι Ζορπάς</title>
+<title>Zorbas Submissions</title>
 <style>
 body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
 #mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
@@ -41,6 +41,20 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 #submissionsList div button.acceptBtn:hover{background:#3D9737;}
 #submissionsList div button.declineBtn:hover{background:#E04B4B;}
 @media (max-width:640px){h1{font-size:34px;}#mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}#storeButtonsDiv{width:90%;}.store-button{width:100%;}}
+#deviceNamePopup {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.3);
+  display: none; align-items: center; justify-content: center; z-index: 9999;
+}
+#deviceNamePopup .popup-content {
+  background: #fff; padding: 30px 40px; border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+#deviceNamePopup input { font-size: 18px; padding: 10px; width: 220px; border-radius: 6px; border: 1px solid #ccc; }
+#deviceNamePopup button { font-size: 16px; padding: 10px 20px; background: #E4D882; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+#deviceNamePopup button:hover { background: #CFC76D; }
 </style>
 </head>
 <body>
@@ -75,6 +89,7 @@ button[type="submit"]:hover{background-color:#CFC76D;}
       <button type="submit" id="submitBtn">Submit</button>
     </div>
   </form>
+  <button id="viewSubmissionsBtn">View Submissions</button>
 </div>
 
 <div id="adminGuiSection">
@@ -114,11 +129,19 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 </div>
 <div class="success-message" id="successMessage">You have successfully submitted!</div>
 
+<!-- Device name popup -->
+<div id="deviceNamePopup">
+  <div class="popup-content">
+    <h2>Set Your Device Name</h2>
+    <input id="deviceNameInput" type="text" placeholder="eg. John's Laptop" />
+    <button id="saveDeviceNameBtn">Save</button>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
   // ------------------ Firebase Setup ------------------
   const firebaseConfig = {
     apiKey: "AIzaSyD_2QiORiAdBpfLe9Dzxv6KJX46HLqbALc",
@@ -148,6 +171,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const storeSubmissionsSection = document.getElementById('storeSubmissionsSection');
   const adminButtonsDiv = document.getElementById('adminButtons');
   const successMessage = document.getElementById('successMessage');
+  const deviceNamePopup = document.getElementById('deviceNamePopup');
+  const deviceNameInput = document.getElementById('deviceNameInput');
+  const saveDeviceNameBtn = document.getElementById('saveDeviceNameBtn');
 
   const submissionsListDiv = document.getElementById('submissionsList');
   const storeButtonsDiv = document.getElementById('storeButtonsDiv');
@@ -160,20 +186,48 @@ document.addEventListener("DOMContentLoaded", () => {
     deviceId = (Math.floor(Math.random()*900000000)+100000000).toString();
     localStorage.setItem('deviceId', deviceId);
   }
-  let deviceName = localStorage.getItem('deviceName') || "Unknown";
-  localStorage.setItem('deviceName', deviceName);
+  let deviceName = localStorage.getItem('deviceName');
 
-  // ------------------ Device Registration ------------------
+  // Device registration popup logic
+  function askDeviceName() {
+    deviceNamePopup.style.display = 'flex';
+    deviceNameInput.value = '';
+    deviceNameInput.focus();
+  }
+  function registerDevice(name) {
+    localStorage.setItem('deviceName', name);
+    deviceName = name;
+    deviceNamePopup.style.display = 'none';
+    deviceRef.set({
+      name: deviceName,
+      type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
+      role: null
+    });
+  }
+  // Always set up device ref
   const deviceRef = db.ref('devices/' + deviceId);
-  deviceRef.get().then(snapshot => {
-    if(!snapshot.exists()){
-      deviceRef.set({
-        name: deviceName,
-        type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-        role: null
-      });
-    }
+
+  // If no name or default, prompt for device name
+  if (!deviceName || deviceName === "Unknown") {
+    askDeviceName();
+  } else {
+    // Always register device on page load!
+    deviceRef.set({
+      name: deviceName,
+      type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
+      role: null
+    });
+  }
+  // Save name button
+  saveDeviceNameBtn.onclick = () => {
+    const name = deviceNameInput.value.trim();
+    if (name.length > 0) registerDevice(name);
+  };
+  deviceNameInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') saveDeviceNameBtn.click();
   });
+
+  // Admin auto-assign for first device
   db.ref('devices').once('value').then(devicesSnap=>{
     const devices = devicesSnap.val() || {};
     if(Object.keys(devices).length === 1){
@@ -253,6 +307,11 @@ document.addEventListener("DOMContentLoaded", () => {
               box.appendChild(typeP);
               box.appendChild(roleP);
               box.appendChild(btnContainer);
+
+              // Highlight current device
+              if (id === deviceId) {
+                box.style.border = '2px solid #E4D882';
+              }
 
               usersListDiv.appendChild(box);
           });
@@ -455,15 +514,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
         showSection(storeSubmissionsSection);
-        // Patch: Ensure submissions are always rendered after showing the section
-        // This guarantees updates even if the section is shown without clicking a store button
-        renderSubmissions();
       };
       storeButtonsDiv.appendChild(btn);
     }
     showSection(storeMenuSection);
-    // Patch: Always render submissions when showing store menu
-    renderSubmissions();
   });
 
   document.getElementById('resetAllBtn').addEventListener('click', ()=>{ submissionsRef.remove(); renderSubmissions(); });
@@ -477,8 +531,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if(usersGuiSection.style.display==='flex') renderUsers();
   });
 
-  updateAdminButtonsVisibility();
+  // User submissions button
+  document.getElementById('viewSubmissionsBtn').addEventListener('click', () => {
+    showSection(submissionsGuiSection);
+    renderSubmissions();
+  });
 
+  updateAdminButtonsVisibility();
 });
 </script>
 </body>
