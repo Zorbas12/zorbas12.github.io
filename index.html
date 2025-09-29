@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Φούρνοι Ζορπάς</title>
+<title>https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-180x180.png Φούρνοι Ζορπάς</title>
 <style>
 body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
 #mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
@@ -48,7 +48,6 @@ button[type="submit"]:hover{background-color:#CFC76D;}
   <button id="englishBtn">English</button>
   <button id="greekBtn">Greek</button>
 </div>
-
 <div id="mainFormSection">
   <h1>Zorbas Submissions</h1>
   <form id="submissionForm">
@@ -100,28 +99,23 @@ button[type="submit"]:hover{background-color:#CFC76D;}
   <div id="submissionsList"></div>
   <button id="backFromSubmissionsBtn">Back</button>
 </div>
-
 <div id="storeMenuSection">
   <h1>Select Store</h1>
   <div id="storeButtonsDiv" role="toolbar" aria-label="Store letters"></div>
   <button id="backFromStoreMenuBtn">Back</button>
 </div>
-
 <div id="storeSubmissionsSection">
   <h1 id="storeTitle"></h1>
   <div id="storeSubmissionsList"></div>
   <button id="backFromStoreSubmissionsBtn">Back</button>
 </div>
-
 <div class="admin-buttons" id="adminButtons">
   <button id="adminGuiBtn">Admin GUI</button>
 </div>
-
 <div class="success-message" id="successMessage">You have successfully submitted!</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -168,6 +162,111 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   let deviceName = localStorage.getItem('deviceName') || "Unknown";
   localStorage.setItem('deviceName', deviceName);
+
+  // ------------------ Device Registration ------------------
+  const deviceRef = db.ref('devices/' + deviceId);
+  deviceRef.get().then(snapshot => {
+    if(!snapshot.exists()){
+      deviceRef.set({
+        name: deviceName,
+        type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
+        role: null
+      });
+    }
+  });
+  db.ref('devices').once('value').then(devicesSnap=>{
+    const devices = devicesSnap.val() || {};
+    if(Object.keys(devices).length === 1){
+      deviceRef.update({role:"admin"});
+    }
+  });
+
+  function updateAdminButtonsVisibility(){
+    deviceRef.once('value').then(snap=>{
+      const data = snap.val();
+      if(data && data.role === "admin"){
+        adminButtonsDiv.style.display = 'flex';
+      } else {
+        adminButtonsDiv.style.display = 'none';
+      }
+    });
+  }
+
+  function showSection(section){
+    mainFormSection.style.display='none';
+    adminGuiSection.style.display='none';
+    submissionsGuiSection.style.display='none';
+    storeMenuSection.style.display='none';
+    storeSubmissionsSection.style.display='none';
+    usersGuiSection.style.display='none';
+    section.style.display='flex';
+    updateAdminButtonsVisibility();
+  }
+
+  showSection(mainFormSection);
+
+  // ------------------ Live Manage Users Patch ------------------
+  function renderUsers() {
+      usersListDiv.innerHTML = '';
+      db.ref('devices').once('value').then(snapshot => {
+          const devices = snapshot.val() || {};
+          Object.entries(devices).forEach(([id, data]) => {
+              const box = document.createElement('div');
+              box.style.background = '#fff';
+              box.style.padding = '15px';
+              box.style.borderRadius = '10px';
+              box.style.marginBottom = '10px';
+              box.style.display = 'flex';
+              box.style.flexDirection = 'column';
+              box.style.alignItems = 'flex-start';
+
+              const nameP = document.createElement('p');
+              nameP.innerHTML = `<strong>${data.name}</strong>`;
+
+              const typeP = document.createElement('p');
+              typeP.innerHTML = `Device: ${data.type || 'Unknown'}`;
+
+              const roleP = document.createElement('p');
+              roleP.innerHTML = `Role: ${data.role || 'none'}`;
+
+              const btnContainer = document.createElement('div');
+              btnContainer.style.marginTop = '10px';
+              btnContainer.style.display = 'flex';
+              btnContainer.style.gap = '10px';
+
+              const userBtn = document.createElement('button');
+              userBtn.innerText = 'User';
+              userBtn.onclick = () => {
+                  db.ref('devices/' + id + '/role').set('user');
+              };
+
+              const adminBtn = document.createElement('button');
+              adminBtn.innerText = 'Admin';
+              adminBtn.onclick = () => {
+                  db.ref('devices/' + id + '/role').set('admin');
+              };
+
+              btnContainer.appendChild(userBtn);
+              btnContainer.appendChild(adminBtn);
+
+              box.appendChild(nameP);
+              box.appendChild(typeP);
+              box.appendChild(roleP);
+              box.appendChild(btnContainer);
+
+              usersListDiv.appendChild(box);
+          });
+      });
+  }
+
+  document.getElementById('usersGuiBtn').addEventListener('click', () => {
+      renderUsers();
+      showSection(usersGuiSection);
+  });
+
+  db.ref('devices').on('value', () => {
+      if(usersGuiSection.style.display === 'flex') renderUsers();
+  });
 
   // ------------------ Language Translations ------------------
   const translations = {
@@ -238,47 +337,6 @@ document.addEventListener("DOMContentLoaded", () => {
   englishBtn.addEventListener('click',()=>setLanguage('english'));
   greekBtn.addEventListener('click',()=>setLanguage('greek'));
   setLanguage('english');
-  // ------------------ Device Registration ------------------
-  const deviceRef = db.ref('devices/' + deviceId);
-
-  deviceRef.get().then(snapshot => {
-    if(!snapshot.exists()){
-      // First time seeing this device
-      deviceRef.set({
-        name: deviceName,
-        type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-        role: null // default role null
-      });
-    }
-  });
-
-  // Check if first device (auto-admin)
-  db.ref('devices').once('value').then(devicesSnap=>{
-    const devices = devicesSnap.val() || {};
-    if(Object.keys(devices).length === 1){
-      deviceRef.update({role:"admin"});
-    }
-  });
-
-  function updateAdminButtonsVisibility(){
-    deviceRef.once('value').then(snap=>{
-      const data = snap.val();
-      adminButtonsDiv.style.display = (data && data.role === "admin") ? 'flex' : 'none';
-    });
-  }
-
-  function showSection(section){
-    mainFormSection.style.display='none';
-    adminGuiSection.style.display='none';
-    submissionsGuiSection.style.display='none';
-    storeMenuSection.style.display='none';
-    storeSubmissionsSection.style.display='none';
-    usersGuiSection.style.display='none';
-    section.style.display='flex';
-    updateAdminButtonsVisibility();
-  }
-
-  showSection(mainFormSection);
 
   // ------------------ Submission Handling ------------------
   const submissionsRef = db.ref('submissions');
@@ -286,8 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('submissionForm').addEventListener('submit', e=>{
     e.preventDefault();
     if(e.target.checkValidity()){
+      const playerName = document.getElementById('name').value;
       const submission = {
-        name: document.getElementById('name').value,
+        name: playerName,
         month: monthSelect.value,
         day: dayInput.value,
         shift: shiftSelect.value,
@@ -300,79 +359,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ------------------ Manage Users GUI ------------------
-  function renderUsers() {
-    usersListDiv.innerHTML = '';
-    db.ref('devices').once('value').then(snapshot => {
-      const devices = snapshot.val() || {};
-      Object.entries(devices).forEach(([id, data]) => {
-        const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.padding = '15px';
-        box.style.borderRadius = '10px';
-        box.style.marginBottom = '10px';
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        box.style.alignItems = 'flex-start';
-
-        const nameP = document.createElement('p');
-        nameP.innerHTML = `<strong>${data.name}</strong>`;
-
-        const typeP = document.createElement('p');
-        typeP.innerHTML = `Device: ${data.type || 'Unknown'}`;
-
-        const roleP = document.createElement('p');
-        roleP.innerHTML = `Role: ${data.role || 'none'}`;
-
-        const btnContainer = document.createElement('div');
-        btnContainer.style.marginTop = '10px';
-        btnContainer.style.display = 'flex';
-        btnContainer.style.gap = '10px';
-
-        const userBtn = document.createElement('button');
-        userBtn.innerText = 'User';
-        userBtn.onclick = () => {
-          db.ref('devices/' + id + '/role').set('user');
-        };
-
-        const adminBtn = document.createElement('button');
-        adminBtn.innerText = 'Admin';
-        adminBtn.onclick = () => {
-          db.ref('devices/' + id + '/role').set('admin');
-        };
-
-        btnContainer.appendChild(userBtn);
-        btnContainer.appendChild(adminBtn);
-
-        box.appendChild(nameP);
-        box.appendChild(typeP);
-        box.appendChild(roleP);
-        box.appendChild(btnContainer);
-
-        usersListDiv.appendChild(box);
-      });
-    });
-  }
-
-  // Show Manage Users GUI
-  document.getElementById('usersGuiBtn').addEventListener('click', () => {
-    renderUsers();
-    showSection(usersGuiSection);
-  });
-
-  // Real-time update for Users GUI
-  db.ref('devices').on('value', () => {
-    if(usersGuiSection.style.display === 'flex') {
-      renderUsers();
-    }
-  });
-
-  // ------------------ Admin GUI Buttons ------------------
+  // ------------------ Back Buttons ------------------
   document.getElementById('adminGuiBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backBtn').addEventListener('click',()=>showSection(mainFormSection));
   document.getElementById('backFromUsersBtn').addEventListener('click',()=>showSection(adminGuiSection));
 
-  // ------------------ Submissions GUI ------------------
+  // ------------------ Render Submissions ------------------
   function renderSubmissions(){
     submissionsListDiv.innerHTML = '';
     submissionsRef.once('value').then(snapshot=>{
@@ -413,8 +405,74 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ------------------ Admin GUI Buttons ------------------
+  document.getElementById('seeAllBtn').addEventListener('click', ()=>{
+    storeButtonsDiv.innerHTML='';
+    for(let i=65;i<=90;i++){
+      const letter = String.fromCharCode(i);
+      const btn = document.createElement('button');
+      btn.className='store-button';
+      btn.innerText = letter;
+      btn.onclick = ()=>{
+        storeSubmissionsList.innerHTML='';
+        submissionsRef.once('value').then(snapshot=>{
+          const submissions = snapshot.val() || {};
+          Object.entries(submissions)
+            .filter(([k,sub])=>sub.store===letter)
+            .forEach(([k, sub])=>{
+              const subDiv = document.createElement('div');
+              const makeBoldLabel = (label,value)=>{
+                const p = document.createElement('p');
+                p.innerHTML = `<strong>${label}:</strong> ${value}`;
+                p.style.fontSize='16px';
+                return p;
+              };
+              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
+              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
+              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
+              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
+              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
+
+              const btnContainer = document.createElement('div');
+              btnContainer.style.display='flex';
+              btnContainer.style.gap='10px';
+
+              const acceptBtn = document.createElement('button');
+              acceptBtn.innerText = translations[currentLang].acceptBtn;
+              acceptBtn.style.flex='1';
+              acceptBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
+
+              const declineBtn = document.createElement('button');
+              declineBtn.innerText = translations[currentLang].declineBtn;
+              declineBtn.style.flex='1';
+              declineBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
+
+              btnContainer.appendChild(acceptBtn);
+              btnContainer.appendChild(declineBtn);
+              subDiv.appendChild(btnContainer);
+              storeSubmissionsList.appendChild(subDiv);
+            });
+        });
+        showSection(storeSubmissionsSection);
+      };
+      storeButtonsDiv.appendChild(btn);
+    }
+    showSection(storeMenuSection);
+  });
+
+  document.getElementById('resetAllBtn').addEventListener('click', ()=>{ submissionsRef.remove(); renderSubmissions(); });
+  document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
+  document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
+
+  // ------------------ Realtime Updates ------------------
   submissionsRef.on('value', renderSubmissions);
+  db.ref('devices').on('value', ()=>{
+      if(usersGuiSection.style.display==='flex') renderUsers();
+  });
+
   updateAdminButtonsVisibility();
+
 });
 </script>
 </body>
