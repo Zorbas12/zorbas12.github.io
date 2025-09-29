@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Zorbas Submissions</title>
+<title>https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-180x180.png Φούρνοι Ζορπάς</title>
 <style>
+/* ... your unchanged CSS ... */
 body {margin:0;font-family:Arial,sans-serif;background-color:#DAD9D7;position:relative;height:100vh;overflow-x:hidden;}
 #mainFormSection,#adminGuiSection,#submissionsGuiSection,#storeMenuSection,#storeSubmissionsSection,#usersGuiSection{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
 .language-switcher{position:absolute;top:10px;right:10px;display:flex;gap:10px;}
@@ -41,20 +42,6 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 #submissionsList div button.acceptBtn:hover{background:#3D9737;}
 #submissionsList div button.declineBtn:hover{background:#E04B4B;}
 @media (max-width:640px){h1{font-size:34px;}#mainFormSection form, #adminGuiSection .admin-gui-box,#usersGuiSection .users-gui-box{width:90%;}#storeButtonsDiv{width:90%;}.store-button{width:100%;}}
-#deviceNamePopup {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.3);
-  display: none; align-items: center; justify-content: center; z-index: 9999;
-}
-#deviceNamePopup .popup-content {
-  background: #fff; padding: 30px 40px; border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15);
-  display: flex; flex-direction: column; align-items: center; gap: 18px;
-}
-#deviceNamePopup input { font-size: 18px; padding: 10px; width: 220px; border-radius: 6px; border: 1px solid #ccc; }
-#deviceNamePopup button { font-size: 16px; padding: 10px 20px; background: #E4D882; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-#deviceNamePopup button:hover { background: #CFC76D; }
 </style>
 </head>
 <body>
@@ -89,7 +76,6 @@ button[type="submit"]:hover{background-color:#CFC76D;}
       <button type="submit" id="submitBtn">Submit</button>
     </div>
   </form>
-  <button id="viewSubmissionsBtn">View Submissions</button>
 </div>
 
 <div id="adminGuiSection">
@@ -129,32 +115,21 @@ button[type="submit"]:hover{background-color:#CFC76D;}
 </div>
 <div class="success-message" id="successMessage">You have successfully submitted!</div>
 
-<!-- Device name popup -->
-<div id="deviceNamePopup">
-  <div class="popup-content">
-    <h2>Set Your Device Name</h2>
-    <input id="deviceNameInput" type="text" placeholder="eg. John's Laptop" />
-    <button id="saveDeviceNameBtn">Save</button>
-  </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // ------------------ Firebase Setup ------------------
-  const firebaseConfig = {
-    apiKey: "AIzaSyD_2QiORiAdBpfLe9Dzxv6KJX46HLqbALc",
-    authDomain: "zorbas12.firebaseapp.com",
-    databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "zorbas12",
-    storageBucket: "zorbas12.appspot.com",
-    messagingSenderId: "643468962153",
-    appId: "1:643468962153:web:20695d324d8fd0abd635f8",
-    measurementId: "G-84Q60WY6FC"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+
+  // ------------------ In-memory Data ------------------
+  let usersDB = {};
+  let submissionsDB = {};
+  let isAdmin = true; // For quick testing, you can toggle this
+  let deviceId = localStorage.getItem('deviceId');
+  if (!deviceId) {
+    deviceId = (Math.floor(Math.random() * 900000000) + 100000000).toString();
+    localStorage.setItem('deviceId', deviceId);
+  }
+  let deviceName = localStorage.getItem('deviceName') || "Unknown";
+  localStorage.setItem('deviceName', deviceName);
+  usersDB[deviceId] = { name: deviceName, type: navigator.userAgent.includes("Mobile") ? "phone" : "pc", role: isAdmin ? "admin" : "user" };
 
   // ------------------ Elements ------------------
   const monthSelect = document.getElementById('month');
@@ -171,79 +146,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const storeSubmissionsSection = document.getElementById('storeSubmissionsSection');
   const adminButtonsDiv = document.getElementById('adminButtons');
   const successMessage = document.getElementById('successMessage');
-  const deviceNamePopup = document.getElementById('deviceNamePopup');
-  const deviceNameInput = document.getElementById('deviceNameInput');
-  const saveDeviceNameBtn = document.getElementById('saveDeviceNameBtn');
 
   const submissionsListDiv = document.getElementById('submissionsList');
   const storeButtonsDiv = document.getElementById('storeButtonsDiv');
   const storeSubmissionsList = document.getElementById('storeSubmissionsList');
   const usersListDiv = document.getElementById('usersList');
 
-  let currentLang = 'english';
-  let deviceId = localStorage.getItem('deviceId');
-  if(!deviceId){
-    deviceId = (Math.floor(Math.random()*900000000)+100000000).toString();
-    localStorage.setItem('deviceId', deviceId);
-  }
-  let deviceName = localStorage.getItem('deviceName');
-
-  // Device registration popup logic
-  function askDeviceName() {
-    deviceNamePopup.style.display = 'flex';
-    deviceNameInput.value = '';
-    deviceNameInput.focus();
-  }
-  function registerDevice(name) {
-    localStorage.setItem('deviceName', name);
-    deviceName = name;
-    deviceNamePopup.style.display = 'none';
-    deviceRef.set({
-      name: deviceName,
-      type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-      role: null
-    });
-  }
-  // Always set up device ref
-  const deviceRef = db.ref('devices/' + deviceId);
-
-  // If no name or default, prompt for device name
-  if (!deviceName || deviceName === "Unknown") {
-    askDeviceName();
-  } else {
-    // Always register device on page load!
-    deviceRef.set({
-      name: deviceName,
-      type: navigator.userAgent.includes("Mobile") ? "phone" : "pc",
-      role: null
-    });
-  }
-  // Save name button
-  saveDeviceNameBtn.onclick = () => {
-    const name = deviceNameInput.value.trim();
-    if (name.length > 0) registerDevice(name);
-  };
-  deviceNameInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter') saveDeviceNameBtn.click();
-  });
-
-  // Admin auto-assign for first device
-  db.ref('devices').once('value').then(devicesSnap=>{
-    const devices = devicesSnap.val() || {};
-    if(Object.keys(devices).length === 1){
-      deviceRef.update({role:"admin"});
+  // ------------------ Admin Buttons Visibility ------------------
+  function updateAdminButtonsVisibility() {
+    if (usersDB[deviceId] && usersDB[deviceId].role === "admin") {
+      adminButtonsDiv.style.display = 'flex';
+    } else {
+      adminButtonsDiv.style.display = 'none';
     }
-  });
-
-  function updateAdminButtonsVisibility(){
-    deviceRef.once('value').then(snap=>{
-      const data = snap.val();
-      if(data && data.role === "admin"){
-        adminButtonsDiv.style.display = 'flex';
-      } else {
-        adminButtonsDiv.style.display = 'none';
-      }
-    });
   }
 
   function showSection(section){
@@ -256,76 +171,66 @@ document.addEventListener("DOMContentLoaded", () => {
     section.style.display='flex';
     updateAdminButtonsVisibility();
   }
-
   showSection(mainFormSection);
 
-  // ------------------ Live Manage Users Patch ------------------
+  // ------------------ Render Users ------------------
   function renderUsers() {
-      usersListDiv.innerHTML = '';
-      db.ref('devices').once('value').then(snapshot => {
-          const devices = snapshot.val() || {};
-          Object.entries(devices).forEach(([id, data]) => {
-              const box = document.createElement('div');
-              box.style.background = '#fff';
-              box.style.padding = '15px';
-              box.style.borderRadius = '10px';
-              box.style.marginBottom = '10px';
-              box.style.display = 'flex';
-              box.style.flexDirection = 'column';
-              box.style.alignItems = 'flex-start';
+    usersListDiv.innerHTML = '';
+    Object.entries(usersDB).forEach(([id, data]) => {
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.padding = '15px';
+      box.style.borderRadius = '10px';
+      box.style.marginBottom = '10px';
+      box.style.display = 'flex';
+      box.style.flexDirection = 'column';
+      box.style.alignItems = 'flex-start';
 
-              const nameP = document.createElement('p');
-              nameP.innerHTML = `<strong>${data.name}</strong>`;
+      const nameP = document.createElement('p');
+      nameP.innerHTML = `<strong>${data.name}</strong>`;
 
-              const typeP = document.createElement('p');
-              typeP.innerHTML = `Device: ${data.type || 'Unknown'}`;
+      const typeP = document.createElement('p');
+      typeP.innerHTML = `Device: ${data.type || 'Unknown'}`;
 
-              const roleP = document.createElement('p');
-              roleP.innerHTML = `Role: ${data.role || 'none'}`;
+      const roleP = document.createElement('p');
+      roleP.innerHTML = `Role: ${data.role || 'none'}`;
 
-              const btnContainer = document.createElement('div');
-              btnContainer.style.marginTop = '10px';
-              btnContainer.style.display = 'flex';
-              btnContainer.style.gap = '10px';
+      const btnContainer = document.createElement('div');
+      btnContainer.style.marginTop = '10px';
+      btnContainer.style.display = 'flex';
+      btnContainer.style.gap = '10px';
 
-              const userBtn = document.createElement('button');
-              userBtn.innerText = 'User';
-              userBtn.onclick = () => {
-                  db.ref('devices/' + id + '/role').set('user');
-              };
+      const userBtn = document.createElement('button');
+      userBtn.innerText = 'User';
+      userBtn.onclick = () => {
+        usersDB[id].role = "user";
+        renderUsers();
+        updateAdminButtonsVisibility();
+      };
 
-              const adminBtn = document.createElement('button');
-              adminBtn.innerText = 'Admin';
-              adminBtn.onclick = () => {
-                  db.ref('devices/' + id + '/role').set('admin');
-              };
+      const adminBtn = document.createElement('button');
+      adminBtn.innerText = 'Admin';
+      adminBtn.onclick = () => {
+        usersDB[id].role = "admin";
+        renderUsers();
+        updateAdminButtonsVisibility();
+      };
 
-              btnContainer.appendChild(userBtn);
-              btnContainer.appendChild(adminBtn);
+      btnContainer.appendChild(userBtn);
+      btnContainer.appendChild(adminBtn);
 
-              box.appendChild(nameP);
-              box.appendChild(typeP);
-              box.appendChild(roleP);
-              box.appendChild(btnContainer);
+      box.appendChild(nameP);
+      box.appendChild(typeP);
+      box.appendChild(roleP);
+      box.appendChild(btnContainer);
 
-              // Highlight current device
-              if (id === deviceId) {
-                box.style.border = '2px solid #E4D882';
-              }
-
-              usersListDiv.appendChild(box);
-          });
-      });
+      usersListDiv.appendChild(box);
+    });
   }
 
-  // Always render users when opening the users GUI section
   document.getElementById('usersGuiBtn').addEventListener('click', () => {
-      showSection(usersGuiSection);
-      renderUsers();
-  });
-
-  db.ref('devices').on('value', () => {
-      if(usersGuiSection.style.display === 'flex') renderUsers();
+    renderUsers();
+    showSection(usersGuiSection);
   });
 
   // ------------------ Language Translations ------------------
@@ -399,8 +304,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setLanguage('english');
 
   // ------------------ Submission Handling ------------------
-  const submissionsRef = db.ref('submissions');
-
   document.getElementById('submissionForm').addEventListener('submit', e=>{
     e.preventDefault();
     if(e.target.checkValidity()){
@@ -412,10 +315,12 @@ document.addEventListener("DOMContentLoaded", () => {
         shift: shiftSelect.value,
         store: storeSelect.value
       };
-      submissionsRef.push(submission);
+      const subId = Math.random().toString(36).substr(2,9);
+      submissionsDB[subId] = submission;
       successMessage.classList.add('show');
       setTimeout(()=>successMessage.classList.remove('show'),3000);
       e.target.reset();
+      renderSubmissions();
     }
   });
 
@@ -427,41 +332,38 @@ document.addEventListener("DOMContentLoaded", () => {
   // ------------------ Render Submissions ------------------
   function renderSubmissions(){
     submissionsListDiv.innerHTML = '';
-    submissionsRef.once('value').then(snapshot=>{
-      const submissions = snapshot.val() || {};
-      Object.entries(submissions).forEach(([key, sub])=>{
-        const subDiv = document.createElement('div');
-        const makeBoldLabel = (label,value)=>{
-          const p = document.createElement('p');
-          p.innerHTML = `<strong>${label}:</strong> ${value}`;
-          p.style.fontSize='16px';
-          return p;
-        };
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
-        subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
+    Object.entries(submissionsDB).forEach(([key, sub])=>{
+      const subDiv = document.createElement('div');
+      const makeBoldLabel = (label,value)=>{
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${label}:</strong> ${value}`;
+        p.style.fontSize='16px';
+        return p;
+      };
+      subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
+      subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
+      subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
+      subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
+      subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
 
-        const btnContainer = document.createElement('div');
-        btnContainer.style.display='flex';
-        btnContainer.style.gap='10px';
+      const btnContainer = document.createElement('div');
+      btnContainer.style.display='flex';
+      btnContainer.style.gap='10px';
 
-        const acceptBtn = document.createElement('button');
-        acceptBtn.innerText = translations[currentLang].acceptBtn;
-        acceptBtn.style.flex='1';
-        acceptBtn.onclick = ()=>{ submissionsRef.child(key).remove(); renderSubmissions(); };
+      const acceptBtn = document.createElement('button');
+      acceptBtn.innerText = translations[currentLang].acceptBtn;
+      acceptBtn.style.flex='1';
+      acceptBtn.onclick = ()=>{ delete submissionsDB[key]; renderSubmissions(); };
 
-        const declineBtn = document.createElement('button');
-        declineBtn.innerText = translations[currentLang].declineBtn;
-        declineBtn.style.flex='1';
-        declineBtn.onclick = ()=>{ submissionsRef.child(key).remove(); renderSubmissions(); };
+      const declineBtn = document.createElement('button');
+      declineBtn.innerText = translations[currentLang].declineBtn;
+      declineBtn.style.flex='1';
+      declineBtn.onclick = ()=>{ delete submissionsDB[key]; renderSubmissions(); };
 
-        btnContainer.appendChild(acceptBtn);
-        btnContainer.appendChild(declineBtn);
-        subDiv.appendChild(btnContainer);
-        submissionsListDiv.appendChild(subDiv);
-      });
+      btnContainer.appendChild(acceptBtn);
+      btnContainer.appendChild(declineBtn);
+      subDiv.appendChild(btnContainer);
+      submissionsListDiv.appendChild(subDiv);
     });
   }
 
@@ -475,44 +377,41 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.innerText = letter;
       btn.onclick = ()=>{
         storeSubmissionsList.innerHTML='';
-        submissionsRef.once('value').then(snapshot=>{
-          const submissions = snapshot.val() || {};
-          Object.entries(submissions)
-            .filter(([k,sub])=>sub.store===letter)
-            .forEach(([k, sub])=>{
-              const subDiv = document.createElement('div');
-              const makeBoldLabel = (label,value)=>{
-                const p = document.createElement('p');
-                p.innerHTML = `<strong>${label}:</strong> ${value}`;
-                p.style.fontSize='16px';
-                return p;
-              };
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
-              subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
+        Object.entries(submissionsDB)
+          .filter(([k,sub])=>sub.store===letter)
+          .forEach(([k, sub])=>{
+            const subDiv = document.createElement('div');
+            const makeBoldLabel = (label,value)=>{
+              const p = document.createElement('p');
+              p.innerHTML = `<strong>${label}:</strong> ${value}`;
+              p.style.fontSize='16px';
+              return p;
+            };
+            subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Όνομα':'Name', sub.name));
+            subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Μήνας':'Month', sub.month));
+            subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Ημέρα':'Day', sub.day));
+            subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Βάρδια':'Shift', sub.shift));
+            subDiv.appendChild(makeBoldLabel(currentLang==='greek'?'Κατάστημα':'Store', sub.store));
 
-              const btnContainer = document.createElement('div');
-              btnContainer.style.display='flex';
-              btnContainer.style.gap='10px';
+            const btnContainer = document.createElement('div');
+            btnContainer.style.display='flex';
+            btnContainer.style.gap='10px';
 
-              const acceptBtn = document.createElement('button');
-              acceptBtn.innerText = translations[currentLang].acceptBtn;
-              acceptBtn.style.flex='1';
-              acceptBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
+            const acceptBtn = document.createElement('button');
+            acceptBtn.innerText = translations[currentLang].acceptBtn;
+            acceptBtn.style.flex='1';
+            acceptBtn.onclick = ()=>{ delete submissionsDB[k]; btn.click(); };
 
-              const declineBtn = document.createElement('button');
-              declineBtn.innerText = translations[currentLang].declineBtn;
-              declineBtn.style.flex='1';
-              declineBtn.onclick = ()=>{ submissionsRef.child(k).remove(); btn.click(); };
+            const declineBtn = document.createElement('button');
+            declineBtn.innerText = translations[currentLang].declineBtn;
+            declineBtn.style.flex='1';
+            declineBtn.onclick = ()=>{ delete submissionsDB[k]; btn.click(); };
 
-              btnContainer.appendChild(acceptBtn);
-              btnContainer.appendChild(declineBtn);
-              subDiv.appendChild(btnContainer);
-              storeSubmissionsList.appendChild(subDiv);
-            });
-        });
+            btnContainer.appendChild(acceptBtn);
+            btnContainer.appendChild(declineBtn);
+            subDiv.appendChild(btnContainer);
+            storeSubmissionsList.appendChild(subDiv);
+          });
         showSection(storeSubmissionsSection);
       };
       storeButtonsDiv.appendChild(btn);
@@ -520,24 +419,21 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(storeMenuSection);
   });
 
-  document.getElementById('resetAllBtn').addEventListener('click', ()=>{ submissionsRef.remove(); renderSubmissions(); });
+  document.getElementById('resetAllBtn').addEventListener('click', ()=>{
+    submissionsDB = {};
+    renderSubmissions();
+  });
   document.getElementById('backFromSubmissionsBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreMenuBtn').addEventListener('click',()=>showSection(adminGuiSection));
   document.getElementById('backFromStoreSubmissionsBtn').addEventListener('click',()=>showSection(storeMenuSection));
 
-  // ------------------ Realtime Updates ------------------
-  submissionsRef.on('value', renderSubmissions);
-  db.ref('devices').on('value', ()=>{
-      if(usersGuiSection.style.display==='flex') renderUsers();
-  });
-
   // User submissions button
-  document.getElementById('viewSubmissionsBtn').addEventListener('click', () => {
-    showSection(submissionsGuiSection);
-    renderSubmissions();
-  });
+  // You may add a button for users to view submissions, if you want
 
   updateAdminButtonsVisibility();
+
+  // Show submissions on demand (you can call this manually)
+  window.renderSubmissions = renderSubmissions;
 });
 </script>
 </body>
