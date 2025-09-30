@@ -1,273 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Zorbas Submittions</title>
-<style>
-@import url('https://fonts.cdnfonts.com/css/algerian');
-
-body {
-  font-family: Arial, sans-serif;
-  background: #DAD9D7;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  margin: 0;
-  position: relative;
-}
-
-.logo {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-}
-
-/* Language buttons */
-.lang-buttons {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  font-size: 14px;
-}
-.lang-buttons button {
-  background-color: #DAD9D7;
-  border: none;
-  cursor: pointer;
-  margin: 0 2px;
-  font-size: 14px;
-  text-decoration: none;
-  font-weight: normal;
-}
-.lang-buttons button.active {
-  font-weight: bold;
-}
-
-/* Title */
-.form-title {
-  font-family: 'Algerian', sans-serif;
-  font-size: 60px;
-  font-weight: bold;
-  margin-bottom: 10px; /* closer to form */
-  margin-top: -20px;   /* slightly higher on page */
-  text-align: center;
-}
-
-.form-box {
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  width: 320px;
-  text-align: center;
-}
-
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  text-align: center;
-}
-
-input, select {
-  width: 90%;
-  padding: 10px;
-  margin-bottom: 18px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: left;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-#store-container {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s ease;
-}
-
-#store-container.show {
-  max-height: 500px;
-}
-
-.submit-btn {
-  background-color: #E8DA89;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.submit-btn:hover {
-  background-color: #d4c15e;
-}
-
-/* Message box below submit */
-#message {
-  margin-top: 10px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: bold;
-  display: none;
-  font-size: 14px;
-}
-#message.success {
-  background-color: #4CAF50;
-}
-#message.error {
-  background-color: #f44336;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Device Info Box</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .device-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 300px;
+    }
+    .device-box h2 {
+      margin-bottom: 10px;
+    }
+    .device-box button {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .device-box button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
 
-<img class="logo" src="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-180x180.png" alt="Zorbas Logo" width="40" height="40">
-
-<div class="lang-buttons">
-  <button id="greek-btn" class="active">ΕΛΛ</button> / 
-  <button id="eng-btn">ENG</button>
-</div>
-
-<div class="form-title" id="form-title">Zorbas Submittions</div>
-
-<div class="form-box">
-  <form id="zorbas-form">
-    <label for="name" id="label-name">Όνομα</label>
-    <input type="text" id="name" placeholder="Γράψτε το όνομά σας" required>
-
-    <label for="month" id="label-month">Μήνας</label>
-    <select id="month" required>
-      <option value="" disabled selected>Επιλέξτε μήνα</option>
-      <option>Ιανουάριος</option><option>Φεβρουάριος</option><option>Μάρτιος</option>
-      <option>Απρίλιος</option><option>Μάιος</option><option>Ιούνιος</option>
-      <option>Ιούλιος</option><option>Αύγουστος</option><option>Σεπτέμβριος</option>
-      <option>Οκτώβριος</option><option>Νοέμβριος</option><option>Δεκέμβριος</option>
-    </select>
-
-    <label for="day" id="label-day">Ημέρα</label>
-    <input type="text" id="day" placeholder="π.χ. 12 - 24" pattern="[0-9\s-]+" required>
-
-    <label for="shift" id="label-shift">Βάρδια</label>
-    <select id="shift" required>
-      <option value="" disabled selected>Επιλέξτε βάρδια</option>
-      <option>off</option>
-      <option>6-2</option>
-      <option>2-10</option>
-    </select>
-
-    <label for="location" id="label-location">Τοποθεσία</label>
-    <select id="location" required>
-      <option value="" disabled selected>Επιλέξτε τοποθεσία</option>
-      <option value="NICOSIA">Λευκωσία</option>
-      <option value="LARNACA">Λάρνακα</option>
-      <option value="FAMAGUSTA">Αμμόχωστος</option>
-      <option value="LIMASSOL">Λεμεσός</option>
-      <option value="PAFOS">Πάφος</option>
-    </select>
-
-    <div id="store-container">
-      <label for="store" id="label-store">Κατάστημα</label>
-      <select id="store"></select>
-    </div>
-
-    <button type="button" class="submit-btn" id="submit-btn">Υποβολή</button>
-    <div id="message"></div>
-  </form>
+<div class="device-box">
+  <h2 id="deviceType">Device Type: Loading...</h2>
+  <button onclick="selectRole('User')">User</button>
+  <button onclick="selectRole('Admin')">Admin</button>
 </div>
 
 <script>
-const stores = {
-  NICOSIA: {GR:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Κοκκινοτριμιθιά","Άγιος Παύλος","Χατζηιωσηφ","Παλλουριώτισσα"], EN:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Kokkinotrimithia","Agios Pavlos","Chatziiosif","Pallouriotissa"]},
-  LARNACA: {GR:["Τιμάγια","Μακαρίου","Φανερωμένη","Ορόκλινη","Αραδίππου","Κίτι"], EN:["Timagia","Makariou","Faneromeni","Oroklini","Aradippou","Kiti"]},
-  FAMAGUSTA: {GR:["Παραλίμνι","Πρωταράς"], EN:["Paralimni","Protaras"]},
-  LIMASSOL: {GR:["Πάφου","Ακαδημίας","NAAFI","Όμηρου"], EN:["Paphou","Akadimias","NAAFI","Omirou"]},
-  PAFOS: {GR:["Ελ. Βενιζέλου","Γεροσκήπου","Ελλάδος","Αποστόλου Παύλου"], EN:["El. Venizelou","Geroskipou","Ellados","Apostolou Pavlou"]}
-};
-
-let currentLang="GR";
-const greekBtn=document.getElementById("greek-btn");
-const engBtn=document.getElementById("eng-btn");
-const locationSelect=document.getElementById("location");
-const storeContainer=document.getElementById("store-container");
-const storeSelect=document.getElementById("store");
-const submitBtn=document.getElementById("submit-btn");
-const messageDiv=document.getElementById("message");
-
-greekBtn.addEventListener("click",()=>switchLang("GR"));
-engBtn.addEventListener("click",()=>switchLang("EN"));
-
-function switchLang(lang){
-  currentLang=lang;
-  if(lang==="GR"){
-    greekBtn.classList.add("active"); engBtn.classList.remove("active");
-    document.getElementById("label-name").textContent="Όνομα";
-    document.getElementById("name").placeholder="Γράψτε το όνομά σας";
-    document.getElementById("label-day").textContent="Ημέρα";
-    document.getElementById("day").placeholder="π.χ. 12 - 24";
-    document.getElementById("label-shift").textContent="Βάρδια";
-    document.getElementById("shift").options[0].text="Επιλέξτε βάρδια";
-    document.getElementById("label-month").textContent="Μήνας";
-    document.getElementById("month").options[0].text="Επιλέξτε μήνα";
-    document.getElementById("label-location").textContent="Τοποθεσία";
-    document.getElementById("location").options[0].text="Επιλέξτε τοποθεσία";
-    document.getElementById("label-store").textContent="Κατάστημα";
-    submitBtn.textContent="Υποβολή";
-  } else {
-    greekBtn.classList.remove("active"); engBtn.classList.add("active");
-    document.getElementById("label-name").textContent="Name";
-    document.getElementById("name").placeholder="Fill out your name";
-    document.getElementById("label-day").textContent="Day";
-    document.getElementById("day").placeholder="fill out your day";
-    document.getElementById("label-shift").textContent="Shift";
-    document.getElementById("shift").options[0].text="Select shift";
-    document.getElementById("label-month").textContent="Month";
-    document.getElementById("month").options[0].text="Select month";
-    document.getElementById("label-location").textContent="Location";
-    document.getElementById("location").options[0].text="Select location";
-    document.getElementById("label-store").textContent="Stores";
-    submitBtn.textContent="Submit";
+  function getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/tablet|ipad|playbook|silk/i.test(ua)) return "Tablet";
+    if (/mobile|android|iphone|ipod/i.test(ua)) return "Phone";
+    return "PC";
   }
-  if(locationSelect.value) updateStores(locationSelect.value);
-}
 
-locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
+  document.getElementById("deviceType").textContent = "Device Type: " + getDeviceType();
 
-function updateStores(location){
-  if(stores[location]){
-    storeSelect.innerHTML=`<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
-    stores[location][currentLang].forEach(store=>{
-      const option=document.createElement("option");
-      option.value=store; option.textContent=store;
-      storeSelect.appendChild(option);
-    });
-    storeContainer.classList.add("show");
-  } else storeContainer.classList.remove("show");
-}
-
-function showMessage(text,type){
-  messageDiv.textContent=text;
-  messageDiv.className=type; // success or error
-  messageDiv.style.display="block";
-  setTimeout(()=>{messageDiv.style.display="none";},2000);
-}
-
-submitBtn.addEventListener("click",()=>{
-  const name=document.getElementById("name").value.trim();
-  const day=document.getElementById("day").value.trim();
-  const shift=document.getElementById("shift").value;
-  const month=document.getElementById("month").value;
-  const location=document.getElementById("location").value;
-  const store=storeContainer.classList.contains("show")?storeSelect.value:"filled";
-
-  if(name && day && shift && month && location && store){
-    showMessage(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
-    document.getElementById("zorbas-form").reset();
-    storeContainer.classList.remove("show");
-  } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
-});
+  function selectRole(role) {
+    alert("You selected: " + role);
+    // Add your logic here (e.g., redirect or store role)
+  }
 </script>
 
 </body>
