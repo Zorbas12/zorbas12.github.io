@@ -19,7 +19,6 @@ body {
   position: relative;
 }
 
-/* Language buttons */
 .lang-buttons {
   position: absolute;
   top: 15px;
@@ -39,7 +38,6 @@ body {
   font-weight: bold;
 }
 
-/* Title */
 .form-title {
   font-family: 'Algerian', sans-serif;
   font-size: 60px;
@@ -99,7 +97,6 @@ input, select {
   background-color: #d4c15e;
 }
 
-/* Message box below submit */
 #message {
   margin-top: 10px;
   padding: 10px 15px;
@@ -109,8 +106,9 @@ input, select {
   display: none;
   font-size: 14px;
 }
+#message.success { background-color: #4CAF50; }
+#message.error { background-color: #f44336; }
 
-/* Admin GUI button in corner */
 #admin-btn {
   position: fixed;
   bottom: 15px;
@@ -118,7 +116,6 @@ input, select {
   z-index: 1000;
 }
 
-/* Admin GUI full overlay */
 #admin-gui {
   display:none;
   position:fixed;
@@ -131,8 +128,7 @@ input, select {
   flex-direction:column;
 }
 
-/* White box inside submissions overlay */
-#submissions-gui {
+#submissions-gui, #manage-users-gui, #store-submissions-gui {
   display:none;
   position:fixed;
   top:0; left:0;
@@ -141,17 +137,107 @@ input, select {
   z-index:3000;
   align-items:center;
   justify-content:center;
+  overflow-y: auto;
 }
-#submissions-box {
+
+#submissions-box, #manage-users-box, #store-submissions-box {
   background:#fff;
   padding:30px;
   border-radius:14px;
   text-align:center;
   width:300px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
-#submissions-box button {
+
+#submissions-box button, #manage-users-box button {
   width:90%;
   margin-bottom:10px;
+}
+
+.user-card {
+  background: #f5f5f5;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.user-card p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.user-card .role-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.user-card .role-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.user-card .role-buttons .user-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.user-card .role-buttons .admin-btn {
+  background-color: #FF9800;
+  color: white;
+}
+
+.user-card .role-buttons button.active {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
+}
+
+.user-card .role-buttons button:not(.active) {
+  opacity: 0.5;
+}
+
+.submission-card {
+  background: #f5f5f5;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.submission-card p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.submission-card .action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.submission-card .action-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.submission-card .accept-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.submission-card .decline-btn {
+  background-color: #f44336;
+  color: white;
 }
 </style>
 </head>
@@ -164,7 +250,6 @@ input, select {
 
 <div class="form-title" id="form-title">Zorbas Submissions</div>
 
-<!-- Main submission GUI -->
 <div class="form-box" id="submit-gui">
   <form id="zorbas-form">
     <label for="name" id="label-name">Name</label>
@@ -210,32 +295,32 @@ input, select {
   </form>
 </div>
 
-<!-- Admin GUI button -->
 <button id="admin-btn" class="submit-btn">Admin GUI</button>
 
-<!-- Admin GUI overlay -->
 <div id="admin-gui">
   <button class="submit-btn" id="admin-see-submissions">See all submissions</button>
   <button class="submit-btn" id="admin-reset-submissions">Reset all submissions</button>
-  <button class="submit-btn" id="admin-see-users">See all users</button>
+  <button class="submit-btn" id="admin-see-users">Manage Users</button>
   <button id="admin-back" style="background-color:#f44336; color:#fff; border:none; padding:12px 20px; border-radius:6px; font-size:16px; cursor:pointer; margin-top:20px;">Back</button>
 </div>
 
-<!-- Submissions locations overlay -->
 <div id="submissions-gui">
-  <div id="submissions-box">
-    <!-- Dynamic content added here -->
-  </div>
+  <div id="submissions-box"></div>
 </div>
 
-<!-- Firebase SDKs -->
+<div id="manage-users-gui">
+  <div id="manage-users-box"></div>
+</div>
+
+<div id="store-submissions-gui">
+  <div id="store-submissions-box"></div>
+</div>
+
 <script type="module">
-  // Import the functions you need from the SDKs
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  import { getDatabase, ref, set, get, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
   import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
 
-  // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyD_2QiORiAdBpfLe9Dzxv6KJX46HLqbALc",
     authDomain: "zorbas12.firebaseapp.com",
@@ -247,18 +332,22 @@ input, select {
     measurementId: "G-84Q60WY6FC"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const database = getDatabase(app);
   const analytics = getAnalytics(app);
 
-  // Make Firebase available globally so index.js can use it
   window.firebaseApp = app;
   window.firebaseDatabase = database;
   window.firebaseAnalytics = analytics;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseGet = get;
+  window.firebasePush = push;
+  window.firebaseRemove = remove;
+  window.firebaseOnValue = onValue;
 </script>
 
-<script src="index.js" defer></script>
+<script src="index.js"></script>
 
 </body>
 </html>
