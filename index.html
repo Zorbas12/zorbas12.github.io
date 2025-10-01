@@ -523,8 +523,38 @@ resetSubmissionsBtn.addEventListener("click", () => {
   );
 });
 
-seeUsersBtn.addEventListener("click", () => { 
-  alert("Users feature not implemented yet."); 
+seeUsersBtn.addEventListener("click", () => {
+  const submissionsRef = ref(db, 'submissions');
+  onValue(submissionsRef, snapshot => {
+    const data = snapshot.val();
+    if(data){
+      // Backup the data to console or a JSON file
+      console.log("Backup of all submissions:", JSON.stringify(data, null, 2));
+    }
+    // Now continue showing the users GUI
+    adminGui.style.display = "none";
+    usersGui.style.display = "flex";
+    usersContainer.innerHTML = "";
+    if (data) {
+      for (let key in data) {
+        const user = data[key];
+        const card = document.createElement("div");
+        card.className = "user-card";
+        card.style.cssText = "background:#fff;padding:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);";
+        card.innerHTML = `
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Month:</strong> ${user.month}</p>
+          <p><strong>Day:</strong> ${user.day}</p>
+          <p><strong>Shift:</strong> ${user.shift}</p>
+          <p><strong>Location:</strong> ${user.location}</p>
+          <p><strong>Store:</strong> ${user.store}</p>
+        `;
+        usersContainer.appendChild(card);
+      }
+    } else {
+      usersContainer.innerHTML = "<p>No users found.</p>";
+    }
+  }, { onlyOnce: true });
 });
 
 // ---------------- Store Submissions Cards ----------------
