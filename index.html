@@ -525,22 +525,25 @@ resetSubmissionsBtn.addEventListener("click", () => {
 
 seeUsersBtn.addEventListener("click", () => {
   const submissionsRef = ref(db, 'submissions');
+
   onValue(submissionsRef, snapshot => {
     const data = snapshot.val();
+
+    // Backup in console
     if(data){
-      // Backup the data to console or a JSON file
       console.log("Backup of all submissions:", JSON.stringify(data, null, 2));
     }
-    // Now continue showing the users GUI
+
+    // Show users GUI
     adminGui.style.display = "none";
     usersGui.style.display = "flex";
     usersContainer.innerHTML = "";
-    if (data) {
-      for (let key in data) {
+
+    if(data){
+      for (let key in data){
         const user = data[key];
         const card = document.createElement("div");
         card.className = "user-card";
-        card.style.cssText = "background:#fff;padding:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);";
         card.innerHTML = `
           <p><strong>Name:</strong> ${user.name}</p>
           <p><strong>Month:</strong> ${user.month}</p>
