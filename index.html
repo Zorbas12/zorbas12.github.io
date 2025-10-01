@@ -305,6 +305,28 @@ const devicesGui = document.getElementById("devices-gui");
 const devicesContainer = document.getElementById("devices-container");
 const backDevicesBtn = document.getElementById("back-devices");
 
+  // ================= Admin Button Permission =================
+adminBtn.style.display = "none"; // hide by default
+
+get(deviceRef).then(snapshot => {
+  if (snapshot.exists()) {
+    const deviceData = snapshot.val();
+    if (deviceData.role === "admin") {
+      adminBtn.style.display = "block"; // show if admin
+    }
+  }
+});
+
+// Optional live update if role changes
+onValue(deviceRef, snapshot => {
+  const deviceData = snapshot.val();
+  if (deviceData.role === "admin") {
+    adminBtn.style.display = "block";
+  } else {
+    adminBtn.style.display = "none";
+  }
+});
+  
 // Store submissions overlay
 const storeSubmissionsGui = document.createElement("div");
 storeSubmissionsGui.id = "store-submissions-gui";
@@ -428,7 +450,6 @@ resetSubmissionsBtn.addEventListener("click", () => {
 });
 
 // SEE USERS -> Devices GUI
-// SEE USERS -> Devices GUI
 seeUsersBtn.addEventListener("click", () => {
   adminGui.style.display = "none";
   devicesGui.style.display = "flex";
@@ -436,63 +457,100 @@ seeUsersBtn.addEventListener("click", () => {
 
   onValue(ref(db, 'devices'), snapshot => {
     const data = snapshot.val();
+    devicesContainer.innerHTML = ""; // clear old boxes
+
     if (data) {
       for (let key in data) {
         const d = data[key];
 
-        // Create the box container first
+        // Box container
         const box = document.createElement("div");
         box.style.cssText = `
           background:#fff;
-          padding:15px;
-          border-radius:10px;
-          margin-bottom:10px;
-          box-shadow:0 2px 8px rgba(0,0,0,0.2);
+          padding:20px;
+          border-radius:12px;
+          margin-bottom:20px;
+          box-shadow:0 4px 12px rgba(0,0,0,0.2);
           width:100%;
+          max-width:400px;
           display:flex;
           flex-direction:column;
           align-items:center;
-          gap:8px;
+          gap:15px;
         `;
 
-        // Add device info
-        box.innerHTML = `
-          <p><strong>Name:</strong> ${d.name}</p>
-          <p><strong>Type:</strong> ${d.type}</p>
-        `;
+        // Device display
+        const deviceEl = document.createElement("p");
+        deviceEl.style.cssText = "font-size:18px;font-weight:bold;text-align:center;margin:0;";
+        deviceEl.textContent = `Device: ${d.type}`; // <-- show "Device: PC/Phone/Tablet"
+        box.appendChild(deviceEl);
 
-        // Create role buttons container
-        const roleContainer = document.createElement("div");
-        roleContainer.style.cssText = "display:flex; gap:10px;";
+        // Add extra space
+        const spacer = document.createElement("div");
+        spacer.style.height = "10px";
+        box.appendChild(spacer);
+
+        // Role buttons container
+        const buttons = document.createElement("div");
+        buttons.style.cssText = "display:flex; gap:20px; justify-content:center;";
 
         const userBtn = document.createElement("button");
         userBtn.textContent = "User";
         userBtn.style.cssText = `
-          background:#E8DA89;
+          background:#fff;
           border:none;
-          padding:6px 12px;
+          padding:10px 20px;
           border-radius:6px;
           cursor:pointer;
-          font-weight:bold;
+          font-size:16px;
         `;
 
         const adminBtn = document.createElement("button");
         adminBtn.textContent = "Admin";
         adminBtn.style.cssText = `
-          background:#A2F5A2;
+          background:#fff;
           border:none;
-          padding:6px 12px;
+          padding:10px 20px;
           border-radius:6px;
           cursor:pointer;
-          font-weight:bold;
+          font-size:16px;
         `;
 
-        roleContainer.appendChild(userBtn);
-        roleContainer.appendChild(adminBtn);
-        box.appendChild(roleContainer);
+        function updateRoleUI(selectedRole) {
+          if(selectedRole==="user"){
+            userBtn.style.fontWeight="bold";
+            userBtn.style.textDecoration="underline";
+            adminBtn.style.fontWeight="normal";
+            adminBtn.style.textDecoration="none";
+          } else {
+            adminBtn.style.fontWeight="bold";
+            adminBtn.style.textDecoration="underline";
+            userBtn.style.fontWeight="normal";
+            userBtn.style.textDecoration="none";
+          }
+        }
+
+        // Initialize button state
+        updateRoleUI(d.role);
+
+        userBtn.addEventListener("click", () => {
+          set(ref(db, `devices/${key}/role`), "user");
+          updateRoleUI("user");
+        });
+
+        adminBtn.addEventListener("click", () => {
+          set(ref(db, `devices/${key}/role`), "admin");
+          updateRoleUI("admin");
+        });
+
+        buttons.appendChild(userBtn);
+        buttons.appendChild(adminBtn);
+        box.appendChild(buttons);
 
         devicesContainer.appendChild(box);
       }
+    } else {
+      devicesContainer.innerHTML = "<p>No devices found</p>";
     }
   }, { onlyOnce: true });
 });
