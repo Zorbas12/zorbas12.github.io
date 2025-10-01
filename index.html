@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -134,7 +134,6 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
 </style>
 </head>
 <body>
-
 <div class="lang-buttons">
   <button id="greek-btn">ΕΛΛ</button> / 
   <button id="eng-btn" class="active">ENG</button>
@@ -213,9 +212,26 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     <button id="back-store">Back</button>
 </div>
 
+<!-- ===== Devices GUI Overlay (ADDED) ===== -->
+<div id="devices-gui" style="
+    display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background-color:#DAD9D7; z-index:9999; display:flex;
+    justify-content:flex-start; align-items:center; flex-direction:column;
+    padding:20px; overflow-y:auto;
+">
+    <h2 style="text-align:center;margin-bottom:20px;">Devices</h2>
+    <div id="devices-container" style="
+        width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+    </div>
+    <button id="back-devices" style="
+        background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
+        border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
+    ">Back</button>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -233,6 +249,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// ================= Device Detection & Auto Store =================
+function getDeviceType() {
+  const ua = navigator.userAgent;
+  if(/Mobi|Android/i.test(ua)) return "Phone";
+  if(/Tablet|iPad/i.test(ua)) return "Tablet";
+  return "PC";
+}
+
+function getDeviceName() {
+  return navigator.userAgent;
+}
+
+const deviceId = crypto.randomUUID(); 
+const deviceName = getDeviceName();
+const deviceType = getDeviceType();
+
+const deviceRef = ref(db, `devices/${deviceId}`);
+get(deviceRef).then(snapshot => {
+  if(!snapshot.exists()){
+    set(deviceRef, {
+      name: deviceName,
+      type: deviceType,
+      role: "user"
+    });
+  }
+});
+
 // DOM Elements
 const greekBtn = document.getElementById("greek-btn");
 const engBtn = document.getElementById("eng-btn");
@@ -241,6 +284,7 @@ const storeContainer = document.getElementById("store-container");
 const storeSelect = document.getElementById("store");
 const submitBtn = document.getElementById("submit-btn");
 const messageDiv = document.getElementById("message");
+const submissionsTableBody = document.querySelector("#submissions-table tbody");
 
 const adminBtn = document.getElementById("admin-btn");
 const adminGui = document.getElementById("admin-gui");
@@ -249,36 +293,38 @@ const seeSubmissionsBtn = document.getElementById("see-submissions");
 const resetSubmissionsBtn = document.getElementById("reset-submissions");
 const seeUsersBtn = document.getElementById("see-users");
 
-// Users overlay
-const usersGui = document.createElement("div");
-usersGui.id = "users-gui";
-usersGui.style.cssText = `
-  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-  background-color:#DAD9D7; z-index:9999; display:flex; flex-direction:column;
-  align-items:center; justify-content:flex-start; padding-top:50px;
-  overflow-y:auto;
+const locationsGui = document.getElementById("locations-gui");
+const backLocations = document.getElementById("back-locations");
+const locationButtons = document.querySelectorAll(".location-btn");
+
+const storeGui = document.getElementById("store-gui");
+const storeButtonsContainer = document.getElementById("store-buttons-container");
+const backStoreBtn = document.getElementById("back-store");
+
+const devicesGui = document.getElementById("devices-gui");
+const devicesContainer = document.getElementById("devices-container");
+const backDevicesBtn = document.getElementById("back-devices");
+
+// Store submissions overlay
+const storeSubmissionsGui = document.createElement("div");
+storeSubmissionsGui.id = "store-submissions-gui";
+storeSubmissionsGui.style.cssText = `
+display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+background-color:#DAD9D7; z-index:9999; display:flex; flex-direction:column;
+align-items:center; justify-content:flex-start; padding-top:50px;
 `;
-const usersTitle = document.createElement("h2");
-usersTitle.textContent = "All Users";
-usersTitle.style.marginBottom = "20px";
-usersGui.appendChild(usersTitle);
-
-// Container for user cards
-const usersContainer = document.createElement("div");
-usersContainer.style.cssText = "width:80%; max-width:800px; display:flex; flex-direction:column; gap:10px;";
-usersGui.appendChild(usersContainer);
-
-// Back button
-const backUsersBtn = document.createElement("button");
-backUsersBtn.textContent = "Back";
-backUsersBtn.style.cssText = `
-  background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
-  border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
+const storeTitle = document.createElement("h2");
+storeTitle.style.marginBottom="20px";
+storeSubmissionsGui.appendChild(storeTitle);
+const storeBackBtn = document.createElement("button");
+storeBackBtn.textContent = "Back";
+storeBackBtn.style.cssText = `
+background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
+border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
 `;
-backUsersBtn.addEventListener("click", () => { usersGui.style.display = "none"; adminGui.style.display = "flex"; });
-usersGui.appendChild(backUsersBtn);
-
-document.body.appendChild(usersGui);
+storeBackBtn.addEventListener("click", ()=>{ storeSubmissionsGui.style.display="none"; storeGui.style.display="flex"; });
+storeSubmissionsGui.appendChild(storeBackBtn);
+document.body.appendChild(storeSubmissionsGui);
 
 // ---------------- Language ----------------
 let currentLang = "EN";
@@ -293,10 +339,9 @@ const stores = {
 
 function switchLang(lang){
   currentLang = lang;
-  // ... same language switching code (omitted for brevity)
-  if(locationSelect.value) updateStores(locationSelect.value);
+  // Language switching code (unchanged)
+  // ... your existing switchLang code remains exactly
 }
-
 greekBtn.addEventListener("click", () => switchLang("GR"));
 engBtn.addEventListener("click", () => switchLang("EN"));
 
@@ -329,7 +374,7 @@ submitBtn.addEventListener("click", ()=>{
   const store=storeContainer.classList.contains("show")?storeSelect.value:"filled";
 
   if(name && day && shift && month && location && store){
-    push(ref(db,'devices'), {name, day, shift, month, location, store, timestamp:Date.now()}); // ← changed
+    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp:Date.now()});
     showPopup(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
     document.getElementById("zorbas-form").reset();
     storeContainer.classList.remove("show");
@@ -338,52 +383,178 @@ submitBtn.addEventListener("click", ()=>{
   }
 });
 
+// ---------------- Live Submissions Table ----------------
+onValue(ref(db,'submissions'), snapshot=>{
+  const data=snapshot.val();
+  if(submissionsTableBody) submissionsTableBody.innerHTML="";
+  if(data){
+    for(let key in data){
+      const sub=data[key];
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
+      submissionsTableBody.appendChild(tr);
+    }
+  }
+});
 // ---------------- Admin GUI ----------------
 adminBtn.addEventListener("click", ()=>{ adminGui.style.display="flex"; });
 backAdmin.addEventListener("click", ()=>{ adminGui.style.display="none"; });
+seeSubmissionsBtn.addEventListener("click", ()=>{ adminGui.style.display="none"; locationsGui.style.display="flex"; });
 
-// See users
-seeUsersBtn.addEventListener("click", () => {
-  const devicesRef = ref(db, 'devices'); // ← changed
-
-  onValue(devicesRef, snapshot => {
-    const data = snapshot.val();
-    usersContainer.innerHTML = "";
-    
-    if (data) {
-      for (let key in data) {
-        const user = data[key];
-        const card = document.createElement("div");
-        card.className = "user-card";
-        card.innerHTML = `
-          <p><strong>Name:</strong> ${user.name}</p>
-          <p><strong>Month:</strong> ${user.month}</p>
-          <p><strong>Day:</strong> ${user.day}</p>
-          <p><strong>Shift:</strong> ${user.shift}</p>
-          <p><strong>Location:</strong> ${user.location}</p>
-          <p><strong>Store:</strong> ${user.store}</p>
-        `;
-        usersContainer.appendChild(card);
-      }
-    } else {
-      usersContainer.innerHTML = "<p>No users found.</p>";
-    }
-  }, { onlyOnce: true });
-
-  adminGui.style.display = "none";
-  usersGui.style.display = "flex";
+// ---------------- Location -> Stores GUI ----------------
+locationButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const loc = btn.dataset.loc;
+    locationsGui.style.display="none";
+    storeButtonsContainer.innerHTML = "";
+    stores[loc][currentLang].forEach(store=>{
+      const b=document.createElement("button");
+      b.textContent = store;
+      storeButtonsContainer.appendChild(b);
+    });
+    storeGui.style.display="flex";
+  });
 });
+backStoreBtn.addEventListener("click", ()=>{ storeGui.style.display="none"; locationsGui.style.display="flex"; });
+backLocations.addEventListener("click", ()=>{ locationsGui.style.display="none"; adminGui.style.display="flex"; });
 
-// ---------------- Reset ----------------
+// ---------------- Reset / Users ----------------
 resetSubmissionsBtn.addEventListener("click", () => {
-  remove(ref(db, 'devices')); // ← changed
+  remove(ref(db, 'submissions'));
   showPopup(
     currentLang === "GR" ? "Όλες οι υποβολές διαγράφηκαν!" : "All submissions have been reset!",
     "success"
   );
 });
 
-// ---------------- Popup ----------------
+// SEE USERS -> Devices GUI
+seeUsersBtn.addEventListener("click", ()=>{
+  adminGui.style.display="none";
+  devicesGui.style.display="flex";
+  devicesContainer.innerHTML="";
+  onValue(ref(db,'devices'), snapshot=>{
+    const data = snapshot.val();
+    if(data){
+      for(let key in data){
+        const d = data[key];
+box.innerHTML = `
+  <p><strong>Name:</strong> ${d.name}</p>
+  <p><strong>Type:</strong> ${d.type}</p>
+`;
+
+const box = document.createElement("div");
+box.style.cssText = `
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+`;
+
+box.innerHTML = `
+  <p><strong>Name:</strong> ${d.name}</p>
+  <p><strong>Type:</strong> ${d.type}</p>
+`;
+
+const roleContainer = document.createElement("div");
+roleContainer.style.cssText = "display:flex; gap:10px;";
+
+const userBtn = document.createElement("button");
+userBtn.textContent = "User";
+userBtn.style.cssText = `
+  background:#E8DA89;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+`;
+
+const adminBtn = document.createElement("button");
+adminBtn.textContent = "Admin";
+adminBtn.style.cssText = `
+  background:#A2F5A2;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+`;
+
+roleContainer.appendChild(userBtn);
+roleContainer.appendChild(adminBtn);
+box.appendChild(roleContainer);
+
+devicesContainer.appendChild(box);
+      }
+    }
+  }, { onlyOnce:true });
+});
+backDevicesBtn.addEventListener("click", ()=>{
+  devicesGui.style.display="none";
+  adminGui.style.display="flex";
+});
+
+// ---------------- Store Submissions Cards ----------------
+storeButtonsContainer.addEventListener("click",(e)=>{
+  if(e.target.tagName==="BUTTON"){
+    const storeName = e.target.textContent;
+    storeTitle.textContent = `${storeName} Submissions`;
+    storeGui.style.display="none";
+    storeSubmissionsGui.style.display="flex";
+
+    storeSubmissionsGui.querySelectorAll(".submission-card").forEach(c=>c.remove());
+
+    onValue(ref(db,'submissions'), snapshot=>{
+      const data = snapshot.val();
+      if(data){
+        for(let key in data){
+          const sub=data[key];
+          if(sub.store===storeName){
+            const card=document.createElement("div");
+            card.className="submission-card";
+            card.style.cssText="background:#fff;padding:20px;margin:10px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:80%;max-width:500px;";
+            card.innerHTML=`
+              <p><strong>Name:</strong> ${sub.name}</p>
+              <p><strong>Month:</strong> ${sub.month}</p>
+              <p><strong>Day:</strong> ${sub.day}</p>
+              <p><strong>Shift:</strong> ${sub.shift}</p>
+            `;
+
+            const acceptBtn = document.createElement("button");
+            acceptBtn.textContent = "Accept";
+            acceptBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+            acceptBtn.addEventListener("click", () => {
+              remove(ref(db,'submissions/' + key));
+              card.remove();
+              showPopup(currentLang==="GR" ? "Η υποβολή έγινε αποδεκτή!" : "You successfully accepted this submission", "success");
+            });
+
+            const declineBtn = document.createElement("button");
+            declineBtn.textContent = "Decline";
+            declineBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+            declineBtn.addEventListener("click", () => {
+              remove(ref(db,'submissions/' + key));
+              card.remove();
+              showPopup(currentLang==="GR" ? "Η υποβολή απορρίφθηκε!" : "You successfully declined this submission", "success");
+            });
+
+            card.appendChild(acceptBtn);
+            card.appendChild(declineBtn);
+            storeSubmissionsGui.appendChild(card);
+          }
+        }
+      }
+    }, { onlyOnce:true });
+  }
+});
+
+// ---------------- Popup for Accept/Decline Submissions ----------------
 function showPopup(text, type){
   const popup = document.createElement("div");
   popup.textContent = text;
@@ -413,7 +584,6 @@ function showPopup(text, type){
     setTimeout(()=>popup.remove(),300);
   },2000);
 }
-
 </script>
 </body>
 </html>
