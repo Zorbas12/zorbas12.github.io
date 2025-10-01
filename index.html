@@ -428,72 +428,73 @@ resetSubmissionsBtn.addEventListener("click", () => {
 });
 
 // SEE USERS -> Devices GUI
-seeUsersBtn.addEventListener("click", ()=>{
-  adminGui.style.display="none";
-  devicesGui.style.display="flex";
-  devicesContainer.innerHTML="";
-  onValue(ref(db,'devices'), snapshot=>{
+// SEE USERS -> Devices GUI
+seeUsersBtn.addEventListener("click", () => {
+  adminGui.style.display = "none";
+  devicesGui.style.display = "flex";
+  devicesContainer.innerHTML = "";
+
+  onValue(ref(db, 'devices'), snapshot => {
     const data = snapshot.val();
-    if(data){
-      for(let key in data){
+    if (data) {
+      for (let key in data) {
         const d = data[key];
-box.innerHTML = `
-  <p><strong>Name:</strong> ${d.name}</p>
-  <p><strong>Type:</strong> ${d.type}</p>
-`;
 
-const box = document.createElement("div");
-box.style.cssText = `
-  background:#fff;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.2);
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8px;
-`;
+        // Create the box container first
+        const box = document.createElement("div");
+        box.style.cssText = `
+          background:#fff;
+          padding:15px;
+          border-radius:10px;
+          margin-bottom:10px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.2);
+          width:100%;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:8px;
+        `;
 
-box.innerHTML = `
-  <p><strong>Name:</strong> ${d.name}</p>
-  <p><strong>Type:</strong> ${d.type}</p>
-`;
+        // Add device info
+        box.innerHTML = `
+          <p><strong>Name:</strong> ${d.name}</p>
+          <p><strong>Type:</strong> ${d.type}</p>
+        `;
 
-const roleContainer = document.createElement("div");
-roleContainer.style.cssText = "display:flex; gap:10px;";
+        // Create role buttons container
+        const roleContainer = document.createElement("div");
+        roleContainer.style.cssText = "display:flex; gap:10px;";
 
-const userBtn = document.createElement("button");
-userBtn.textContent = "User";
-userBtn.style.cssText = `
-  background:#E8DA89;
-  border:none;
-  padding:6px 12px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-`;
+        const userBtn = document.createElement("button");
+        userBtn.textContent = "User";
+        userBtn.style.cssText = `
+          background:#E8DA89;
+          border:none;
+          padding:6px 12px;
+          border-radius:6px;
+          cursor:pointer;
+          font-weight:bold;
+        `;
 
-const adminBtn = document.createElement("button");
-adminBtn.textContent = "Admin";
-adminBtn.style.cssText = `
-  background:#A2F5A2;
-  border:none;
-  padding:6px 12px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-`;
+        const adminBtn = document.createElement("button");
+        adminBtn.textContent = "Admin";
+        adminBtn.style.cssText = `
+          background:#A2F5A2;
+          border:none;
+          padding:6px 12px;
+          border-radius:6px;
+          cursor:pointer;
+          font-weight:bold;
+        `;
 
-roleContainer.appendChild(userBtn);
-roleContainer.appendChild(adminBtn);
-box.appendChild(roleContainer);
+        roleContainer.appendChild(userBtn);
+        roleContainer.appendChild(adminBtn);
+        box.appendChild(roleContainer);
 
-devicesContainer.appendChild(box);
+        devicesContainer.appendChild(box);
       }
     }
-  }, { onlyOnce:true });
+  }, { onlyOnce: true });
 });
 backDevicesBtn.addEventListener("click", ()=>{
   devicesGui.style.display="none";
