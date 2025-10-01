@@ -15,230 +15,34 @@ body {
   justify-content: flex-start;
   min-height: 100vh;
   margin: 0;
-  padding-top: 100px;
+  padding-top: 50px;
   position: relative;
 }
 
-.lang-buttons {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  font-size: 14px;
-}
-.lang-buttons button {
-  background-color: #DAD9D7;
-  border: none;
-  cursor: pointer;
-  margin: 0 2px;
-  font-size: 14px;
-  text-decoration: none;
-  font-weight: normal;
-}
-.lang-buttons button.active {
-  font-weight: bold;
-}
+.lang-buttons { position: absolute; top: 15px; right: 15px; font-size: 14px; }
+.lang-buttons button { background-color: #DAD9D7; border: none; cursor: pointer; margin: 0 2px; font-size: 14px; font-weight: normal; }
+.lang-buttons button.active { font-weight: bold; }
 
-.form-title {
-  font-family: 'Algerian', sans-serif;
-  font-size: 60px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: center;
-}
+.form-title { font-family: 'Algerian', sans-serif; font-size: 60px; font-weight: bold; margin-bottom: 10px; text-align: center; }
 
-.form-box {
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  width: 320px;
-  text-align: center;
-  margin-bottom: 20px;
-}
+.form-box { background: #fff; padding: 30px 40px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 320px; text-align: center; margin-bottom: 20px; }
 
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  text-align: center;
-}
+label { display: block; margin-bottom: 6px; font-weight: bold; text-align: center; }
 
-input, select {
-  width: 90%;
-  padding: 10px;
-  margin-bottom: 18px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: left;
-  font-size: 14px;
-  box-sizing: border-box;
-}
+input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 6px; text-align: left; font-size: 14px; box-sizing: border-box; }
 
-#store-container {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s ease;
-}
+#store-container { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+#store-container.show { max-height: 500px; }
 
-#store-container.show {
-  max-height: 500px;
-}
+.submit-btn { background-color: #E8DA89; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
+.submit-btn:hover { background-color: #d4c15e; }
 
-.submit-btn {
-  background-color: #E8DA89;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.submit-btn:hover {
-  background-color: #d4c15e;
-}
+#message { margin-top: 10px; padding: 10px 15px; border-radius: 6px; color: #fff; font-weight: bold; display: none; font-size: 14px; }
 
-#message {
-  margin-top: 10px;
-  padding: 10px 15px;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: bold;
-  display: none;
-  font-size: 14px;
-}
-#message.success { background-color: #4CAF50; }
-#message.error { background-color: #f44336; }
-
-#admin-btn {
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  z-index: 1000;
-}
-
-#admin-gui {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:#DAD9D7;
-  z-index:2000;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-}
-
-#submissions-gui, #manage-users-gui, #store-submissions-gui {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:#DAD9D7;
-  z-index:3000;
-  align-items:center;
-  justify-content:center;
-  overflow-y: auto;
-}
-
-#submissions-box, #manage-users-box, #store-submissions-box {
-  background:#fff;
-  padding:30px;
-  border-radius:14px;
-  text-align:center;
-  width:300px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-#submissions-box button, #manage-users-box button {
-  width:90%;
-  margin-bottom:10px;
-}
-
-.user-card {
-  background: #f5f5f5;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  text-align: left;
-}
-
-.user-card p {
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.user-card .role-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.user-card .role-buttons button {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.user-card .role-buttons .user-btn {
-  background-color: #2196F3;
-  color: white;
-}
-
-.user-card .role-buttons .admin-btn {
-  background-color: #FF9800;
-  color: white;
-}
-
-.user-card .role-buttons button.active {
-  opacity: 1;
-  box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
-}
-
-.user-card .role-buttons button:not(.active) {
-  opacity: 0.5;
-}
-
-.submission-card {
-  background: #f5f5f5;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  text-align: left;
-}
-
-.submission-card p {
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.submission-card .action-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.submission-card .action-buttons button {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.submission-card .accept-btn {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.submission-card .decline-btn {
-  background-color: #f44336;
-  color: white;
-}
+#submissions-container { background: #fff; padding: 20px 30px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 80%; max-width: 800px; margin-top: 20px; overflow-x: auto; }
+#submissions-table { width: 100%; border-collapse: collapse; }
+#submissions-table th, #submissions-table td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+#submissions-table th { background-color: #E8DA89; }
 </style>
 </head>
 <body>
@@ -295,59 +99,163 @@ input, select {
   </form>
 </div>
 
-<button id="admin-btn" class="submit-btn">Admin GUI</button>
-
-<div id="admin-gui">
-  <button class="submit-btn" id="admin-see-submissions">See all submissions</button>
-  <button class="submit-btn" id="admin-reset-submissions">Reset all submissions</button>
-  <button class="submit-btn" id="admin-see-users">Manage Users</button>
-  <button id="admin-back" style="background-color:#f44336; color:#fff; border:none; padding:12px 20px; border-radius:6px; font-size:16px; cursor:pointer; margin-top:20px;">Back</button>
-</div>
-
-<div id="submissions-gui">
-  <div id="submissions-box"></div>
-</div>
-
-<div id="manage-users-gui">
-  <div id="manage-users-box"></div>
-</div>
-
-<div id="store-submissions-gui">
-  <div id="store-submissions-box"></div>
+<div id="submissions-container">
+  <h2 style="text-align:center;">Submissions</h2>
+  <table id="submissions-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Month</th>
+        <th>Day</th>
+        <th>Shift</th>
+        <th>Location</th>
+        <th>Store</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { getDatabase, ref, set, get, push, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-  import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyD_2QiORiAdBpfLe9Dzxv6KJX46HLqbALc",
-    authDomain: "zorbas12.firebaseapp.com",
-    databaseURL: "https://zorbas12-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "zorbas12",
-    storageBucket: "zorbas12.firebasestorage.app",
-    messagingSenderId: "643468962153",
-    appId: "1:643468962153:web:20695d324d8fd0abd635f8",
-    measurementId: "G-84Q60WY6FC"
-  };
+// ------------------ Firebase Config ------------------
+const firebaseConfig = {
+  apiKey: "AIzaSyB08KDzXF6rgvqPJGaaD1SYPycAecaH8Vg",
+  authDomain: "zorbas1.firebaseapp.com",
+  databaseURL: "https://zorbas1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "zorbas1",
+  storageBucket: "zorbas1.firebasestorage.app",
+  messagingSenderId: "26818695331",
+  appId: "1:26818695331:web:afafafe4454bacf5d3af16",
+  measurementId: "G-WHH6ZTZNP0"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const database = getDatabase(app);
-  const analytics = getAnalytics(app);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  window.firebaseApp = app;
-  window.firebaseDatabase = database;
-  window.firebaseAnalytics = analytics;
-  window.firebaseRef = ref;
-  window.firebaseSet = set;
-  window.firebaseGet = get;
-  window.firebasePush = push;
-  window.firebaseRemove = remove;
-  window.firebaseOnValue = onValue;
+// ------------------ DOM Elements ------------------
+const greekBtn = document.getElementById("greek-btn");
+const engBtn = document.getElementById("eng-btn");
+const locationSelect = document.getElementById("location");
+const storeContainer = document.getElementById("store-container");
+const storeSelect = document.getElementById("store");
+const submitBtn = document.getElementById("submit-btn");
+const messageDiv = document.getElementById("message");
+const submissionsTableBody = document.querySelector("#submissions-table tbody");
+
+let currentLang = "EN";
+
+const stores = {
+  NICOSIA: {EN:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Kokkinotrimithia","Agios Pavlos","Chatziiosif","Pallouriotissa"], GR:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Κοκκινοτριμιθιά","Άγιος Παύλος","Χατζηιωσηφ","Παλλουριώτισσα"]},
+  LARNACA: {EN:["Timagia","Makariou","Faneromeni","Oroklini","Aradippou","Kiti"], GR:["Τιμάγια","Μακαρίου","Φανερωμένη","Ορόκλινη","Αραδίππου","Κίτι"]},
+  FAMAGUSTA: {EN:["Paralimni","Protaras"], GR:["Παραλίμνι","Πρωταράς"]},
+  LIMASSOL: {EN:["Paphou","Akadimias","NAAFI","Omirou"], GR:["Πάφου","Ακαδημίας","NAAFI","Όμηρου"]},
+  PAFOS: {EN:["El. Venizelou","Geroskipou","Ellados","Apostolou Pavlou"], GR:["Ελ. Βενιζέλου","Γεροσκήπου","Ελλάδος","Αποστόλου Παύλου"]}
+};
+
+// ------------------ Functions ------------------
+function updateStores(location){
+  if(stores[location]){
+    storeSelect.innerHTML = `<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
+    stores[location][currentLang].forEach(store=>{
+      const option = document.createElement("option");
+      option.value = store; option.textContent = store;
+      storeSelect.appendChild(option);
+    });
+    storeContainer.classList.add("show");
+  } else storeContainer.classList.remove("show");
+}
+
+locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
+
+function showMessage(text,type){
+  messageDiv.textContent = text;
+  messageDiv.className = type;
+  messageDiv.style.display = "block";
+  setTimeout(()=>{messageDiv.style.display="none";},2000);
+}
+
+// ------------------ Translation ------------------
+function switchLang(lang){
+  currentLang = lang;
+  if(lang==="GR"){
+    greekBtn.classList.add("active"); engBtn.classList.remove("active");
+    document.getElementById("label-name").textContent="Όνομα";
+    document.getElementById("name").placeholder="Γράψτε το όνομά σας";
+    document.getElementById("label-day").textContent="Ημέρα";
+    document.getElementById("day").placeholder="π.χ. 12 - 24";
+    document.getElementById("label-shift").textContent="Βάρδια";
+    document.getElementById("shift").options[0].text="Επιλέξτε βάρδια";
+    document.getElementById("label-month").textContent="Μήνας";
+    const monthsGR = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+    const monthOptions = document.getElementById("month").options;
+    for(let i=1;i<monthOptions.length;i++){ monthOptions[i].text=monthsGR[i-1]; }
+    document.getElementById("month").options[0].text="Επιλέξτε μήνα";
+    document.getElementById("label-location").textContent="Τοποθεσία";
+    const locOptions = document.getElementById("location").options;
+    locOptions[0].text="Επιλέξτε τοποθεσία";
+    locOptions[1].text="Λευκωσία"; locOptions[2].text="Λάρνακα"; locOptions[3].text="Αμμόχωστος"; locOptions[4].text="Λεμεσός"; locOptions[5].text="Πάφος";
+    document.getElementById("label-store").textContent="Κατάστημα";
+    submitBtn.textContent="Υποβολή";
+  } else {
+    greekBtn.classList.remove("active"); engBtn.classList.add("active");
+    document.getElementById("label-name").textContent="Name";
+    document.getElementById("name").placeholder="Fill out your name";
+    document.getElementById("label-day").textContent="Day";
+    document.getElementById("day").placeholder="fill out your day";
+    document.getElementById("label-shift").textContent="Shift";
+    document.getElementById("shift").options[0].text="Select shift";
+    document.getElementById("label-month").textContent="Month";
+    const monthsEN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const monthOptions = document.getElementById("month").options;
+    for(let i=1;i<monthOptions.length;i++){ monthOptions[i].text=monthsEN[i-1]; }
+    document.getElementById("month").options[0].text="Select month";
+    document.getElementById("label-location").textContent="Location";
+    const locOptions = document.getElementById("location").options;
+    locOptions[0].text="Select location";
+    locOptions[1].text="Nicosia"; locOptions[2].text="Larnaca"; locOptions[3].text="Famagusta"; locOptions[4].text="Limassol"; locOptions[5].text="Pafos";
+    document.getElementById("label-store").textContent="Stores";
+    submitBtn.textContent="Submit";
+  }
+
+  if(locationSelect.value) updateStores(locationSelect.value);
+}
+
+greekBtn.addEventListener("click",()=>switchLang("GR"));
+engBtn.addEventListener("click",()=>switchLang("EN"));
+
+// ------------------ Submission ------------------
+submitBtn.addEventListener("click",()=>{
+  const name = document.getElementById("name").value.trim();
+  const day = document.getElementById("day").value.trim();
+  const shift = document.getElementById("shift").value;
+  const month = document.getElementById("month").value;
+  const location = document.getElementById("location").value;
+  const store = storeContainer.classList.contains("show") ? storeSelect.value : "filled";
+
+  if(name && day && shift && month && location && store){
+    const submission = { name, day, shift, month, location, store, timestamp: Date.now() };
+    push(ref(db,'submissions'), submission);
+    showMessage(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!","success");
+    document.getElementById("zorbas-form").reset();
+    storeContainer.classList.remove("show");
+  } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.","error");
+});
+
+// ------------------ Live Table ------------------
+onValue(ref(db,'submissions'), (snapshot)=>{
+  const data = snapshot.val();
+  submissionsTableBody.innerHTML = "";
+  for(let key in data){
+    const sub = data[key];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
+    submissionsTableBody.appendChild(tr);
+  }
+});
 </script>
-
-<script src="index.js"></script>
-
 </body>
 </html>
