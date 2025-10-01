@@ -44,20 +44,22 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
 #submissions-table th, #submissions-table td { border: 1px solid #ccc; padding: 10px; text-align: center; }
 #submissions-table th { background-color: #E8DA89; }
 
-/* Admin GUI */
+/* Admin GUI overlay */
 #admin-gui {
     display: none;
     position: fixed;
     top:0; left:0; width:100%; height:100%;
-    background-color: red;
+    background-color: #DAD9D7; /* same as main page */
     z-index: 9999;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-direction: column;
 }
+
+/* Buttons inside Admin GUI */
 #admin-gui button {
-    background-color: #E8DA89;
+    background-color: #E8DA89; /* yellow buttons */
     border: none;
     padding: 12px 20px;
     border-radius: 6px;
@@ -66,8 +68,15 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     font-weight: bold;
     cursor: pointer;
 }
+
 #admin-gui button:hover { background-color: #d4c15e; }
-#admin-gui #back-admin { background-color: #ff4c4c; color: #fff; }
+
+/* Only the Back button is red */
+#admin-gui #back-admin {
+    background-color: #ff4c4c;
+    color: #fff;
+}
+
 #admin-gui #back-admin:hover { background-color: #e03b3b; }
 </style>
 </head>
@@ -157,7 +166,7 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
-// ------------------ Firebase Config ------------------
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyB08KDzXF6rgvqPJGaaD1SYPycAecaH8Vg",
   authDomain: "zorbas1.firebaseapp.com",
@@ -173,7 +182,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ------------------ DOM Elements ------------------
+// DOM Elements
 const greekBtn = document.getElementById("greek-btn");
 const engBtn = document.getElementById("eng-btn");
 const locationSelect = document.getElementById("location");
@@ -222,7 +231,6 @@ function showMessage(text,type){
   setTimeout(()=>{messageDiv.style.display="none";},2000);
 }
 
-// ------------------ Translation ------------------
 function switchLang(lang){
   currentLang = lang;
   if(lang==="GR"){
@@ -264,7 +272,6 @@ function switchLang(lang){
     document.getElementById("label-store").textContent="Stores";
     submitBtn.textContent="Submit";
   }
-
   if(locationSelect.value) updateStores(locationSelect.value);
 }
 
@@ -293,39 +300,29 @@ submitBtn.addEventListener("click",()=>{
 onValue(ref(db,'submissions'), (snapshot)=>{
   const data = snapshot.val();
   submissionsTableBody.innerHTML = "";
-  for(let key in data){
-    const sub = data[key];
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
-    submissionsTableBody.appendChild(tr);
+  if(data){
+    for(let key in data){
+      const sub = data[key];
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
+      submissionsTableBody.appendChild(tr);
+    }
   }
 });
 
 // ------------------ Admin GUI ------------------
-adminBtn.addEventListener("click", () => {
-    adminGui.style.display = "flex";
-});
+adminBtn.addEventListener("click", () => { adminGui.style.display = "flex"; });
+backAdmin.addEventListener("click", () => { adminGui.style.display = "none"; });
 
-backAdmin.addEventListener("click", () => {
-    adminGui.style.display = "none";
-});
-
-// Example functionality for buttons (customize later)
-seeSubmissionsBtn.addEventListener("click", () => {
-    adminGui.style.display = "none";  // Close overlay to show main table
-    alert("Submissions table is already visible below.");
-});
-
+seeSubmissionsBtn.addEventListener("click", () => { adminGui.style.display = "none"; alert("Submissions table is visible below."); });
 resetSubmissionsBtn.addEventListener("click", () => {
-    if(confirm("Are you sure you want to reset all submissions?")) {
+    if(confirm("Are you sure you want to reset all submissions?")){
         remove(ref(db,'submissions'));
         showMessage(currentLang==="GR"?"Όλες οι υποβολές διαγράφηκαν!":"All submissions have been reset!","success");
     }
 });
+seeUsersBtn.addEventListener("click", () => { alert("Users feature not implemented yet."); });
 
-seeUsersBtn.addEventListener("click", () => {
-    alert("Users feature not implemented yet.");
-});
 </script>
 </body>
 </html>
