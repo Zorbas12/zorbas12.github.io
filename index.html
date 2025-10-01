@@ -43,6 +43,32 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
 #submissions-table { width: 100%; border-collapse: collapse; }
 #submissions-table th, #submissions-table td { border: 1px solid #ccc; padding: 10px; text-align: center; }
 #submissions-table th { background-color: #E8DA89; }
+
+/* Admin GUI */
+#admin-gui {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background-color: red;
+    z-index: 9999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction: column;
+}
+#admin-gui button {
+    background-color: #E8DA89;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 18px;
+    margin: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+#admin-gui button:hover { background-color: #d4c15e; }
+#admin-gui #back-admin { background-color: #ff4c4c; color: #fff; }
+#admin-gui #back-admin:hover { background-color: #e03b3b; }
 </style>
 </head>
 <body>
@@ -97,6 +123,9 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     <button type="button" class="submit-btn" id="submit-btn">Submit</button>
     <div id="message"></div>
   </form>
+
+  <!-- Admin GUI Button -->
+  <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
 </div>
 
 <div id="submissions-container">
@@ -116,9 +145,17 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
   </table>
 </div>
 
+<!-- Admin GUI Overlay -->
+<div id="admin-gui">
+    <button id="see-submissions">See all submissions</button>
+    <button id="reset-submissions">Reset all submissions</button>
+    <button id="see-users">See all users</button>
+    <button id="back-admin">Back</button>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 // ------------------ Firebase Config ------------------
 const firebaseConfig = {
@@ -145,6 +182,13 @@ const storeSelect = document.getElementById("store");
 const submitBtn = document.getElementById("submit-btn");
 const messageDiv = document.getElementById("message");
 const submissionsTableBody = document.querySelector("#submissions-table tbody");
+
+const adminBtn = document.getElementById("admin-btn");
+const adminGui = document.getElementById("admin-gui");
+const backAdmin = document.getElementById("back-admin");
+const seeSubmissionsBtn = document.getElementById("see-submissions");
+const resetSubmissionsBtn = document.getElementById("reset-submissions");
+const seeUsersBtn = document.getElementById("see-users");
 
 let currentLang = "EN";
 
@@ -245,7 +289,7 @@ submitBtn.addEventListener("click",()=>{
   } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.","error");
 });
 
-// ------------------ Live Table ------------------
+// ------------------ Live Submissions Table ------------------
 onValue(ref(db,'submissions'), (snapshot)=>{
   const data = snapshot.val();
   submissionsTableBody.innerHTML = "";
@@ -255,6 +299,32 @@ onValue(ref(db,'submissions'), (snapshot)=>{
     tr.innerHTML = `<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
     submissionsTableBody.appendChild(tr);
   }
+});
+
+// ------------------ Admin GUI ------------------
+adminBtn.addEventListener("click", () => {
+    adminGui.style.display = "flex";
+});
+
+backAdmin.addEventListener("click", () => {
+    adminGui.style.display = "none";
+});
+
+// Example functionality for buttons (customize later)
+seeSubmissionsBtn.addEventListener("click", () => {
+    adminGui.style.display = "none";  // Close overlay to show main table
+    alert("Submissions table is already visible below.");
+});
+
+resetSubmissionsBtn.addEventListener("click", () => {
+    if(confirm("Are you sure you want to reset all submissions?")) {
+        remove(ref(db,'submissions'));
+        showMessage(currentLang==="GR"?"Όλες οι υποβολές διαγράφηκαν!":"All submissions have been reset!","success");
+    }
+});
+
+seeUsersBtn.addEventListener("click", () => {
+    alert("Users feature not implemented yet.");
 });
 </script>
 </body>
