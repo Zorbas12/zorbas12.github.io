@@ -1,3 +1,4 @@
+backup before see all users
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -153,8 +154,7 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
       <option>January</option><option>February</option><option>March</option>
       <option>April</option><option>May</option><option>June</option>
       <option>July</option><option>August</option><option>September</option>
-      <option>October</option><option>November</option>
-      <option>December</option>
+      <option>October</option><option>November</option><option>December</option>
     </select>
 
     <label for="day" id="label-day">Day</label>
@@ -188,23 +188,6 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
   </form>
 
   <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
-</div>
-
-<div id="submissions-container">
-  <h2 style="text-align:center;">Submissions</h2>
-  <table id="submissions-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Month</th>
-        <th>Day</th>
-        <th>Shift</th>
-        <th>Location</th>
-        <th>Store</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 </div>
 
 <!-- Admin GUI -->
@@ -267,6 +250,40 @@ const backAdmin = document.getElementById("back-admin");
 const seeSubmissionsBtn = document.getElementById("see-submissions");
 const resetSubmissionsBtn = document.getElementById("reset-submissions");
 const seeUsersBtn = document.getElementById("see-users");
+  
+seeUsersBtn.addEventListener("click", () => {
+  adminGui.style.display = "none";        // Hide admin menu
+  usersGui.style.display = "flex";        // Show users overlay
+  usersContainer.innerHTML = "";           // Clear previous content
+
+  onValue(ref(db, 'submissions'), snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      for (let key in data) {
+        const user = data[key];
+        const card = document.createElement("div");
+        card.className = "user-card";
+        card.style.cssText = `
+          background:#fff;
+          padding:15px;
+          border-radius:8px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.2);
+        `;
+        card.innerHTML = `
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Month:</strong> ${user.month}</p>
+          <p><strong>Day:</strong> ${user.day}</p>
+          <p><strong>Shift:</strong> ${user.shift}</p>
+          <p><strong>Location:</strong> ${user.location}</p>
+          <p><strong>Store:</strong> ${user.store}</p>
+        `;
+        usersContainer.appendChild(card);
+      }
+    } else {
+      usersContainer.innerHTML = "<p>No users found.</p>";
+    }
+  }, { onlyOnce: true });
+});
 
 const locationsGui = document.getElementById("locations-gui");
 const backLocations = document.getElementById("back-locations");
@@ -276,6 +293,59 @@ const storeGui = document.getElementById("store-gui");
 const storeButtonsContainer = document.getElementById("store-buttons-container");
 const backStoreBtn = document.getElementById("back-store");
 
+// Store submissions overlay
+const storeSubmissionsGui = document.createElement("div");
+storeSubmissionsGui.id = "store-submissions-gui";
+storeSubmissionsGui.style.cssText = `
+display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+background-color:#DAD9D7; z-index:9999; display:flex; flex-direction:column;
+align-items:center; justify-content:flex-start; padding-top:50px;
+`;
+const storeTitle = document.createElement("h2");
+storeTitle.style.marginBottom="20px";
+storeSubmissionsGui.appendChild(storeTitle);
+const storeBackBtn = document.createElement("button");
+storeBackBtn.textContent = "Back";
+storeBackBtn.style.cssText = `
+background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
+border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
+`;
+storeBackBtn.addEventListener("click", ()=>{ storeSubmissionsGui.style.display="none"; storeGui.style.display="flex"; });
+storeSubmissionsGui.appendChild(storeBackBtn);
+document.body.appendChild(storeSubmissionsGui);
+  
+  // Users overlay
+const usersGui = document.createElement("div");
+usersGui.id = "users-gui";
+usersGui.style.cssText = `
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background-color:#DAD9D7; z-index:9999; display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start; padding-top:50px;
+  overflow-y:auto;
+`;
+const usersTitle = document.createElement("h2");
+usersTitle.textContent = "All Users";
+usersTitle.style.marginBottom = "20px";
+usersGui.appendChild(usersTitle);
+
+// Container for user cards
+const usersContainer = document.createElement("div");
+usersContainer.style.cssText = "width:80%; max-width:800px; display:flex; flex-direction:column; gap:10px;";
+usersGui.appendChild(usersContainer);
+
+// Back button
+const backUsersBtn = document.createElement("button");
+backUsersBtn.textContent = "Back";
+backUsersBtn.style.cssText = `
+  background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
+  border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
+`;
+backUsersBtn.addEventListener("click", () => { usersGui.style.display = "none"; adminGui.style.display = "flex"; });
+usersGui.appendChild(backUsersBtn);
+
+document.body.appendChild(usersGui);
+
+// ---------------- Language ----------------
 let currentLang = "EN";
 
 const stores = {
@@ -286,53 +356,86 @@ const stores = {
   PAFOS: {EN:["El. Venizelou","Geroskipou","Ellados","Apostolou Pavlou"], GR:["Ελ. Βενιζέλου","Γεροσκήπου","Ελλάδος","Αποστόλου Παύλου"]}
 };
 
-// ---------------- Language ----------------
 function switchLang(lang){
   currentLang = lang;
-  if(lang==="GR"){
+
+  if(lang === "GR"){
     greekBtn.classList.add("active"); engBtn.classList.remove("active");
-    document.getElementById("label-name").textContent="Όνομα";
-    document.getElementById("name").placeholder="Γράψτε το όνομά σας";
-    document.getElementById("label-day").textContent="Ημέρα";
-    document.getElementById("day").placeholder="π.χ. 12 - 24";
-    document.getElementById("label-shift").textContent="Βάρδια";
-    document.getElementById("shift").options[0].text="Επιλέξτε βάρδια";
-    document.getElementById("label-month").textContent="Μήνας";
+
+    document.getElementById("label-name").textContent = "Όνομα";
+    document.getElementById("name").placeholder = "Γράψτε το όνομά σας";
+
+    document.getElementById("label-day").textContent = "Ημέρα";
+    document.getElementById("day").placeholder = "Επηλέξτε μέρα";
+
+    document.getElementById("label-shift").textContent = "Βάρδια";
+    const shiftOptions = document.getElementById("shift").options;
+    shiftOptions[0].text = "Επιλέξτε βάρδια";
+    shiftOptions[1].text = "off";
+    shiftOptions[2].text = "6-2";
+    shiftOptions[3].text = "2-10";
+
+    document.getElementById("label-month").textContent = "Μήνας";
     const monthsGR = ["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
     const monthOptions = document.getElementById("month").options;
-    for(let i=1;i<monthOptions.length;i++){ monthOptions[i].text=monthsGR[i-1]; }
-    document.getElementById("month").options[0].text="Επιλέξτε μήνα";
-    document.getElementById("label-location").textContent="Τοποθεσία";
+    for(let i = 1; i < monthOptions.length; i++) monthOptions[i].text = monthsGR[i-1];
+    monthOptions[0].text = "Επιλέξτε μήνα";
+
+    document.getElementById("label-location").textContent = "Τοποθεσία";
     const locOptions = document.getElementById("location").options;
-    locOptions[0].text="Επιλέξτε τοποθεσία";
-    locOptions[1].text="Λευκωσία"; locOptions[2].text="Λάρνακα"; locOptions[3].text="Αμμόχωστος"; locOptions[4].text="Λεμεσός"; locOptions[5].text="Πάφος";
-    document.getElementById("label-store").textContent="Κατάστημα";
-    submitBtn.textContent="Υποβολή";
+    locOptions[0].text = "Επιλέξτε τοποθεσία";
+    locOptions[1].text = "Λευκωσία";
+    locOptions[2].text = "Λάρνακα";
+    locOptions[3].text = "Αμμόχωστος";
+    locOptions[4].text = "Λεμεσός";
+    locOptions[5].text = "Πάφος";
+
+    document.getElementById("label-store").textContent = "Κατάστημα";
+    submitBtn.textContent = "Υποβολή";
+
   } else {
     greekBtn.classList.remove("active"); engBtn.classList.add("active");
-    document.getElementById("label-name").textContent="Name";
-    document.getElementById("name").placeholder="Fill out your name";
-    document.getElementById("label-day").textContent="Day";
-    document.getElementById("day").placeholder="fill out your day";
-    document.getElementById("label-shift").textContent="Shift";
-    document.getElementById("shift").options[0].text="Select shift";
-    document.getElementById("label-month").textContent="Month";
+
+    document.getElementById("form-title").textContent = "Zorbas Submissions";
+    document.getElementById("label-name").textContent = "Name";
+    document.getElementById("name").placeholder = "Fill out your name";
+
+    document.getElementById("label-day").textContent = "Day";
+    document.getElementById("day").placeholder = "Fill out the day";
+
+    document.getElementById("label-shift").textContent = "Shift";
+    const shiftOptions = document.getElementById("shift").options;
+    shiftOptions[0].text = "Select shift";
+    shiftOptions[1].text = "off";
+    shiftOptions[2].text = "6-2";
+    shiftOptions[3].text = "2-10";
+
+    document.getElementById("label-month").textContent = "Month";
     const monthsEN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     const monthOptions = document.getElementById("month").options;
-    for(let i=1;i<monthOptions.length;i++){ monthOptions[i].text=monthsEN[i-1]; }
-    document.getElementById("month").options[0].text="Select month";
-    document.getElementById("label-location").textContent="Location";
+    for(let i = 1; i < monthOptions.length; i++) monthOptions[i].text = monthsEN[i-1];
+    monthOptions[0].text = "Select month";
+
+    document.getElementById("label-location").textContent = "Location";
     const locOptions = document.getElementById("location").options;
-    locOptions[0].text="Select location";
-    locOptions[1].text="Nicosia"; locOptions[2].text="Larnaca"; locOptions[3].text="Famagusta"; locOptions[4].text="Limassol"; locOptions[5].text="Pafos";
-    document.getElementById("label-store").textContent="Stores";
-    submitBtn.textContent="Submit";
+    locOptions[0].text = "Select location";
+    locOptions[1].text = "Nicosia";
+    locOptions[2].text = "Larnaca";
+    locOptions[3].text = "Famagusta";
+    locOptions[4].text = "Limassol";
+    locOptions[5].text = "Pafos";
+
+    document.getElementById("label-store").textContent = "Store";
+    submitBtn.textContent = "Submit";
   }
+
+  // Update store options if location is already selected
   if(locationSelect.value) updateStores(locationSelect.value);
 }
 
-greekBtn.addEventListener("click",()=>switchLang("GR"));
-engBtn.addEventListener("click",()=>switchLang("EN"));
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click", () => switchLang("EN"));
+
 
 // ---------------- Stores ----------------
 locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
@@ -340,7 +443,7 @@ function updateStores(location){
   if(stores[location]){
     storeSelect.innerHTML=`<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
     stores[location][currentLang].forEach(store=>{
-      const option=document.createElement("option"); option.value=store; option.textContent=store; storeSelect.appendChild(option);
+      const opt=document.createElement("option"); opt.value=store; opt.textContent=store; storeSelect.appendChild(opt);
     });
     storeContainer.classList.add("show");
   } else storeContainer.classList.remove("show");
@@ -354,7 +457,7 @@ function showMessage(text,type){
   setTimeout(()=>{messageDiv.style.display="none";},2000);
 }
 
-submitBtn.addEventListener("click",()=>{
+submitBtn.addEventListener("click", ()=>{
   const name=document.getElementById("name").value.trim();
   const day=document.getElementById("day").value.trim();
   const shift=document.getElementById("shift").value;
@@ -363,11 +466,13 @@ submitBtn.addEventListener("click",()=>{
   const store=storeContainer.classList.contains("show")?storeSelect.value:"filled";
 
   if(name && day && shift && month && location && store){
-    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp: Date.now()});
-    showMessage(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
+    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp:Date.now()});
+    showPopup(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
     document.getElementById("zorbas-form").reset();
     storeContainer.classList.remove("show");
-  } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
+  } else {
+    showPopup(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
+  }
 });
 
 // ---------------- Live Submissions Table ----------------
@@ -387,38 +492,126 @@ onValue(ref(db,'submissions'), snapshot=>{
 // ---------------- Admin GUI ----------------
 adminBtn.addEventListener("click", ()=>{ adminGui.style.display="flex"; });
 backAdmin.addEventListener("click", ()=>{ adminGui.style.display="none"; });
-
-// ---------------- See All Submissions -> Locations GUI ----------------
 seeSubmissionsBtn.addEventListener("click", ()=>{ adminGui.style.display="none"; locationsGui.style.display="flex"; });
 backLocations.addEventListener("click", ()=>{ locationsGui.style.display="none"; adminGui.style.display="flex"; });
 
-// ---------------- Location buttons -> Stores GUI ----------------
+// ---------------- Location -> Stores GUI ----------------
 locationButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const loc = btn.dataset.loc;
     locationsGui.style.display="none";
     storeButtonsContainer.innerHTML = "";
     stores[loc][currentLang].forEach(store=>{
-      const b = document.createElement("button");
+      const b=document.createElement("button");
       b.textContent = store;
       storeButtonsContainer.appendChild(b);
     });
     storeGui.style.display="flex";
   });
 });
-backStoreBtn.addEventListener("click", ()=>{
-  storeGui.style.display="none";
-  locationsGui.style.display="flex";
-});
+backStoreBtn.addEventListener("click", ()=>{ storeGui.style.display="none"; locationsGui.style.display="flex"; });
 
 // ---------------- Reset / Users ----------------
-resetSubmissionsBtn.addEventListener("click", ()=>{
-  if(confirm("Are you sure you want to reset all submissions?")){
-    remove(ref(db,'submissions'));
-    showMessage(currentLang==="GR"?"Όλες οι υποβολές διαγράφηκαν!":"All submissions have been reset!","success");
+resetSubmissionsBtn.addEventListener("click", () => {
+  // Remove all submissions
+  remove(ref(db, 'submissions'));
+
+  // Show animated popup (same style as Accept/Decline)
+  showPopup(
+    currentLang === "GR" ? "Όλες οι υποβολές διαγράφηκαν!" : "All submissions have been reset!",
+    "success"
+  );
+});
+
+seeUsersBtn.addEventListener("click", () => { 
+  alert("Users feature not implemented yet."); 
+});
+
+// ---------------- Store Submissions Cards ----------------
+storeButtonsContainer.addEventListener("click",(e)=>{
+  if(e.target.tagName==="BUTTON"){
+    const storeName = e.target.textContent;
+    storeTitle.textContent = `${storeName} Submissions`;
+    storeGui.style.display="none";
+    storeSubmissionsGui.style.display="flex";
+
+    // Remove previous cards
+    storeSubmissionsGui.querySelectorAll(".submission-card").forEach(c=>c.remove());
+
+    onValue(ref(db,'submissions'), snapshot=>{
+      const data = snapshot.val();
+      if(data){
+        for(let key in data){
+          const sub=data[key];
+          if(sub.store===storeName){
+            const card=document.createElement("div");
+            card.className="submission-card";
+            card.style.cssText="background:#fff;padding:20px;margin:10px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:80%;max-width:500px;";
+            card.innerHTML=`
+              <p><strong>Name:</strong> ${sub.name}</p>
+              <p><strong>Month:</strong> ${sub.month}</p>
+              <p><strong>Day:</strong> ${sub.day}</p>
+              <p><strong>Shift:</strong> ${sub.shift}</p>
+            `;
+
+const acceptBtn = document.createElement("button");
+acceptBtn.textContent = "Accept";
+acceptBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+acceptBtn.addEventListener("click", () => {
+  remove(ref(db,'submissions/' + key));
+  card.remove();
+  showPopup(currentLang==="GR" ? "Η υποβολή έγινε αποδεκτή!" : "You successfully accepted this submission", "success");
+});
+
+const declineBtn = document.createElement("button");
+declineBtn.textContent = "Decline";
+declineBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+declineBtn.addEventListener("click", () => {
+  remove(ref(db,'submissions/' + key));
+  card.remove();
+  showPopup(currentLang==="GR" ? "Η υποβολή απορρίφθηκε!" : "You successfully declined this submission", "success");
+});
+
+card.appendChild(acceptBtn);
+card.appendChild(declineBtn);
+storeSubmissionsGui.appendChild(card);
+
+          }
+        }
+      }
+    }, { onlyOnce:true });
   }
 });
-seeUsersBtn.addEventListener("click", ()=>{ alert("Users feature not implemented yet."); });
+  // ---------------- Popup for Accept/Decline Submissions ----------------
+function showPopup(text, type){
+  const popup = document.createElement("div");
+  popup.textContent = text;
+  popup.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: black;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    ${type==="success" ? "background-color: #a2f5a2;" : "background-color: #f57c7c;"}
+  `;
+  document.body.appendChild(popup);
+  requestAnimationFrame(()=>{
+    popup.style.opacity="1";
+    popup.style.transform="translateX(-50%) translateY(0)";
+  });
+  setTimeout(()=>{
+    popup.style.opacity="0";
+    popup.style.transform="translateX(-50%) translateY(-20px)";
+    setTimeout(()=>popup.remove(),300);
+  },2000);
+}
 
 </script>
 </body>
