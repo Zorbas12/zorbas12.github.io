@@ -49,17 +49,15 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     display: none;
     position: fixed;
     top:0; left:0; width:100%; height:100%;
-    background-color: #DAD9D7; /* same as main page */
+    background-color: #DAD9D7;
     z-index: 9999;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-direction: column;
 }
-
-/* Buttons inside Admin GUI */
 #admin-gui button {
-    background-color: #E8DA89; /* yellow buttons */
+    background-color: #E8DA89; 
     border: none;
     padding: 12px 20px;
     border-radius: 6px;
@@ -68,16 +66,71 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     font-weight: bold;
     cursor: pointer;
 }
-
 #admin-gui button:hover { background-color: #d4c15e; }
-
-/* Only the Back button is red */
-#admin-gui #back-admin {
-    background-color: #ff4c4c;
-    color: #fff;
-}
-
+#admin-gui #back-admin { background-color: #ff4c4c; color: #fff; }
 #admin-gui #back-admin:hover { background-color: #e03b3b; }
+
+/* Locations GUI overlay */
+#locations-gui {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background-color: #DAD9D7;
+    z-index: 9999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction: column;
+}
+#locations-gui button {
+    background-color: #E8DA89;
+    border: none;
+    padding: 12px 0;
+    width: 200px;      
+    border-radius: 6px;
+    font-size: 18px;
+    margin: 10px 0;     
+    font-weight: bold;
+    cursor: pointer;
+}
+#locations-gui button:hover { background-color: #d4c15e; }
+#locations-gui #back-locations { background-color: #ff4c4c; color: #fff; }
+#locations-gui #back-locations:hover { background-color: #e03b3b; }
+
+/* Store GUI overlay */
+.store-gui {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background-color: #DAD9D7;
+    z-index: 9999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction: column;
+}
+.store-gui button {
+    background-color: #E8DA89;
+    border: none;
+    padding: 12px 0;
+    width: 200px;        
+    border-radius: 6px;
+    font-size: 18px;
+    margin: 10px 0;      
+    font-weight: bold;
+    cursor: pointer;
+}
+.store-gui button:hover { background-color: #d4c15e; }
+.store-gui #back-store { background-color: #ff4c4c; color: #fff; }
+.store-gui #back-store:hover { background-color: #e03b3b; }
+
+/* Store buttons container */
+#store-buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
 </style>
 </head>
 <body>
@@ -100,7 +153,8 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
       <option>January</option><option>February</option><option>March</option>
       <option>April</option><option>May</option><option>June</option>
       <option>July</option><option>August</option><option>September</option>
-      <option>October</option><option>November</option><option>December</option>
+      <option>October</option><option>November</option>
+      <option>December</option>
     </select>
 
     <label for="day" id="label-day">Day</label>
@@ -133,7 +187,6 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     <div id="message"></div>
   </form>
 
-  <!-- Admin GUI Button -->
   <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
 </div>
 
@@ -154,12 +207,28 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
   </table>
 </div>
 
-<!-- Admin GUI Overlay -->
+<!-- Admin GUI -->
 <div id="admin-gui">
     <button id="see-submissions">See all submissions</button>
     <button id="reset-submissions">Reset all submissions</button>
     <button id="see-users">See all users</button>
     <button id="back-admin">Back</button>
+</div>
+
+<!-- Locations GUI -->
+<div id="locations-gui">
+    <button class="location-btn" data-loc="NICOSIA">Nicosia</button>
+    <button class="location-btn" data-loc="LARNACA">Larnaca</button>
+    <button class="location-btn" data-loc="FAMAGUSTA">Famagusta</button>
+    <button class="location-btn" data-loc="LIMASSOL">Limassol</button>
+    <button class="location-btn" data-loc="PAFOS">Pafos</button>
+    <button id="back-locations">Back</button>
+</div>
+
+<!-- Stores GUI -->
+<div class="store-gui" id="store-gui">
+    <div id="store-buttons-container"></div>
+    <button id="back-store">Back</button>
 </div>
 
 <script type="module">
@@ -199,6 +268,14 @@ const seeSubmissionsBtn = document.getElementById("see-submissions");
 const resetSubmissionsBtn = document.getElementById("reset-submissions");
 const seeUsersBtn = document.getElementById("see-users");
 
+const locationsGui = document.getElementById("locations-gui");
+const backLocations = document.getElementById("back-locations");
+const locationButtons = document.querySelectorAll(".location-btn");
+
+const storeGui = document.getElementById("store-gui");
+const storeButtonsContainer = document.getElementById("store-buttons-container");
+const backStoreBtn = document.getElementById("back-store");
+
 let currentLang = "EN";
 
 const stores = {
@@ -209,28 +286,7 @@ const stores = {
   PAFOS: {EN:["El. Venizelou","Geroskipou","Ellados","Apostolou Pavlou"], GR:["Ελ. Βενιζέλου","Γεροσκήπου","Ελλάδος","Αποστόλου Παύλου"]}
 };
 
-// ------------------ Functions ------------------
-function updateStores(location){
-  if(stores[location]){
-    storeSelect.innerHTML = `<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
-    stores[location][currentLang].forEach(store=>{
-      const option = document.createElement("option");
-      option.value = store; option.textContent = store;
-      storeSelect.appendChild(option);
-    });
-    storeContainer.classList.add("show");
-  } else storeContainer.classList.remove("show");
-}
-
-locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
-
-function showMessage(text,type){
-  messageDiv.textContent = text;
-  messageDiv.className = type;
-  messageDiv.style.display = "block";
-  setTimeout(()=>{messageDiv.style.display="none";},2000);
-}
-
+// ---------------- Language ----------------
 function switchLang(lang){
   currentLang = lang;
   if(lang==="GR"){
@@ -278,50 +334,91 @@ function switchLang(lang){
 greekBtn.addEventListener("click",()=>switchLang("GR"));
 engBtn.addEventListener("click",()=>switchLang("EN"));
 
-// ------------------ Submission ------------------
+// ---------------- Stores ----------------
+locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
+function updateStores(location){
+  if(stores[location]){
+    storeSelect.innerHTML=`<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
+    stores[location][currentLang].forEach(store=>{
+      const option=document.createElement("option"); option.value=store; option.textContent=store; storeSelect.appendChild(option);
+    });
+    storeContainer.classList.add("show");
+  } else storeContainer.classList.remove("show");
+}
+
+// ---------------- Submissions ----------------
+function showMessage(text,type){
+  messageDiv.textContent=text;
+  messageDiv.className=type;
+  messageDiv.style.display="block";
+  setTimeout(()=>{messageDiv.style.display="none";},2000);
+}
+
 submitBtn.addEventListener("click",()=>{
-  const name = document.getElementById("name").value.trim();
-  const day = document.getElementById("day").value.trim();
-  const shift = document.getElementById("shift").value;
-  const month = document.getElementById("month").value;
-  const location = document.getElementById("location").value;
-  const store = storeContainer.classList.contains("show") ? storeSelect.value : "filled";
+  const name=document.getElementById("name").value.trim();
+  const day=document.getElementById("day").value.trim();
+  const shift=document.getElementById("shift").value;
+  const month=document.getElementById("month").value;
+  const location=document.getElementById("location").value;
+  const store=storeContainer.classList.contains("show")?storeSelect.value:"filled";
 
   if(name && day && shift && month && location && store){
-    const submission = { name, day, shift, month, location, store, timestamp: Date.now() };
-    push(ref(db,'submissions'), submission);
-    showMessage(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!","success");
+    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp: Date.now()});
+    showMessage(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
     document.getElementById("zorbas-form").reset();
     storeContainer.classList.remove("show");
-  } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.","error");
+  } else showMessage(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
 });
 
-// ------------------ Live Submissions Table ------------------
-onValue(ref(db,'submissions'), (snapshot)=>{
-  const data = snapshot.val();
-  submissionsTableBody.innerHTML = "";
+// ---------------- Live Submissions Table ----------------
+onValue(ref(db,'submissions'), snapshot=>{
+  const data=snapshot.val();
+  submissionsTableBody.innerHTML="";
   if(data){
     for(let key in data){
-      const sub = data[key];
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
+      const sub=data[key];
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
       submissionsTableBody.appendChild(tr);
     }
   }
 });
 
-// ------------------ Admin GUI ------------------
-adminBtn.addEventListener("click", () => { adminGui.style.display = "flex"; });
-backAdmin.addEventListener("click", () => { adminGui.style.display = "none"; });
+// ---------------- Admin GUI ----------------
+adminBtn.addEventListener("click", ()=>{ adminGui.style.display="flex"; });
+backAdmin.addEventListener("click", ()=>{ adminGui.style.display="none"; });
 
-seeSubmissionsBtn.addEventListener("click", () => { adminGui.style.display = "none"; alert("Submissions table is visible below."); });
-resetSubmissionsBtn.addEventListener("click", () => {
-    if(confirm("Are you sure you want to reset all submissions?")){
-        remove(ref(db,'submissions'));
-        showMessage(currentLang==="GR"?"Όλες οι υποβολές διαγράφηκαν!":"All submissions have been reset!","success");
-    }
+// ---------------- See All Submissions -> Locations GUI ----------------
+seeSubmissionsBtn.addEventListener("click", ()=>{ adminGui.style.display="none"; locationsGui.style.display="flex"; });
+backLocations.addEventListener("click", ()=>{ locationsGui.style.display="none"; adminGui.style.display="flex"; });
+
+// ---------------- Location buttons -> Stores GUI ----------------
+locationButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const loc = btn.dataset.loc;
+    locationsGui.style.display="none";
+    storeButtonsContainer.innerHTML = "";
+    stores[loc][currentLang].forEach(store=>{
+      const b = document.createElement("button");
+      b.textContent = store;
+      storeButtonsContainer.appendChild(b);
+    });
+    storeGui.style.display="flex";
+  });
 });
-seeUsersBtn.addEventListener("click", () => { alert("Users feature not implemented yet."); });
+backStoreBtn.addEventListener("click", ()=>{
+  storeGui.style.display="none";
+  locationsGui.style.display="flex";
+});
+
+// ---------------- Reset / Users ----------------
+resetSubmissionsBtn.addEventListener("click", ()=>{
+  if(confirm("Are you sure you want to reset all submissions?")){
+    remove(ref(db,'submissions'));
+    showMessage(currentLang==="GR"?"Όλες οι υποβολές διαγράφηκαν!":"All submissions have been reset!","success");
+  }
+});
+seeUsersBtn.addEventListener("click", ()=>{ alert("Users feature not implemented yet."); });
 
 </script>
 </body>
