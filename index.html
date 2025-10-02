@@ -273,7 +273,7 @@ input, select {
     </select>
 
     <label for="day" id="label-day">Day</label>
-    <input type="text" id="day" placeholder="e.g. 12 - 24" pattern="[0-9\s-]+" required>
+    <input type="text" id="day" placeholder="Fill out your day" pattern="[0-9\s-]+" required>
 
     <label for="shift" id="label-shift">Shift</label>
     <select id="shift" required>
@@ -501,14 +501,11 @@ function switchLang(lang){
 
   // Placeholders
   document.getElementById("name").placeholder = lang === "GR" ? "Συμπληρώστε το όνομά σας" : "Fill out your name";
-  document.getElementById("day").placeholder = lang === "GR" ? "π.χ. 12 - 24" : "e.g. 12 - 24";
+  document.getElementById("day").placeholder = lang === "GR" ? "Συμπληρώστε τη μέρα σας" : "Fill out your day";
 
   // Buttons
   submitBtn.textContent = lang === "GR" ? "Υποβολή" : "Submit";
   adminBtn.textContent = lang === "GR" ? "Διαχειριστής" : "Admin GUI";
-
-  // Form title
-  document.getElementById("form-title").textContent = lang === "GR" ? "Υποβολές Ζορμπά" : "Zorbas Submissions";
 
   // Update stores dropdown if visible
   if(storeContainer.classList.contains("show")){
