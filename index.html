@@ -679,6 +679,18 @@ function showPopup(text, type){
     setTimeout(()=>popup.remove(),300);
   },2000);
 }
+  // ================= Force Submissions GUI on Load =================
+window.addEventListener("load", () => {
+  // Hide all other GUIs
+  adminGui.style.display = "none";
+  locationsGui.style.display = "none";
+  storeGui.style.display = "none";
+  devicesGui.style.display = "none";
+  storeSubmissionsGui.style.display = "none";
+
+  // Always show submission form when page opens
+  document.getElementById("submit-gui").style.display = "block";
+});
 </script>
 </body>
 </html>
