@@ -128,7 +128,6 @@ input, select {
     background-color: #E8DA89; 
 }
 
-/* Admin GUI overlay */
 #admin-gui {
     display: none;
     position: fixed;
@@ -161,7 +160,6 @@ input, select {
     background-color: #e03b3b; 
 }
 
-/* Center buttons inside the form-box */
 #admin-btn, #schedule-btn {
     display: block;
     margin: 10px auto 0;
@@ -178,7 +176,6 @@ input, select {
     background-color: #d4c15e;
 }
 
-/* Locations GUI overlay */
 #locations-gui {
     display: none;
     position: fixed;
@@ -211,7 +208,6 @@ input, select {
     background-color: #e03b3b; 
 }
 
-/* Schedule GUI overlay (NEW) */
 #schedule-gui {
     display: none;
     position: fixed;
@@ -244,7 +240,6 @@ input, select {
     background-color: #e03b3b; 
 }
 
-/* Store GUI overlay */
 .store-gui {
     display: none;
     position: fixed;
@@ -270,7 +265,6 @@ input, select {
 .store-gui .back-store-btn { background-color: #ff4c4c; color: #fff; }
 .store-gui .back-store-btn:hover { background-color: #e03b3b; }
 
-/* Store buttons container */
 #store-buttons-container {
     display: flex;
     flex-direction: column;
@@ -284,7 +278,6 @@ input, select {
     gap: 10px;
 }
 
-/* Devices GUI */
 #devices-gui {
     display:none;
     position:fixed;
@@ -355,7 +348,6 @@ input, select {
   <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
 </div>
 
-<!-- Admin GUI -->
 <div id="admin-gui">
     <button id="see-submissions">See all submissions</button>
     <button id="reset-submissions">Reset all submissions</button>
@@ -363,7 +355,6 @@ input, select {
     <button id="back-admin">Back</button>
 </div>
 
-<!-- Locations GUI -->
 <div id="locations-gui">
     <button class="location-btn" data-loc="NICOSIA">Nicosia</button>
     <button class="location-btn" data-loc="LARNACA">Larnaca</button>
@@ -373,7 +364,6 @@ input, select {
     <button id="back-locations">Back</button>
 </div>
 
-<!-- Schedule GUI (NEW - PUBLIC ACCESS) -->
 <div id="schedule-gui">
     <button class="schedule-location-btn" data-loc="NICOSIA">Nicosia</button>
     <button class="schedule-location-btn" data-loc="LARNACA">Larnaca</button>
@@ -383,19 +373,16 @@ input, select {
     <button id="back-schedule">Back</button>
 </div>
 
-<!-- Stores GUI -->
 <div class="store-gui" id="store-gui">
     <div id="store-buttons-container"></div>
     <button class="back-store-btn" id="back-store">Back</button>
 </div>
 
-<!-- Schedule Stores GUI (NEW) -->
 <div class="store-gui" id="store-gui-schedule">
     <div id="store-buttons-container-schedule"></div>
     <button class="back-store-btn" id="back-store-schedule">Back</button>
 </div>
 
-<!-- Devices GUI -->
 <div id="devices-gui">
     <h2 style="text-align:center;margin-bottom:20px;">Devices</h2>
     <div id="devices-container" style="width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:10px;"></div>
@@ -431,11 +418,7 @@ function getDeviceName() {
   return navigator.userAgent;
 }
 
-let deviceId = localStorage.getItem("deviceId");
-if (!deviceId) {
-  deviceId = crypto.randomUUID();
-  localStorage.setItem("deviceId", deviceId);
-}
+let deviceId = crypto.randomUUID();
 
 const deviceName = getDeviceName();
 const deviceType = getDeviceType();
@@ -503,12 +486,10 @@ onValue(deviceRef, snapshot => {
   const deviceData = snapshot.val();
   if (deviceData && deviceData.role === "admin") {
     adminBtn.style.display = "block";
-    // Show edit schedule button if it exists
     const editBtn = document.getElementById("edit-schedule-btn");
     if(editBtn) editBtn.style.display = "block";
   } else {
     adminBtn.style.display = "none";
-    // Hide edit schedule button if it exists
     const editBtn = document.getElementById("edit-schedule-btn");
     if(editBtn) editBtn.style.display = "none";
   }
@@ -533,6 +514,26 @@ scheduleSubmissionsGui.style.cssText = `display:none; position:fixed; top:0; lef
 const scheduleTitle = document.createElement("h2");
 scheduleTitle.style.marginBottom="20px";
 scheduleSubmissionsGui.appendChild(scheduleTitle);
+const scheduleTableContainer = document.createElement("div");
+scheduleTableContainer.style.cssText = `background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); margin-bottom:80px; overflow-x:auto;`;
+const scheduleTable = document.createElement("table");
+scheduleTable.id = "schedule-edit-table";
+scheduleTable.style.cssText = `border-collapse:collapse; background:#fff;`;
+for(let i=0; i<12; i++){
+  const row = scheduleTable.insertRow();
+  for(let j=0; j<12; j++){
+    const cell = row.insertCell();
+    cell.style.cssText = `border:1px solid #ccc; padding:10px; min-width:80px; min-height:40px; text-align:center;`;
+    cell.contentEditable = "false";
+  }
+}
+scheduleTableContainer.appendChild(scheduleTable);
+scheduleSubmissionsGui.appendChild(scheduleTableContainer);
+
+let currentEditingStore = "";
+let currentEditingLocation = "";
+let isEditMode = false;
+
 const editScheduleBtn = document.createElement("button");
 editScheduleBtn.textContent = "Edit Schedule";
 editScheduleBtn.id = "edit-schedule-btn";
@@ -552,9 +553,18 @@ editScheduleBtn.style.cssText = `
   z-index:10001;
 `;
 editScheduleBtn.addEventListener("click", ()=>{ 
-  scheduleSubmissionsGui.style.display="none";
-  scheduleTableGui.style.display="flex";
-  enableTableEditing();
+  if(!isEditMode){
+    enableTableEditing();
+    editScheduleBtn.textContent = "Save Schedule";
+    editScheduleBtn.style.backgroundColor = "#90EE90";
+    isEditMode = true;
+  } else {
+    disableTableEditing();
+    saveScheduleToFirebase();
+    editScheduleBtn.textContent = "Edit Schedule";
+    editScheduleBtn.style.backgroundColor = "#E8DA89";
+    isEditMode = false;
+  }
 });
 scheduleSubmissionsGui.appendChild(editScheduleBtn);
 
@@ -577,7 +587,7 @@ scheduleBackBtn.style.cssText = `
 scheduleBackBtn.addEventListener("click", ()=>{ 
   scheduleSubmissionsGui.style.display="none"; 
   storeGuiSchedule.style.display="flex";
-  // Reset edit button state when leaving
+  isEditMode = false;
   const editBtn = document.getElementById("edit-schedule-btn");
   if(editBtn){
     disableTableEditing();
@@ -593,6 +603,7 @@ function enableTableEditing(){
   cells.forEach(cell => {
     cell.contentEditable = "true";
     cell.style.backgroundColor = "#fffacd";
+    cell.style.cursor = "text";
   });
 }
 
@@ -601,6 +612,45 @@ function disableTableEditing(){
   cells.forEach(cell => {
     cell.contentEditable = "false";
     cell.style.backgroundColor = "#fff";
+    cell.style.cursor = "default";
+  });
+}
+
+function saveScheduleToFirebase(){
+  const table = document.getElementById("schedule-edit-table");
+  const scheduleData = [];
+  for(let i=0; i<table.rows.length; i++){
+    const rowData = [];
+    for(let j=0; j<table.rows[i].cells.length; j++){
+      rowData.push(table.rows[i].cells[j].textContent);
+    }
+    scheduleData.push(rowData);
+  }
+  const schedulePath = `schedules/${currentEditingLocation}/${currentEditingStore}`;
+  set(ref(db, schedulePath), scheduleData);
+  showPopup(currentLang === "GR" ? "Το πρόγραμμα αποθηκεύτηκε!" : "Schedule saved!", "success");
+}
+
+function loadScheduleFromFirebase(location, store){
+  currentEditingLocation = location;
+  currentEditingStore = store;
+  const schedulePath = `schedules/${location}/${store}`;
+  get(ref(db, schedulePath)).then(snapshot => {
+    const table = document.getElementById("schedule-edit-table");
+    if(snapshot.exists()){
+      const scheduleData = snapshot.val();
+      for(let i=0; i<scheduleData.length && i<table.rows.length; i++){
+        for(let j=0; j<scheduleData[i].length && j<table.rows[i].cells.length; j++){
+          table.rows[i].cells[j].textContent = scheduleData[i][j];
+        }
+      }
+    } else {
+      for(let i=0; i<table.rows.length; i++){
+        for(let j=0; j<table.rows[i].cells.length; j++){
+          table.rows[i].cells[j].textContent = "";
+        }
+      }
+    }
   });
 }
 
@@ -743,6 +793,7 @@ scheduleLocationButtons.forEach(btn=>{
     stores[loc][currentLang].forEach(store=>{
       const b=document.createElement("button");
       b.textContent = store;
+      b.dataset.location = loc;
       storeButtonsContainerSchedule.appendChild(b);
     });
     storeGuiSchedule.style.display="flex";
@@ -891,15 +942,16 @@ storeButtonsContainer.addEventListener("click",(e)=>{
 });
 
 storeButtonsContainerSchedule.addEventListener("click",(e)=>{
-  if(e.target.tagName==="BUTTON"){
+  if(e.target.tagName==="BUTTON" && !e.target.classList.contains("back-store-btn")){
     const storeName = e.target.textContent;
+    const location = e.target.dataset.location;
     scheduleTitle.textContent = `${storeName} Schedule`;
     storeGuiSchedule.style.display="none";
     scheduleSubmissionsGui.style.display="flex";
+    
+    loadScheduleFromFirebase(location, storeName);
 
     scheduleSubmissionsGui.querySelectorAll(".schedule-card").forEach(c=>c.remove());
-
-    // Table is always visible, no need to populate cards
   }
 });
 
