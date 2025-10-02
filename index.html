@@ -261,13 +261,21 @@ function getDeviceName() {
   return navigator.userAgent;
 }
 
-const deviceId = crypto.randomUUID(); 
+// Get or create a persistent deviceId
+let deviceId = localStorage.getItem("deviceId");
+if (!deviceId) {
+  deviceId = crypto.randomUUID();
+  localStorage.setItem("deviceId", deviceId);
+}
+
 const deviceName = getDeviceName();
 const deviceType = getDeviceType();
 
 const deviceRef = ref(db, `devices/${deviceId}`);
+
+// Create only if it's the first time
 get(deviceRef).then(snapshot => {
-  if(!snapshot.exists()){
+  if (!snapshot.exists()) {
     set(deviceRef, {
       name: deviceName,
       type: deviceType,
@@ -361,9 +369,37 @@ const stores = {
 
 function switchLang(lang){
   currentLang = lang;
-  // Language switching code (unchanged)
-  // ... your existing switchLang code remains exactly
+
+  // Toggle active language button
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+
+  // Form labels
+  document.getElementById("label-name").textContent = lang === "GR" ? "Όνομα" : "Name";
+  document.getElementById("label-month").textContent = lang === "GR" ? "Μήνας" : "Month";
+  document.getElementById("label-day").textContent = lang === "GR" ? "Ημέρα" : "Day";
+  document.getElementById("label-shift").textContent = lang === "GR" ? "Βάρδια" : "Shift";
+  document.getElementById("label-location").textContent = lang === "GR" ? "Τοποθεσία" : "Location";
+  document.getElementById("label-store").textContent = lang === "GR" ? "Κατάστημα" : "Store";
+
+  // Placeholders
+  document.getElementById("name").placeholder = lang === "GR" ? "Συμπληρώστε το όνομά σας" : "Fill out your name";
+  document.getElementById("day").placeholder = lang === "GR" ? "π.χ. 12 - 24" : "e.g. 12 - 24";
+
+  // Buttons
+  submitBtn.textContent = lang === "GR" ? "Υποβολή" : "Submit";
+  adminBtn.textContent = lang === "GR" ? "Διαχειριστής" : "Admin GUI";
+
+  // Form title
+  document.getElementById("form-title").textContent = lang === "GR" ? "Υποβολές Ζορμπά" : "Zorbas Submissions";
+
+  // Update stores dropdown if visible
+  if(storeContainer.classList.contains("show")){
+      updateStores(locationSelect.value);
+  }
 }
+
+// Attach language buttons
 greekBtn.addEventListener("click", () => switchLang("GR"));
 engBtn.addEventListener("click", () => switchLang("EN"));
 
