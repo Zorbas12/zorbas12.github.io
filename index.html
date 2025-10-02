@@ -53,7 +53,6 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     width: 320px; text-align: center; 
     margin-bottom: 20px; 
-    margin-bottom: 20px; 
 }
 
 label { 
@@ -136,7 +135,6 @@ input, select {
     top:0; left:0; width:100%; height:100%;
     background-color: #DAD9D7;
     z-index: 9999;
-    display:flex;
     justify-content:center;
     align-items:center;
     flex-direction: column;
@@ -163,10 +161,10 @@ input, select {
     background-color: #e03b3b; 
 }
 
-/* Center Admin button inside the form-box */
-#admin-btn {
-    display: block;           /* block allows margin auto to center */
-    margin: 10px auto 0;      /* top margin + horizontal centering */
+/* Center buttons inside the form-box */
+#admin-btn, #schedule-btn {
+    display: block;
+    margin: 10px auto 0;
     background-color: #E8DA89;
     border: none;
     padding: 12px 20px;
@@ -176,7 +174,7 @@ input, select {
     cursor: pointer;
     text-align: center;
 }
-#admin-btn:hover {
+#admin-btn:hover, #schedule-btn:hover {
     background-color: #d4c15e;
 }
 
@@ -187,7 +185,6 @@ input, select {
     top:0; left:0; width:100%; height:100%;
     background-color: #DAD9D7;
     z-index: 9999;
-    display:flex;
     justify-content:center;
     align-items:center;
     flex-direction: column;
@@ -214,6 +211,39 @@ input, select {
     background-color: #e03b3b; 
 }
 
+/* Schedule GUI overlay (NEW) */
+#schedule-gui {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background-color: #DAD9D7;
+    z-index: 9999;
+    justify-content:center;
+    align-items:center;
+    flex-direction: column;
+}
+#schedule-gui button {
+    background-color: #E8DA89;
+    border: none;
+    padding: 12px 0;
+    width: 200px;      
+    border-radius: 6px;
+    font-size: 18px;
+    margin: 10px 0;     
+    font-weight: bold;
+    cursor: pointer;
+}
+#schedule-gui button:hover { 
+    background-color: #d4c15e; 
+}
+#schedule-gui #back-schedule { 
+    background-color: #ff4c4c; 
+    color: #fff; 
+}
+#schedule-gui #back-schedule:hover { 
+    background-color: #e03b3b; 
+}
+
 /* Store GUI overlay */
 .store-gui {
     display: none;
@@ -221,7 +251,6 @@ input, select {
     top:0; left:0; width:100%; height:100%;
     background-color: #DAD9D7;
     z-index: 9999;
-    display:flex;
     justify-content:center;
     align-items:center;
     flex-direction: column;
@@ -238,8 +267,8 @@ input, select {
     cursor: pointer;
 }
 .store-gui button:hover { background-color: #d4c15e; }
-.store-gui #back-store { background-color: #ff4c4c; color: #fff; }
-.store-gui #back-store:hover { background-color: #e03b3b; }
+.store-gui .back-store-btn { background-color: #ff4c4c; color: #fff; }
+.store-gui .back-store-btn:hover { background-color: #e03b3b; }
 
 /* Store buttons container */
 #store-buttons-container {
@@ -247,6 +276,26 @@ input, select {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+}
+#store-buttons-container-schedule {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Devices GUI */
+#devices-gui {
+    display:none;
+    position:fixed;
+    top:0; left:0; width:100%; height:100%;
+    background-color:#DAD9D7;
+    z-index:9999;
+    justify-content:flex-start;
+    align-items:center;
+    flex-direction:column;
+    padding:20px;
+    overflow-y:auto;
 }
 </style>
 </head>
@@ -302,6 +351,7 @@ input, select {
     <div id="message"></div>
   </form>
 
+  <button type="button" class="submit-btn" id="schedule-btn" style="margin-top:10px;">Schedule GUI</button>
   <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
 </div>
 
@@ -323,34 +373,39 @@ input, select {
     <button id="back-locations">Back</button>
 </div>
 
+<!-- Schedule GUI (NEW - PUBLIC ACCESS) -->
+<div id="schedule-gui">
+    <button class="schedule-location-btn" data-loc="NICOSIA">Nicosia</button>
+    <button class="schedule-location-btn" data-loc="LARNACA">Larnaca</button>
+    <button class="schedule-location-btn" data-loc="FAMAGUSTA">Famagusta</button>
+    <button class="schedule-location-btn" data-loc="LIMASSOL">Limassol</button>
+    <button class="schedule-location-btn" data-loc="PAFOS">Pafos</button>
+    <button id="back-schedule">Back</button>
+</div>
+
 <!-- Stores GUI -->
 <div class="store-gui" id="store-gui">
     <div id="store-buttons-container"></div>
-    <button id="back-store">Back</button>
+    <button class="back-store-btn" id="back-store">Back</button>
 </div>
 
-<!-- ===== Devices GUI Overlay (ADDED) ===== -->
-<div id="devices-gui" style="
-    display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background-color:#DAD9D7; z-index:9999; display:flex;
-    justify-content:flex-start; align-items:center; flex-direction:column;
-    padding:20px; overflow-y:auto;
-">
+<!-- Schedule Stores GUI (NEW) -->
+<div class="store-gui" id="store-gui-schedule">
+    <div id="store-buttons-container-schedule"></div>
+    <button class="back-store-btn" id="back-store-schedule">Back</button>
+</div>
+
+<!-- Devices GUI -->
+<div id="devices-gui">
     <h2 style="text-align:center;margin-bottom:20px;">Devices</h2>
-    <div id="devices-container" style="
-        width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:10px;">
-    </div>
-    <button id="back-devices" style="
-        background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
-        border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
-    ">Back</button>
+    <div id="devices-container" style="width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:10px;"></div>
+    <button id="back-devices" style="background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;">Back</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
-// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyB08KDzXF6rgvqPJGaaD1SYPycAecaH8Vg",
   authDomain: "zorbas1.firebaseapp.com",
@@ -362,11 +417,9 @@ const firebaseConfig = {
   measurementId: "G-WHH6ZTZNP0"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ================= Device Detection & Auto Store =================
 function getDeviceType() {
   const ua = navigator.userAgent;
   if(/Mobi|Android/i.test(ua)) return "Phone";
@@ -378,7 +431,6 @@ function getDeviceName() {
   return navigator.userAgent;
 }
 
-// Get or create a persistent deviceId
 let deviceId = localStorage.getItem("deviceId");
 if (!deviceId) {
   deviceId = crypto.randomUUID();
@@ -387,10 +439,8 @@ if (!deviceId) {
 
 const deviceName = getDeviceName();
 const deviceType = getDeviceType();
-
 const deviceRef = ref(db, `devices/${deviceId}`);
 
-// Create only if it's the first time
 get(deviceRef).then(snapshot => {
   if (!snapshot.exists()) {
     set(deviceRef, {
@@ -401,7 +451,6 @@ get(deviceRef).then(snapshot => {
   }
 });
 
-// DOM Elements
 const greekBtn = document.getElementById("greek-btn");
 const engBtn = document.getElementById("eng-btn");
 const locationSelect = document.getElementById("location");
@@ -412,6 +461,7 @@ const messageDiv = document.getElementById("message");
 const submissionsTableBody = document.querySelector("#submissions-table tbody");
 
 const adminBtn = document.getElementById("admin-btn");
+const scheduleBtn = document.getElementById("schedule-btn");
 const adminGui = document.getElementById("admin-gui");
 const backAdmin = document.getElementById("back-admin");
 const seeSubmissionsBtn = document.getElementById("see-submissions");
@@ -422,58 +472,138 @@ const locationsGui = document.getElementById("locations-gui");
 const backLocations = document.getElementById("back-locations");
 const locationButtons = document.querySelectorAll(".location-btn");
 
+const scheduleGui = document.getElementById("schedule-gui");
+const backSchedule = document.getElementById("back-schedule");
+const scheduleLocationButtons = document.querySelectorAll(".schedule-location-btn");
+
 const storeGui = document.getElementById("store-gui");
 const storeButtonsContainer = document.getElementById("store-buttons-container");
 const backStoreBtn = document.getElementById("back-store");
+
+const storeGuiSchedule = document.getElementById("store-gui-schedule");
+const storeButtonsContainerSchedule = document.getElementById("store-buttons-container-schedule");
+const backStoreBtnSchedule = document.getElementById("back-store-schedule");
 
 const devicesGui = document.getElementById("devices-gui");
 const devicesContainer = document.getElementById("devices-container");
 const backDevicesBtn = document.getElementById("back-devices");
 
-  // ================= Admin Button Permission =================
-adminBtn.style.display = "none"; // hide by default
+adminBtn.style.display = "none";
 
 get(deviceRef).then(snapshot => {
   if (snapshot.exists()) {
     const deviceData = snapshot.val();
     if (deviceData.role === "admin") {
-      adminBtn.style.display = "block"; // show if admin
+      adminBtn.style.display = "block";
     }
   }
 });
 
-// Optional live update if role changes
 onValue(deviceRef, snapshot => {
   const deviceData = snapshot.val();
-  if (deviceData.role === "admin") {
+  if (deviceData && deviceData.role === "admin") {
     adminBtn.style.display = "block";
+    // Show edit schedule button if it exists
+    const editBtn = document.getElementById("edit-schedule-btn");
+    if(editBtn) editBtn.style.display = "block";
   } else {
     adminBtn.style.display = "none";
+    // Hide edit schedule button if it exists
+    const editBtn = document.getElementById("edit-schedule-btn");
+    if(editBtn) editBtn.style.display = "none";
   }
 });
-  
-// Store submissions overlay
+
 const storeSubmissionsGui = document.createElement("div");
 storeSubmissionsGui.id = "store-submissions-gui";
-storeSubmissionsGui.style.cssText = `
-display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-background-color:#DAD9D7; z-index:9999; display:flex; flex-direction:column;
-align-items:center; justify-content:flex-start; padding-top:50px;
-`;
+storeSubmissionsGui.style.cssText = `display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:#DAD9D7; z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:50px; overflow-y:auto;`;
 const storeTitle = document.createElement("h2");
 storeTitle.style.marginBottom="20px";
 storeSubmissionsGui.appendChild(storeTitle);
 const storeBackBtn = document.createElement("button");
 storeBackBtn.textContent = "Back";
-storeBackBtn.style.cssText = `
-background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;
-border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;
-`;
+storeBackBtn.style.cssText = `background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;`;
 storeBackBtn.addEventListener("click", ()=>{ storeSubmissionsGui.style.display="none"; storeGui.style.display="flex"; });
 storeSubmissionsGui.appendChild(storeBackBtn);
 document.body.appendChild(storeSubmissionsGui);
 
-// ---------------- Language ----------------
+const scheduleSubmissionsGui = document.createElement("div");
+scheduleSubmissionsGui.id = "schedule-submissions-gui";
+scheduleSubmissionsGui.style.cssText = `display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:#DAD9D7; z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:50px; overflow-y:auto;`;
+const scheduleTitle = document.createElement("h2");
+scheduleTitle.style.marginBottom="20px";
+scheduleSubmissionsGui.appendChild(scheduleTitle);
+const editScheduleBtn = document.createElement("button");
+editScheduleBtn.textContent = "Edit Schedule";
+editScheduleBtn.id = "edit-schedule-btn";
+editScheduleBtn.style.cssText = `
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color:#E8DA89;
+  color:#000;
+  padding:12px 20px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  display:none;
+  z-index:10001;
+`;
+editScheduleBtn.addEventListener("click", ()=>{ 
+  scheduleSubmissionsGui.style.display="none";
+  scheduleTableGui.style.display="flex";
+  enableTableEditing();
+});
+scheduleSubmissionsGui.appendChild(editScheduleBtn);
+
+const scheduleBackBtn = document.createElement("button");
+scheduleBackBtn.textContent = "Back";
+scheduleBackBtn.style.cssText = `
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background-color:#ff4c4c;
+  color:#fff;
+  padding:12px 20px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  z-index:10001;
+`;
+scheduleBackBtn.addEventListener("click", ()=>{ 
+  scheduleSubmissionsGui.style.display="none"; 
+  storeGuiSchedule.style.display="flex";
+  // Reset edit button state when leaving
+  const editBtn = document.getElementById("edit-schedule-btn");
+  if(editBtn){
+    disableTableEditing();
+    editBtn.textContent = "Edit Schedule";
+    editBtn.style.backgroundColor = "#E8DA89";
+  }
+});
+scheduleSubmissionsGui.appendChild(scheduleBackBtn);
+document.body.appendChild(scheduleSubmissionsGui);
+
+function enableTableEditing(){
+  const cells = document.querySelectorAll("#schedule-edit-table td");
+  cells.forEach(cell => {
+    cell.contentEditable = "true";
+    cell.style.backgroundColor = "#fffacd";
+  });
+}
+
+function disableTableEditing(){
+  const cells = document.querySelectorAll("#schedule-edit-table td");
+  cells.forEach(cell => {
+    cell.contentEditable = "false";
+    cell.style.backgroundColor = "#fff";
+  });
+}
+
 let currentLang = "EN";
 
 const stores = {
@@ -486,38 +616,27 @@ const stores = {
 
 function switchLang(lang){
   currentLang = lang;
-
-  // Toggle active language button
   greekBtn.classList.toggle("active", lang === "GR");
   engBtn.classList.toggle("active", lang === "EN");
-
-  // Form labels
   document.getElementById("label-name").textContent = lang === "GR" ? "Όνομα" : "Name";
   document.getElementById("label-month").textContent = lang === "GR" ? "Μήνας" : "Month";
   document.getElementById("label-day").textContent = lang === "GR" ? "Ημέρα" : "Day";
   document.getElementById("label-shift").textContent = lang === "GR" ? "Βάρδια" : "Shift";
   document.getElementById("label-location").textContent = lang === "GR" ? "Τοποθεσία" : "Location";
   document.getElementById("label-store").textContent = lang === "GR" ? "Κατάστημα" : "Store";
-
-  // Placeholders
   document.getElementById("name").placeholder = lang === "GR" ? "Συμπληρώστε το όνομά σας" : "Fill out your name";
   document.getElementById("day").placeholder = lang === "GR" ? "Συμπληρώστε τη μέρα σας" : "Fill out your day";
-
-  // Buttons
   submitBtn.textContent = lang === "GR" ? "Υποβολή" : "Submit";
   adminBtn.textContent = lang === "GR" ? "Διαχειριστής" : "Admin GUI";
-
-  // Update stores dropdown if visible
+  scheduleBtn.textContent = lang === "GR" ? "Πρόγραμμα" : "Schedule GUI";
   if(storeContainer.classList.contains("show")){
       updateStores(locationSelect.value);
   }
 }
 
-// Attach language buttons
 greekBtn.addEventListener("click", () => switchLang("GR"));
 engBtn.addEventListener("click", () => switchLang("EN"));
 
-// ---------------- Stores ----------------
 locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
 function updateStores(location){
   if(stores[location]){
@@ -529,7 +648,6 @@ function updateStores(location){
   } else storeContainer.classList.remove("show");
 }
 
-// ---------------- Submissions ----------------
 function showMessage(text,type){
   messageDiv.textContent=text;
   messageDiv.className=type;
@@ -555,7 +673,6 @@ submitBtn.addEventListener("click", ()=>{
   }
 });
 
-// ---------------- Live Submissions Table ----------------
 onValue(ref(db,'submissions'), snapshot=>{
   const data=snapshot.val();
   if(submissionsTableBody) submissionsTableBody.innerHTML="";
@@ -568,12 +685,32 @@ onValue(ref(db,'submissions'), snapshot=>{
     }
   }
 });
-// ---------------- Admin GUI ----------------
-adminBtn.addEventListener("click", ()=>{ adminGui.style.display="flex"; });
-backAdmin.addEventListener("click", ()=>{ adminGui.style.display="none"; });
-seeSubmissionsBtn.addEventListener("click", ()=>{ adminGui.style.display="none"; locationsGui.style.display="flex"; });
 
-// ---------------- Location -> Stores GUI ----------------
+adminBtn.addEventListener("click", ()=>{ 
+  adminGui.style.display="flex"; 
+  document.getElementById("submit-gui").style.display="none";
+});
+
+scheduleBtn.addEventListener("click", ()=>{ 
+  scheduleGui.style.display="flex"; 
+  document.getElementById("submit-gui").style.display="none";
+});
+
+backAdmin.addEventListener("click", ()=>{ 
+  adminGui.style.display="none"; 
+  document.getElementById("submit-gui").style.display="block";
+});
+
+backSchedule.addEventListener("click", ()=>{ 
+  scheduleGui.style.display="none"; 
+  document.getElementById("submit-gui").style.display="block";
+});
+
+seeSubmissionsBtn.addEventListener("click", ()=>{ 
+  adminGui.style.display="none"; 
+  locationsGui.style.display="flex"; 
+});
+
 locationButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const loc = btn.dataset.loc;
@@ -587,19 +724,41 @@ locationButtons.forEach(btn=>{
     storeGui.style.display="flex";
   });
 });
-backStoreBtn.addEventListener("click", ()=>{ storeGui.style.display="none"; locationsGui.style.display="flex"; });
-backLocations.addEventListener("click", ()=>{ locationsGui.style.display="none"; adminGui.style.display="flex"; });
 
-// ---------------- Reset / Users ----------------
-resetSubmissionsBtn.addEventListener("click", () => {
-  remove(ref(db, 'submissions'));
-  showPopup(
-    currentLang === "GR" ? "Όλες οι υποβολές διαγράφηκαν!" : "All submissions have been reset!",
-    "success"
-  );
+backStoreBtn.addEventListener("click", ()=>{ 
+  storeGui.style.display="none"; 
+  locationsGui.style.display="flex"; 
 });
 
-// SEE USERS -> Devices GUI
+backLocations.addEventListener("click", ()=>{ 
+  locationsGui.style.display="none"; 
+  adminGui.style.display="flex"; 
+});
+
+scheduleLocationButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const loc = btn.dataset.loc;
+    scheduleGui.style.display="none";
+    storeButtonsContainerSchedule.innerHTML = "";
+    stores[loc][currentLang].forEach(store=>{
+      const b=document.createElement("button");
+      b.textContent = store;
+      storeButtonsContainerSchedule.appendChild(b);
+    });
+    storeGuiSchedule.style.display="flex";
+  });
+});
+
+backStoreBtnSchedule.addEventListener("click", ()=>{ 
+  storeGuiSchedule.style.display="none"; 
+  scheduleGui.style.display="flex"; 
+});
+
+resetSubmissionsBtn.addEventListener("click", () => {
+  remove(ref(db, 'submissions'));
+  showPopup(currentLang === "GR" ? "Όλες οι υποβολές διαγράφηκαν!" : "All submissions have been reset!", "success");
+});
+
 seeUsersBtn.addEventListener("click", () => {
   adminGui.style.display = "none";
   devicesGui.style.display = "flex";
@@ -607,80 +766,48 @@ seeUsersBtn.addEventListener("click", () => {
 
   onValue(ref(db, 'devices'), snapshot => {
     const data = snapshot.val();
-    devicesContainer.innerHTML = ""; // clear old boxes
+    devicesContainer.innerHTML = "";
 
     if (data) {
       for (let key in data) {
         const d = data[key];
-
-        // Box container
         const box = document.createElement("div");
-        box.style.cssText = `
-          background:#fff;
-          padding:20px;
-          border-radius:12px;
-          margin-bottom:20px;
-          box-shadow:0 4px 12px rgba(0,0,0,0.2);
-          width:100%;
-          max-width:400px;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          gap:15px;
-        `;
+        box.style.cssText = `background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:15px;`;
 
-        // Device display
         const deviceEl = document.createElement("p");
         deviceEl.style.cssText = "font-size:18px;font-weight:bold;text-align:center;margin:0;";
-        deviceEl.textContent = `Device: ${d.type}`; // <-- show "Device: PC/Phone/Tablet"
+        deviceEl.textContent = `Device: ${d.type}`;
         box.appendChild(deviceEl);
 
-        // Add extra space
         const spacer = document.createElement("div");
         spacer.style.height = "10px";
         box.appendChild(spacer);
 
-        // Role buttons container
         const buttons = document.createElement("div");
         buttons.style.cssText = "display:flex; gap:20px; justify-content:center;";
 
         const userBtn = document.createElement("button");
         userBtn.textContent = "User";
-        userBtn.style.cssText = `
-          background:#fff;
-          border:none;
-          padding:10px 20px;
-          border-radius:6px;
-          cursor:pointer;
-          font-size:16px;
-        `;
+        userBtn.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;`;
 
-        const adminBtn = document.createElement("button");
-        adminBtn.textContent = "Admin";
-        adminBtn.style.cssText = `
-          background:#fff;
-          border:none;
-          padding:10px 20px;
-          border-radius:6px;
-          cursor:pointer;
-          font-size:16px;
-        `;
+        const adminBtn2 = document.createElement("button");
+        adminBtn2.textContent = "Admin";
+        adminBtn2.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;`;
 
         function updateRoleUI(selectedRole) {
           if(selectedRole==="user"){
             userBtn.style.fontWeight="bold";
             userBtn.style.textDecoration="underline";
-            adminBtn.style.fontWeight="normal";
-            adminBtn.style.textDecoration="none";
+            adminBtn2.style.fontWeight="normal";
+            adminBtn2.style.textDecoration="none";
           } else {
-            adminBtn.style.fontWeight="bold";
-            adminBtn.style.textDecoration="underline";
+            adminBtn2.style.fontWeight="bold";
+            adminBtn2.style.textDecoration="underline";
             userBtn.style.fontWeight="normal";
             userBtn.style.textDecoration="none";
           }
         }
 
-        // Initialize button state
         updateRoleUI(d.role);
 
         userBtn.addEventListener("click", () => {
@@ -688,13 +815,13 @@ seeUsersBtn.addEventListener("click", () => {
           updateRoleUI("user");
         });
 
-        adminBtn.addEventListener("click", () => {
+        adminBtn2.addEventListener("click", () => {
           set(ref(db, `devices/${key}/role`), "admin");
           updateRoleUI("admin");
         });
 
         buttons.appendChild(userBtn);
-        buttons.appendChild(adminBtn);
+        buttons.appendChild(adminBtn2);
         box.appendChild(buttons);
 
         devicesContainer.appendChild(box);
@@ -704,12 +831,12 @@ seeUsersBtn.addEventListener("click", () => {
     }
   }, { onlyOnce: true });
 });
+
 backDevicesBtn.addEventListener("click", ()=>{
   devicesGui.style.display="none";
   adminGui.style.display="flex";
 });
 
-// ---------------- Store Submissions Cards ----------------
 storeButtonsContainer.addEventListener("click",(e)=>{
   if(e.target.tagName==="BUTTON"){
     const storeName = e.target.textContent;
@@ -763,7 +890,19 @@ storeButtonsContainer.addEventListener("click",(e)=>{
   }
 });
 
-// ---------------- Popup for Accept/Decline Submissions ----------------
+storeButtonsContainerSchedule.addEventListener("click",(e)=>{
+  if(e.target.tagName==="BUTTON"){
+    const storeName = e.target.textContent;
+    scheduleTitle.textContent = `${storeName} Schedule`;
+    storeGuiSchedule.style.display="none";
+    scheduleSubmissionsGui.style.display="flex";
+
+    scheduleSubmissionsGui.querySelectorAll(".schedule-card").forEach(c=>c.remove());
+
+    // Table is always visible, no need to populate cards
+  }
+});
+
 function showPopup(text, type){
   const popup = document.createElement("div");
   popup.textContent = text;
@@ -793,16 +932,16 @@ function showPopup(text, type){
     setTimeout(()=>popup.remove(),300);
   },2000);
 }
-  // ================= Force Submissions GUI on Load =================
+
 window.addEventListener("load", () => {
-  // Hide all other GUIs
   adminGui.style.display = "none";
   locationsGui.style.display = "none";
+  scheduleGui.style.display = "none";
   storeGui.style.display = "none";
+  storeGuiSchedule.style.display = "none";
   devicesGui.style.display = "none";
   storeSubmissionsGui.style.display = "none";
-
-  // Always show submission form when page opens
+  scheduleSubmissionsGui.style.display = "none";
   document.getElementById("submit-gui").style.display = "block";
 });
 </script>
