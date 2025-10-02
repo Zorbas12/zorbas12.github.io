@@ -418,7 +418,14 @@ function getDeviceName() {
   return navigator.userAgent;
 }
 
-let deviceId = crypto.randomUUID();
+let deviceId = localStorage.getItem("deviceId");
+if (!deviceId) {
+  deviceId = crypto.randomUUID();
+  localStorage.setItem("deviceId", deviceId);
+  console.log("New device ID created:", deviceId);
+} else {
+  console.log("Existing device ID found:", deviceId);
+}
 
 const deviceName = getDeviceName();
 const deviceType = getDeviceType();
@@ -426,11 +433,14 @@ const deviceRef = ref(db, `devices/${deviceId}`);
 
 get(deviceRef).then(snapshot => {
   if (!snapshot.exists()) {
+    console.log("Device not found in Firebase, creating new entry");
     set(deviceRef, {
       name: deviceName,
       type: deviceType,
       role: "user"
     });
+  } else {
+    console.log("Device already exists in Firebase, skipping creation");
   }
 });
 
