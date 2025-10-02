@@ -19,30 +19,114 @@ body {
   position: relative;
 }
 
-.lang-buttons { position: absolute; top: 15px; right: 15px; font-size: 14px; }
-.lang-buttons button { background-color: #DAD9D7; border: none; cursor: pointer; margin: 0 2px; font-size: 14px; font-weight: normal; }
-.lang-buttons button.active { font-weight: bold; }
+.lang-buttons { 
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    font-size: 14px; 
+}
+.lang-buttons button { 
+    background-color: #DAD9D7; 
+    border: none; 
+    cursor: pointer; 
+    margin: 0 2px; 
+    font-size: 14px; 
+    font-weight: normal; 
+}
+.lang-buttons button.active { 
+    font-weight: bold; 
+}
 
-.form-title { font-family: 'Algerian', sans-serif; font-size: 60px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+.form-title { 
+    font-family: 'Algerian', sans-serif; 
+    font-size: 60px; 
+    font-weight: bold; 
+    margin-bottom: 10px; 
+    text-align: center; 
+}
 
-.form-box { background: #fff; padding: 30px 40px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 320px; text-align: center; margin-bottom: 20px; }
+.form-box { 
+    background: #fff; 
+    padding: 30px 40px; 
+    border-radius: 14px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+    width: 320px; 
+    text-align: center; 
+    margin-bottom: 20px; 
+}
 
-label { display: block; margin-bottom: 6px; font-weight: bold; text-align: center; }
+label { 
+    display: block; 
+    margin-bottom: 6px; 
+    font-weight: bold; 
+    text-align: center; 
+}
 
-input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 6px; text-align: left; font-size: 14px; box-sizing: border-box; }
+input, select { 
+    width: 90%; 
+    padding: 10px; 
+    margin-bottom: 18px; 
+    border: 1px solid #ccc; 
+    border-radius: 6px; 
+    text-align: left; 
+    font-size: 14px; 
+    box-sizing: border-box; 
+}
 
-#store-container { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
-#store-container.show { max-height: 500px; }
+#store-container { 
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.5s ease; 
+}
+#store-container.show { 
+    max-height: 500px; 
+}
 
-.submit-btn { background-color: #E8DA89; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
-.submit-btn:hover { background-color: #d4c15e; }
+.submit-btn { 
+    background-color: #E8DA89; 
+    border: none; 
+    padding: 12px 20px; 
+    border-radius: 6px; 
+    font-size: 16px; 
+    cursor: pointer; 
+    font-weight: bold; 
+}
+.submit-btn:hover { 
+    background-color: #d4c15e; 
+}
 
-#message { margin-top: 10px; padding: 10px 15px; border-radius: 6px; color: #fff; font-weight: bold; display: none; font-size: 14px; }
+#message { 
+    margin-top: 10px; 
+    padding: 10px 15px; 
+    border-radius: 6px; 
+    color: #fff; 
+    font-weight: bold; 
+    display: none; 
+    font-size: 14px; 
+}
 
-#submissions-container { background: #fff; padding: 20px 30px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 80%; max-width: 800px; margin-top: 20px; overflow-x: auto; }
-#submissions-table { width: 100%; border-collapse: collapse; }
-#submissions-table th, #submissions-table td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-#submissions-table th { background-color: #E8DA89; }
+#submissions-container { 
+    background: #fff; 
+    padding: 20px 30px; 
+    border-radius: 14px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+    width: 80%; 
+    max-width: 800px; 
+    margin-top: 20px; 
+    overflow-x: auto; 
+}
+#submissions-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+#submissions-table th, #submissions-table td { 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    text-align: center; 
+}
+#submissions-table th { 
+    background-color: #E8DA89; 
+}
 
 /* Admin GUI overlay */
 #admin-gui {
@@ -65,10 +149,35 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     margin: 10px;
     font-weight: bold;
     cursor: pointer;
+    text-align: center; 
 }
-#admin-gui button:hover { background-color: #d4c15e; }
-#admin-gui #back-admin { background-color: #ff4c4c; color: #fff; }
-#admin-gui #back-admin:hover { background-color: #e03b3b; }
+#admin-gui button:hover { 
+    background-color: #d4c15e; 
+}
+#admin-gui #back-admin { 
+    background-color: #ff4c4c; 
+    color: #fff; 
+}
+#admin-gui #back-admin:hover { 
+    background-color: #e03b3b; 
+}
+
+/* Center Admin button inside the form-box */
+#admin-btn {
+    display: block;           /* block allows margin auto to center */
+    margin: 10px auto 0;      /* top margin + horizontal centering */
+    background-color: #E8DA89;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+#admin-btn:hover {
+    background-color: #d4c15e;
+}
 
 /* Locations GUI overlay */
 #locations-gui {
@@ -93,9 +202,16 @@ input, select { width: 90%; padding: 10px; margin-bottom: 18px; border: 1px soli
     font-weight: bold;
     cursor: pointer;
 }
-#locations-gui button:hover { background-color: #d4c15e; }
-#locations-gui #back-locations { background-color: #ff4c4c; color: #fff; }
-#locations-gui #back-locations:hover { background-color: #e03b3b; }
+#locations-gui button:hover { 
+    background-color: #d4c15e; 
+}
+#locations-gui #back-locations { 
+    background-color: #ff4c4c; 
+    color: #fff; 
+}
+#locations-gui #back-locations:hover { 
+    background-color: #e03b3b; 
+}
 
 /* Store GUI overlay */
 .store-gui {
