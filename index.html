@@ -635,13 +635,14 @@ function loadScheduleFromFirebase(location, store){
   currentEditingLocation = location;
   currentEditingStore = store;
   const schedulePath = `schedules/${location}/${store}`;
-  get(ref(db, schedulePath)).then(snapshot => {
+  
+  onValue(ref(db, schedulePath), snapshot => {
     const table = document.getElementById("schedule-edit-table");
     if(snapshot.exists()){
       const scheduleData = snapshot.val();
       for(let i=0; i<scheduleData.length && i<table.rows.length; i++){
         for(let j=0; j<scheduleData[i].length && j<table.rows[i].cells.length; j++){
-          table.rows[i].cells[j].textContent = scheduleData[i][j];
+          table.rows[i].cells[j].textContent = scheduleData[i][j] || "";
         }
       }
     } else {
