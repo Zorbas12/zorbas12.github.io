@@ -7,9 +7,39 @@
 <style>
 @import url('https://fonts.cdnfonts.com/css/algerian');
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
 body {
   font-family: Arial, sans-serif;
-  background: #DAD9D7;
+  background: linear-gradient(135deg, #DAD9D7 0%, #c5c4c2 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,7 +54,8 @@ body {
     position: absolute; 
     top: 15px; 
     right: 15px; 
-    font-size: 14px; 
+    font-size: 14px;
+    animation: slideInRight 0.6s ease;
 }
 .lang-buttons button { 
     background-color: #DAD9D7; 
@@ -32,10 +63,18 @@ body {
     cursor: pointer; 
     margin: 0 2px; 
     font-size: 14px; 
-    font-weight: normal; 
+    font-weight: normal;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+.lang-buttons button:hover {
+    transform: translateY(-2px);
+    background-color: #E8DA89;
 }
 .lang-buttons button.active { 
-    font-weight: bold; 
+    font-weight: bold;
+    background-color: #E8DA89;
 }
 
 .form-title { 
@@ -43,23 +82,38 @@ body {
     font-size: 60px; 
     font-weight: bold; 
     margin-bottom: 10px; 
-    text-align: center; 
+    text-align: center;
+    animation: fadeIn 0.8s ease;
+    background: linear-gradient(90deg, #333, #666, #333);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite, fadeIn 0.8s ease;
 }
 
 .form-box { 
     background: #fff; 
     padding: 30px 40px; 
     border-radius: 14px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-    width: 320px; text-align: center; 
-    margin-bottom: 20px; 
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
+    width: 320px; 
+    text-align: center; 
+    margin-bottom: 20px;
+    animation: scaleIn 0.6s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
 }
 
 label { 
     display: block; 
     margin-bottom: 6px; 
     font-weight: bold; 
-    text-align: center; 
+    text-align: center;
+    animation: fadeIn 0.5s ease;
 }
 
 input, select { 
@@ -70,7 +124,15 @@ input, select {
     border-radius: 6px; 
     text-align: left; 
     font-size: 14px; 
-    box-sizing: border-box; 
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #E8DA89;
+    box-shadow: 0 0 0 3px rgba(232, 218, 137, 0.2);
+    transform: scale(1.02);
 }
 
 #store-container { 
@@ -89,10 +151,34 @@ input, select {
     border-radius: 6px; 
     font-size: 16px; 
     cursor: pointer; 
-    font-weight: bold; 
+    font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+.submit-btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 .submit-btn:hover { 
-    background-color: #d4c15e; 
+    background-color: #d4c15e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.submit-btn:active {
+    transform: translateY(0);
 }
 
 #message { 
@@ -102,33 +188,11 @@ input, select {
     color: #fff; 
     font-weight: bold; 
     display: none; 
-    font-size: 14px; 
+    font-size: 14px;
+    animation: fadeIn 0.3s ease;
 }
 
-#submissions-container { 
-    background: #fff; 
-    padding: 20px 30px; 
-    border-radius: 14px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-    width: 80%; 
-    max-width: 800px; 
-    margin-top: 20px; 
-    overflow-x: auto; 
-}
-#submissions-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-}
-#submissions-table th, #submissions-table td { 
-    border: 1px solid #ccc; 
-    padding: 10px; 
-    text-align: center; 
-}
-#submissions-table th { 
-    background-color: #E8DA89; 
-}
-
-#admin-gui {
+#admin-gui, #locations-gui, #schedule-gui, .store-gui, #devices-gui {
     display: none;
     position: fixed;
     top:0; left:0; width:100%; height:100%;
@@ -137,8 +201,10 @@ input, select {
     justify-content:center;
     align-items:center;
     flex-direction: column;
+    animation: fadeIn 0.4s ease;
 }
-#admin-gui button {
+
+#admin-gui button, #locations-gui button, #schedule-gui button, .store-gui button {
     background-color: #E8DA89; 
     border: none;
     padding: 12px 20px;
@@ -147,16 +213,35 @@ input, select {
     margin: 10px;
     font-weight: bold;
     cursor: pointer;
-    text-align: center; 
+    text-align: center;
+    transition: all 0.3s ease;
+    animation: scaleIn 0.4s ease forwards;
+    opacity: 0;
 }
-#admin-gui button:hover { 
-    background-color: #d4c15e; 
+
+#admin-gui button:nth-child(1) { animation-delay: 0.1s; }
+#admin-gui button:nth-child(2) { animation-delay: 0.2s; }
+#admin-gui button:nth-child(3) { animation-delay: 0.3s; }
+#admin-gui button:nth-child(4) { animation-delay: 0.4s; }
+
+#locations-gui button:nth-child(1) { animation-delay: 0.1s; }
+#locations-gui button:nth-child(2) { animation-delay: 0.15s; }
+#locations-gui button:nth-child(3) { animation-delay: 0.2s; }
+#locations-gui button:nth-child(4) { animation-delay: 0.25s; }
+#locations-gui button:nth-child(5) { animation-delay: 0.3s; }
+#locations-gui button:nth-child(6) { animation-delay: 0.35s; }
+
+#admin-gui button:hover, #locations-gui button:hover, #schedule-gui button:hover, .store-gui button:hover {
+    background-color: #d4c15e;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
-#admin-gui #back-admin { 
+
+#admin-gui #back-admin, #locations-gui #back-locations, #schedule-gui #back-schedule, .store-gui .back-store-btn { 
     background-color: #ff4c4c; 
     color: #fff; 
 }
-#admin-gui #back-admin:hover { 
+#admin-gui #back-admin:hover, #locations-gui #back-locations:hover, #schedule-gui #back-schedule:hover, .store-gui .back-store-btn:hover { 
     background-color: #e03b3b; 
 }
 
@@ -171,107 +256,26 @@ input, select {
     font-weight: bold;
     cursor: pointer;
     text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
+
 #admin-btn:hover, #schedule-btn:hover {
     background-color: #d4c15e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-#locations-gui {
-    display: none;
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background-color: #DAD9D7;
-    z-index: 9999;
-    justify-content:center;
-    align-items:center;
-    flex-direction: column;
-}
-#locations-gui button {
-    background-color: #E8DA89;
-    border: none;
-    padding: 12px 0;
-    width: 200px;      
-    border-radius: 6px;
-    font-size: 18px;
-    margin: 10px 0;     
-    font-weight: bold;
-    cursor: pointer;
-}
-#locations-gui button:hover { 
-    background-color: #d4c15e; 
-}
-#locations-gui #back-locations { 
-    background-color: #ff4c4c; 
-    color: #fff; 
-}
-#locations-gui #back-locations:hover { 
-    background-color: #e03b3b; 
+#locations-gui button, #schedule-gui button {
+    width: 200px;
 }
 
-#schedule-gui {
-    display: none;
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background-color: #DAD9D7;
-    z-index: 9999;
-    justify-content:center;
-    align-items:center;
-    flex-direction: column;
-}
-#schedule-gui button {
-    background-color: #E8DA89;
-    border: none;
-    padding: 12px 0;
-    width: 200px;      
-    border-radius: 6px;
-    font-size: 18px;
-    margin: 10px 0;     
-    font-weight: bold;
-    cursor: pointer;
-}
-#schedule-gui button:hover { 
-    background-color: #d4c15e; 
-}
-#schedule-gui #back-schedule { 
-    background-color: #ff4c4c; 
-    color: #fff; 
-}
-#schedule-gui #back-schedule:hover { 
-    background-color: #e03b3b; 
-}
-
-.store-gui {
-    display: none;
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background-color: #DAD9D7;
-    z-index: 9999;
-    justify-content:center;
-    align-items:center;
-    flex-direction: column;
-}
 .store-gui button {
-    background-color: #E8DA89;
-    border: none;
-    padding: 12px 0;
-    width: 200px;        
-    border-radius: 6px;
-    font-size: 18px;
-    margin: 10px 0;      
-    font-weight: bold;
-    cursor: pointer;
+    width: 200px;
 }
-.store-gui button:hover { background-color: #d4c15e; }
-.store-gui .back-store-btn { background-color: #ff4c4c; color: #fff; }
-.store-gui .back-store-btn:hover { background-color: #e03b3b; }
 
-#store-buttons-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-#store-buttons-container-schedule {
+#store-buttons-container, #store-buttons-container-schedule {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -279,16 +283,43 @@ input, select {
 }
 
 #devices-gui {
-    display:none;
-    position:fixed;
-    top:0; left:0; width:100%; height:100%;
-    background-color:#DAD9D7;
-    z-index:9999;
     justify-content:flex-start;
-    align-items:center;
-    flex-direction:column;
     padding:20px;
     overflow-y:auto;
+}
+
+.submission-card {
+    animation: slideInLeft 0.4s ease;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.popup-notification {
+    animation: popIn 0.4s ease;
+}
+
+#schedule-edit-table td {
+    transition: all 0.3s ease;
+}
+
+#schedule-edit-table td[contenteditable="true"] {
+    animation: pulse 1s ease infinite;
+}
+
+#edit-schedule-btn {
+    transition: all 0.3s ease;
+}
+
+#edit-schedule-btn:hover {
+    transform: scale(1.1) rotate(2deg);
+}
+
+.device-box {
+    animation: scaleIn 0.5s ease;
 }
 </style>
 </head>
@@ -415,16 +446,67 @@ function getDeviceType() {
 }
 
 function getDeviceName() {
-  return navigator.userAgent;
+  const ua = navigator.userAgent;
+  
+  if (/iPhone/.test(ua)) {
+    const model = ua.match(/iPhone\s?(\d+[,\d]*)/);
+    return model ? `iPhone ${model[1].replace(',', '.')}` : "iPhone";
+  }
+  if (/iPad/.test(ua)) return "iPad";
+  if (/Samsung/.test(ua)) {
+    const model = ua.match(/SM-([A-Z0-9]+)/);
+    return model ? `Samsung ${model[1]}` : "Samsung";
+  }
+  if (/Xiaomi/.test(ua)) {
+    const model = ua.match(/Xiaomi[\/\s]([A-Z0-9\s]+)/);
+    return model ? `Xiaomi ${model[1].trim()}` : "Xiaomi";
+  }
+  if (/Huawei/.test(ua)) {
+    const model = ua.match(/([A-Z]{3}-[A-Z0-9]+)/);
+    return model ? `Huawei ${model[1]}` : "Huawei";
+  }
+  if (/OnePlus/.test(ua)) {
+    const model = ua.match(/OnePlus([A-Z0-9\s]+)/);
+    return model ? `OnePlus${model[1]}` : "OnePlus";
+  }
+  if (/Pixel/.test(ua)) {
+    const model = ua.match(/Pixel\s?(\d+[a-zA-Z]*)/);
+    return model ? `Google Pixel ${model[1]}` : "Google Pixel";
+  }
+  if (/OPPO/.test(ua)) {
+    const model = ua.match(/OPPO\s([A-Z0-9]+)/);
+    return model ? `OPPO ${model[1]}` : "OPPO";
+  }
+  if (/vivo/.test(ua)) {
+    const model = ua.match(/vivo\s(\d+)/);
+    return model ? `Vivo ${model[1]}` : "Vivo";
+  }
+  
+  if (/Android/.test(ua) && !/Mobile/.test(ua)) return "Android Tablet";
+  
+  if (/Windows/.test(ua)) {
+    if (/Windows NT 10/.test(ua)) return "Windows 10/11 PC";
+    if (/Windows NT 6/.test(ua)) return "Windows PC";
+    return "Windows PC";
+  }
+  if (/Macintosh/.test(ua)) {
+    if (/Mac OS X/.test(ua)) return "MacBook";
+    return "Mac";
+  }
+  if (/Linux/.test(ua)) return "Linux PC";
+  if (/CrOS/.test(ua)) return "Chromebook";
+  
+  if (/Android/.test(ua)) return "Android Device";
+  if (/Mobile/.test(ua)) return "Mobile Device";
+  
+  return "Unknown Device";
 }
 
-let deviceId = localStorage.getItem("deviceId");
+let deviceId = localStorage.getItem('zorbas_device_id');
+
 if (!deviceId) {
-  deviceId = crypto.randomUUID();
-  localStorage.setItem("deviceId", deviceId);
-  console.log("New device ID created:", deviceId);
-} else {
-  console.log("Existing device ID found:", deviceId);
+  deviceId = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'xxxx-xxxx-xxxx'.replace(/[x]/g, () => (Math.random() * 16 | 0).toString(16));
+  localStorage.setItem('zorbas_device_id', deviceId);
 }
 
 const deviceName = getDeviceName();
@@ -433,14 +515,11 @@ const deviceRef = ref(db, `devices/${deviceId}`);
 
 get(deviceRef).then(snapshot => {
   if (!snapshot.exists()) {
-    console.log("Device not found in Firebase, creating new entry");
     set(deviceRef, {
       name: deviceName,
       type: deviceType,
       role: "user"
     });
-  } else {
-    console.log("Device already exists in Firebase, skipping creation");
   }
 });
 
@@ -451,7 +530,6 @@ const storeContainer = document.getElementById("store-container");
 const storeSelect = document.getElementById("store");
 const submitBtn = document.getElementById("submit-btn");
 const messageDiv = document.getElementById("message");
-const submissionsTableBody = document.querySelector("#submissions-table tbody");
 
 const adminBtn = document.getElementById("admin-btn");
 const scheduleBtn = document.getElementById("schedule-btn");
@@ -513,7 +591,9 @@ storeTitle.style.marginBottom="20px";
 storeSubmissionsGui.appendChild(storeTitle);
 const storeBackBtn = document.createElement("button");
 storeBackBtn.textContent = "Back";
-storeBackBtn.style.cssText = `background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;`;
+storeBackBtn.style.cssText = `background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;transition:all 0.3s ease;`;
+storeBackBtn.addEventListener("mouseover", () => storeBackBtn.style.transform = "translateY(-2px)");
+storeBackBtn.addEventListener("mouseout", () => storeBackBtn.style.transform = "translateY(0)");
 storeBackBtn.addEventListener("click", ()=>{ storeSubmissionsGui.style.display="none"; storeGui.style.display="flex"; });
 storeSubmissionsGui.appendChild(storeBackBtn);
 document.body.appendChild(storeSubmissionsGui);
@@ -561,6 +641,7 @@ editScheduleBtn.style.cssText = `
   cursor:pointer;
   display:none;
   z-index:10001;
+  transition: all 0.3s ease;
 `;
 editScheduleBtn.addEventListener("click", ()=>{ 
   if(!isEditMode){
@@ -593,7 +674,10 @@ scheduleBackBtn.style.cssText = `
   font-weight:bold;
   cursor:pointer;
   z-index:10001;
+  transition: all 0.3s ease;
 `;
+scheduleBackBtn.addEventListener("mouseover", () => scheduleBackBtn.style.transform = "translateY(-2px)");
+scheduleBackBtn.addEventListener("mouseout", () => scheduleBackBtn.style.transform = "translateY(0)");
 scheduleBackBtn.addEventListener("click", ()=>{ 
   scheduleSubmissionsGui.style.display="none"; 
   storeGuiSchedule.style.display="flex";
@@ -709,13 +793,6 @@ function updateStores(location){
   } else storeContainer.classList.remove("show");
 }
 
-function showMessage(text,type){
-  messageDiv.textContent=text;
-  messageDiv.className=type;
-  messageDiv.style.display="block";
-  setTimeout(()=>{messageDiv.style.display="none";},2000);
-}
-
 submitBtn.addEventListener("click", ()=>{
   const name=document.getElementById("name").value.trim();
   const day=document.getElementById("day").value.trim();
@@ -731,19 +808,6 @@ submitBtn.addEventListener("click", ()=>{
     storeContainer.classList.remove("show");
   } else {
     showPopup(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
-  }
-});
-
-onValue(ref(db,'submissions'), snapshot=>{
-  const data=snapshot.val();
-  if(submissionsTableBody) submissionsTableBody.innerHTML="";
-  if(data){
-    for(let key in data){
-      const sub=data[key];
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${sub.name}</td><td>${sub.month}</td><td>${sub.day}</td><td>${sub.shift}</td><td>${sub.location}</td><td>${sub.store}</td>`;
-      submissionsTableBody.appendChild(tr);
-    }
   }
 });
 
@@ -777,9 +841,11 @@ locationButtons.forEach(btn=>{
     const loc = btn.dataset.loc;
     locationsGui.style.display="none";
     storeButtonsContainer.innerHTML = "";
-    stores[loc][currentLang].forEach(store=>{
+    stores[loc][currentLang].forEach((store, index)=>{
       const b=document.createElement("button");
       b.textContent = store;
+      b.style.animation = `scaleIn 0.4s ease forwards ${index * 0.05}s`;
+      b.style.opacity = "0";
       storeButtonsContainer.appendChild(b);
     });
     storeGui.style.display="flex";
@@ -801,10 +867,12 @@ scheduleLocationButtons.forEach(btn=>{
     const loc = btn.dataset.loc;
     scheduleGui.style.display="none";
     storeButtonsContainerSchedule.innerHTML = "";
-    stores[loc][currentLang].forEach(store=>{
+    stores[loc][currentLang].forEach((store, index)=>{
       const b=document.createElement("button");
       b.textContent = store;
       b.dataset.location = loc;
+      b.style.animation = `scaleIn 0.4s ease forwards ${index * 0.05}s`;
+      b.style.opacity = "0";
       storeButtonsContainerSchedule.appendChild(b);
     });
     storeGuiSchedule.style.display="flex";
@@ -831,15 +899,22 @@ seeUsersBtn.addEventListener("click", () => {
     devicesContainer.innerHTML = "";
 
     if (data) {
+      let index = 0;
       for (let key in data) {
         const d = data[key];
         const box = document.createElement("div");
-        box.style.cssText = `background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:15px;`;
+        box.className = "device-box";
+        box.style.cssText = `background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:15px;animation:scaleIn 0.4s ease forwards;animation-delay:${index * 0.1}s;opacity:0;`;
 
         const deviceEl = document.createElement("p");
         deviceEl.style.cssText = "font-size:18px;font-weight:bold;text-align:center;margin:0;";
         deviceEl.textContent = `Device: ${d.type}`;
         box.appendChild(deviceEl);
+
+        const deviceNameEl = document.createElement("p");
+        deviceNameEl.style.cssText = "font-size:14px;color:#666;text-align:center;margin:5px 0 0 0;word-break:break-word;";
+        deviceNameEl.textContent = d.name || "Unknown";
+        box.appendChild(deviceNameEl);
 
         const spacer = document.createElement("div");
         spacer.style.height = "10px";
@@ -850,11 +925,11 @@ seeUsersBtn.addEventListener("click", () => {
 
         const userBtn = document.createElement("button");
         userBtn.textContent = "User";
-        userBtn.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;`;
+        userBtn.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;transition:all 0.3s ease;`;
 
         const adminBtn2 = document.createElement("button");
         adminBtn2.textContent = "Admin";
-        adminBtn2.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;`;
+        adminBtn2.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;transition:all 0.3s ease;`;
 
         function updateRoleUI(selectedRole) {
           if(selectedRole==="user"){
@@ -882,11 +957,17 @@ seeUsersBtn.addEventListener("click", () => {
           updateRoleUI("admin");
         });
 
+        userBtn.addEventListener("mouseover", () => userBtn.style.transform = "translateY(-2px)");
+        userBtn.addEventListener("mouseout", () => userBtn.style.transform = "translateY(0)");
+        adminBtn2.addEventListener("mouseover", () => adminBtn2.style.transform = "translateY(-2px)");
+        adminBtn2.addEventListener("mouseout", () => adminBtn2.style.transform = "translateY(0)");
+
         buttons.appendChild(userBtn);
         buttons.appendChild(adminBtn2);
         box.appendChild(buttons);
 
         devicesContainer.appendChild(box);
+        index++;
       }
     } else {
       devicesContainer.innerHTML = "<p>No devices found</p>";
@@ -911,12 +992,13 @@ storeButtonsContainer.addEventListener("click",(e)=>{
     onValue(ref(db,'submissions'), snapshot=>{
       const data = snapshot.val();
       if(data){
+        let cardIndex = 0;
         for(let key in data){
           const sub=data[key];
           if(sub.store===storeName){
             const card=document.createElement("div");
             card.className="submission-card";
-            card.style.cssText="background:#fff;padding:20px;margin:10px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:80%;max-width:500px;";
+            card.style.cssText=`background:#fff;padding:20px;margin:10px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:80%;max-width:500px;animation:slideInLeft 0.4s ease forwards;animation-delay:${cardIndex * 0.1}s;opacity:0;`;
             card.innerHTML=`
               <p><strong>Name:</strong> ${sub.name}</p>
               <p><strong>Month:</strong> ${sub.month}</p>
@@ -926,25 +1008,32 @@ storeButtonsContainer.addEventListener("click",(e)=>{
 
             const acceptBtn = document.createElement("button");
             acceptBtn.textContent = "Accept";
-            acceptBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+            acceptBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;";
+            acceptBtn.addEventListener("mouseover", () => acceptBtn.style.transform = "scale(1.1)");
+            acceptBtn.addEventListener("mouseout", () => acceptBtn.style.transform = "scale(1)");
             acceptBtn.addEventListener("click", () => {
               remove(ref(db,'submissions/' + key));
-              card.remove();
+              card.style.animation = "fadeOut 0.3s ease";
+              setTimeout(() => card.remove(), 300);
               showPopup(currentLang==="GR" ? "Η υποβολή έγινε αποδεκτή!" : "You successfully accepted this submission", "success");
             });
 
             const declineBtn = document.createElement("button");
             declineBtn.textContent = "Decline";
-            declineBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+            declineBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;";
+            declineBtn.addEventListener("mouseover", () => declineBtn.style.transform = "scale(1.1)");
+            declineBtn.addEventListener("mouseout", () => declineBtn.style.transform = "scale(1)");
             declineBtn.addEventListener("click", () => {
               remove(ref(db,'submissions/' + key));
-              card.remove();
+              card.style.animation = "fadeOut 0.3s ease";
+              setTimeout(() => card.remove(), 300);
               showPopup(currentLang==="GR" ? "Η υποβολή απορρίφθηκε!" : "You successfully declined this submission", "success");
             });
 
             card.appendChild(acceptBtn);
             card.appendChild(declineBtn);
             storeSubmissionsGui.appendChild(card);
+            cardIndex++;
           }
         }
       }
@@ -968,32 +1057,38 @@ storeButtonsContainerSchedule.addEventListener("click",(e)=>{
 
 function showPopup(text, type){
   const popup = document.createElement("div");
+  popup.className = "popup-notification";
   popup.textContent = text;
+  document.body.appendChild(popup);
+  
+  const popupWidth = popup.offsetWidth;
+  
   popup.style.cssText = `
     position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
+    top: -100px;
+    left: calc(50% - ${popupWidth / 2 + 10}px);
+    width: auto;
+    max-width: 300px;
     padding: 15px 25px;
     border-radius: 8px;
     color: black;
     font-weight: bold;
     font-size: 14px;
     z-index: 10000;
-    opacity: 0;
-    transition: opacity 0.3s, transform 0.3s;
+    text-align: center;
+    transition: top 0.5s ease;
+    white-space: nowrap;
     ${type==="success" ? "background-color: #a2f5a2;" : "background-color: #f57c7c;"}
   `;
-  document.body.appendChild(popup);
-  requestAnimationFrame(()=>{
-    popup.style.opacity="1";
-    popup.style.transform="translateX(-50%) translateY(0)";
-  });
+  
   setTimeout(()=>{
-    popup.style.opacity="0";
-    popup.style.transform="translateX(-50%) translateY(-20px)";
-    setTimeout(()=>popup.remove(),300);
-  },2000);
+    popup.style.top = "20px";
+  }, 50);
+  
+  setTimeout(()=>{
+    popup.style.top = "-100px";
+    setTimeout(()=>popup.remove(), 600);
+  }, 2500);
 }
 
 window.addEventListener("load", () => {
