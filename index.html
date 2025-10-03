@@ -306,21 +306,6 @@ input:focus, select:focus {
     transition: all 0.3s ease;
 }
 
-#schedule-edit-table td[contenteditable="true"] {
-    animation: pulse 1s ease infinite;
-}
-
-#edit-schedule-btn {
-    transition: all 0.3s ease;
-}
-
-#edit-schedule-btn:hover {
-    transform: scale(1.1) rotate(2deg);
-}
-
-.device-box {
-    animation: scaleIn 0.5s ease;
-}
 </style>
 </head>
 <body>
@@ -605,15 +590,15 @@ const scheduleTitle = document.createElement("h2");
 scheduleTitle.style.marginBottom="20px";
 scheduleSubmissionsGui.appendChild(scheduleTitle);
 const scheduleTableContainer = document.createElement("div");
-scheduleTableContainer.style.cssText = `background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); margin-bottom:80px; overflow-x:auto; max-width:90vw; width:100%;`;
+scheduleTableContainer.style.cssText = `background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); margin-bottom:20px; overflow-x:auto; max-width:90vw; width:auto;`;
 const scheduleTable = document.createElement("table");
 scheduleTable.id = "schedule-edit-table";
-scheduleTable.style.cssText = `border-collapse:collapse; background:#fff; width:max-content;`;
+scheduleTable.style.cssText = `border-collapse:collapse; background:#fff; width:max-content; margin:0;`;
 for(let i=0; i<12; i++){
   const row = scheduleTable.insertRow();
   for(let j=0; j<12; j++){
     const cell = row.insertCell();
-    cell.style.cssText = `border:1px solid #ccc; padding:10px; min-width:80px; min-height:40px; text-align:center; white-space:nowrap;`;
+    cell.style.cssText = `border:1px solid #ccc; padding:8px; min-width:70px; min-height:35px; text-align:center; white-space:nowrap;`;
     cell.contentEditable = "false";
   }
 }
