@@ -606,33 +606,49 @@ function getDeviceName() {
   }
   if (/iPad/.test(ua)) return "iPad";
   
-  // Android phones - check these before Linux
-  if (/Samsung/.test(ua) || /SM-/.test(ua)) {
-    const model = ua.match(/SM-([A-Z0-9]+)/);
-    return model ? `Samsung ${model[1]}` : "Samsung";
+  // Samsung - try multiple patterns
+  if (/Samsung/.test(ua) || /SM-/.test(ua) || /SAMSUNG/.test(ua)) {
+    const model = ua.match(/SM-([A-Z]\d+[A-Z]?)/i) || ua.match(/Galaxy\s([A-Z0-9\s]+)/i);
+    if (model) {
+      const modelStr = model[1].trim();
+      // Convert SM-A536B to "Galaxy A53" format
+      if (modelStr.match(/^[A-Z]\d+/)) {
+        const letter = modelStr[0];
+        const number = modelStr.match(/\d+/)[0].substring(0, 2);
+        return `Samsung Galaxy ${letter}${number}`;
+      }
+      return `Samsung Galaxy ${modelStr}`;
+    }
+    return "Samsung";
   }
+  
   if (/Xiaomi/.test(ua) || /Mi\s/.test(ua) || /Redmi/.test(ua)) {
-    const model = ua.match(/(?:Xiaomi|Mi|Redmi)[\/\s]([A-Z0-9\s]+)/);
-    return model ? `Xiaomi ${model[1].trim()}` : "Xiaomi";
+    const model = ua.match(/(?:Xiaomi|Mi|Redmi)[\/\s]([A-Z0-9\s]+)/i);
+    return model ? `Xiaomi ${model[1].trim().split(/[\s;]/)[0]}` : "Xiaomi";
   }
+  
   if (/Huawei/.test(ua) || /HUAWEI/.test(ua)) {
-    const model = ua.match(/([A-Z]{3}-[A-Z0-9]+)/);
+    const model = ua.match(/([A-Z]{3}-[A-Z0-9]+)/i);
     return model ? `Huawei ${model[1]}` : "Huawei";
   }
+  
   if (/OnePlus/.test(ua)) {
-    const model = ua.match(/OnePlus([A-Z0-9\s]+)/);
-    return model ? `OnePlus${model[1]}` : "OnePlus";
+    const model = ua.match(/OnePlus([A-Z0-9\s]+)/i);
+    return model ? `OnePlus ${model[1].trim().split(/[\s;]/)[0]}` : "OnePlus";
   }
+  
   if (/Pixel/.test(ua)) {
-    const model = ua.match(/Pixel\s?(\d+[a-zA-Z]*)/);
-    return model ? `Google Pixel ${model[1]}` : "Google Pixel";
+    const model = ua.match(/Pixel\s?(\d+[a-zA-Z\s]*)/i);
+    return model ? `Google Pixel ${model[1].trim()}` : "Google Pixel";
   }
+  
   if (/OPPO/.test(ua)) {
-    const model = ua.match(/OPPO\s([A-Z0-9]+)/);
+    const model = ua.match(/OPPO\s([A-Z0-9]+)/i);
     return model ? `OPPO ${model[1]}` : "OPPO";
   }
+  
   if (/vivo/.test(ua)) {
-    const model = ua.match(/vivo\s(\d+)/);
+    const model = ua.match(/vivo\s([A-Z0-9]+)/i);
     return model ? `Vivo ${model[1]}` : "Vivo";
   }
   
@@ -642,7 +658,7 @@ function getDeviceName() {
     return "Android Phone";
   }
   
-  // Desktop OS - check these last
+  // Desktop OS
   if (/Windows/.test(ua)) {
     if (/Windows NT 10/.test(ua)) return "Windows 10/11 PC";
     if (/Windows NT 6/.test(ua)) return "Windows PC";
