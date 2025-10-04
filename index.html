@@ -599,20 +599,23 @@ function getDeviceType() {
 function getDeviceName() {
   const ua = navigator.userAgent;
   
+  // Mobile devices first
   if (/iPhone/.test(ua)) {
     const model = ua.match(/iPhone\s?(\d+[,\d]*)/);
     return model ? `iPhone ${model[1].replace(',', '.')}` : "iPhone";
   }
   if (/iPad/.test(ua)) return "iPad";
-  if (/Samsung/.test(ua)) {
+  
+  // Android phones - check these before Linux
+  if (/Samsung/.test(ua) || /SM-/.test(ua)) {
     const model = ua.match(/SM-([A-Z0-9]+)/);
     return model ? `Samsung ${model[1]}` : "Samsung";
   }
-  if (/Xiaomi/.test(ua)) {
-    const model = ua.match(/Xiaomi[\/\s]([A-Z0-9\s]+)/);
+  if (/Xiaomi/.test(ua) || /Mi\s/.test(ua) || /Redmi/.test(ua)) {
+    const model = ua.match(/(?:Xiaomi|Mi|Redmi)[\/\s]([A-Z0-9\s]+)/);
     return model ? `Xiaomi ${model[1].trim()}` : "Xiaomi";
   }
-  if (/Huawei/.test(ua)) {
+  if (/Huawei/.test(ua) || /HUAWEI/.test(ua)) {
     const model = ua.match(/([A-Z]{3}-[A-Z0-9]+)/);
     return model ? `Huawei ${model[1]}` : "Huawei";
   }
@@ -633,8 +636,13 @@ function getDeviceName() {
     return model ? `Vivo ${model[1]}` : "Vivo";
   }
   
-  if (/Android/.test(ua) && !/Mobile/.test(ua)) return "Android Tablet";
+  // Generic Android device
+  if (/Android/.test(ua)) {
+    if (!/Mobile/.test(ua)) return "Android Tablet";
+    return "Android Phone";
+  }
   
+  // Desktop OS - check these last
   if (/Windows/.test(ua)) {
     if (/Windows NT 10/.test(ua)) return "Windows 10/11 PC";
     if (/Windows NT 6/.test(ua)) return "Windows PC";
@@ -644,10 +652,9 @@ function getDeviceName() {
     if (/Mac OS X/.test(ua)) return "MacBook";
     return "Mac";
   }
-  if (/Linux/.test(ua)) return "Linux PC";
   if (/CrOS/.test(ua)) return "Chromebook";
+  if (/Linux/.test(ua)) return "Linux PC";
   
-  if (/Android/.test(ua)) return "Android Device";
   if (/Mobile/.test(ua)) return "Mobile Device";
   
   return "Unknown Device";
