@@ -7,6 +7,11 @@
 <style>
 @import url('https://fonts.cdnfonts.com/css/algerian');
 
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -197,7 +202,7 @@ input:focus, select:focus {
     animation: fadeIn 0.3s ease;
 }
 
-#admin-gui, #locations-gui, #schedule-gui, .store-gui, #devices-gui {
+#admin-gui, #locations-gui, #schedule-gui, .store-gui, #devices-gui, #history-gui {
     display: none;
     position: fixed;
     top:0; left:0; width:100%; height:100%;
@@ -250,7 +255,7 @@ input:focus, select:focus {
     background-color: #e03b3b; 
 }
 
-#admin-btn, #schedule-btn {
+#admin-btn, #schedule-btn, #history-btn {
     display: block;
     margin: 10px auto 0;
     background-color: #E8DA89;
@@ -266,7 +271,7 @@ input:focus, select:focus {
     overflow: hidden;
 }
 
-#admin-btn:hover, #schedule-btn:hover {
+#admin-btn:hover, #schedule-btn:hover, #history-btn:hover {
     background-color: #d4c15e;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -472,6 +477,80 @@ input:focus, select:focus {
   opacity: 1;
 }
 
+.print-schedule-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #E8DA89;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  display: none;
+  z-index: 10000;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.print-schedule-btn:hover {
+  background: #d4c15e;
+  transform: translateY(-2px);
+}
+
+.history-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  width: 90%;
+  max-width: 600px;
+  animation: slideInLeft 0.4s ease;
+  margin: 10px 0;
+}
+
+.history-status {
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.history-status.pending {
+  background: #FFC107;
+  color: #000;
+}
+
+.history-status.accepted {
+  background: #4CAF50;
+  color: #fff;
+}
+
+.history-status.declined {
+  background: #F44336;
+  color: #fff;
+}
+
+#history-gui {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  #schedule-edit-table, #schedule-edit-table * { visibility: visible; }
+  #schedule-edit-table { 
+    position: absolute; 
+    left: 0; 
+    top: 0; 
+    width: 100%;
+  }
+  #edit-schedule-btn, #back-schedule, .toolbar-toggle, .toolbar-sidebar, .print-schedule-btn { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -526,6 +605,7 @@ input:focus, select:focus {
     <div id="message"></div>
   </form>
 
+  <button type="button" class="submit-btn" id="history-btn" style="margin-top:10px;">My History</button>
   <button type="button" class="submit-btn" id="schedule-btn" style="margin-top:10px;">Schedule GUI</button>
   <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px;">Admin GUI</button>
 </div>
@@ -571,6 +651,12 @@ input:focus, select:focus {
     <button id="back-devices" style="background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:20px;">Back</button>
 </div>
 
+<div id="history-gui">
+  <h2 style="text-align:center;margin-bottom:20px;font-size:32px;">My Submission History</h2>
+  <div id="history-container" style="width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:15px;"></div>
+  <button id="back-history" style="background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin:30px auto;display:block;">Back</button>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
@@ -599,19 +685,16 @@ function getDeviceType() {
 function getDeviceName() {
   const ua = navigator.userAgent;
   
-  // Mobile devices first
   if (/iPhone/.test(ua)) {
     const model = ua.match(/iPhone\s?(\d+[,\d]*)/);
     return model ? `iPhone ${model[1].replace(',', '.')}` : "iPhone";
   }
   if (/iPad/.test(ua)) return "iPad";
   
-  // Samsung - try multiple patterns
   if (/Samsung/.test(ua) || /SM-/.test(ua) || /SAMSUNG/.test(ua)) {
     const model = ua.match(/SM-([A-Z]\d+[A-Z]?)/i) || ua.match(/Galaxy\s([A-Z0-9\s]+)/i);
     if (model) {
       const modelStr = model[1].trim();
-      // Convert SM-A536B to "Galaxy A53" format
       if (modelStr.match(/^[A-Z]\d+/)) {
         const letter = modelStr[0];
         const number = modelStr.match(/\d+/)[0].substring(0, 2);
@@ -652,13 +735,11 @@ function getDeviceName() {
     return model ? `Vivo ${model[1]}` : "Vivo";
   }
   
-  // Generic Android device
   if (/Android/.test(ua)) {
     if (!/Mobile/.test(ua)) return "Android Tablet";
     return "Android Phone";
   }
   
-  // Desktop OS
   if (/Windows/.test(ua)) {
     if (/Windows NT 10/.test(ua)) return "Windows 10/11 PC";
     if (/Windows NT 6/.test(ua)) return "Windows PC";
@@ -712,6 +793,11 @@ const backAdmin = document.getElementById("back-admin");
 const seeSubmissionsBtn = document.getElementById("see-submissions");
 const resetSubmissionsBtn = document.getElementById("reset-submissions");
 const seeUsersBtn = document.getElementById("see-users");
+
+const historyBtn = document.getElementById("history-btn");
+const historyGui = document.getElementById("history-gui");
+const historyContainer = document.getElementById("history-container");
+const backHistoryBtn = document.getElementById("back-history");
 
 const locationsGui = document.getElementById("locations-gui");
 const backLocations = document.getElementById("back-locations");
@@ -778,6 +864,13 @@ scheduleSubmissionsGui.style.cssText = `display:none; position:fixed; top:0; lef
 const scheduleTitle = document.createElement("h2");
 scheduleTitle.style.marginBottom="20px";
 scheduleSubmissionsGui.appendChild(scheduleTitle);
+
+const printScheduleBtn = document.createElement("button");
+printScheduleBtn.className = "print-schedule-btn";
+printScheduleBtn.textContent = "Print Schedule";
+printScheduleBtn.addEventListener("click", () => window.print());
+document.body.appendChild(printScheduleBtn);
+
 const scheduleTableContainer = document.createElement("div");
 scheduleTableContainer.style.cssText = `background:#fff; padding:15px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); margin-bottom:20px; overflow-x:auto; max-width:90vw; width:auto;`;
 const scheduleTable = document.createElement("table");
@@ -859,6 +952,7 @@ scheduleBackBtn.addEventListener("mouseout", () => scheduleBackBtn.style.transfo
 scheduleBackBtn.addEventListener("click", ()=>{ 
   scheduleSubmissionsGui.style.display="none"; 
   storeGuiSchedule.style.display="flex";
+  printScheduleBtn.style.display = "none";
   isEditMode = false;
   const editBtn = document.getElementById("edit-schedule-btn");
   const toolbarToggle = document.getElementById("toolbar-toggle");
@@ -1171,23 +1265,21 @@ function disableTableEditing(){
   const cells = document.querySelectorAll("#schedule-edit-table td");
   cells.forEach(cell => {
     cell.contentEditable = "false";
-    // If cell has the yellow edit highlight OR no background color, set to white
     if(cell.style.backgroundColor === "rgb(255, 250, 205)" || 
        cell.style.backgroundColor === "#fffacd" || 
        !cell.style.backgroundColor || 
        cell.style.backgroundColor === ""){
       cell.style.backgroundColor = "#fff";
     }
-    // Otherwise keep the custom color the user set
     cell.style.cursor = "default";
   });
   
-  // Clear the selection outline
   if(lastSelectedCell){
     lastSelectedCell.style.outline = "";
     lastSelectedCell = null;
   }
 }
+
 function saveScheduleToFirebase(){
   const table = document.getElementById("schedule-edit-table");
   const scheduleData = [];
@@ -1197,13 +1289,11 @@ function saveScheduleToFirebase(){
       const cell = table.rows[i].cells[j];
       const computedStyle = window.getComputedStyle(cell);
       
-      // Get background color - prioritize inline style
       let bgColor = cell.style.backgroundColor || "";
       if(!bgColor && computedStyle.backgroundColor !== "rgba(0, 0, 0, 0)" && computedStyle.backgroundColor !== "transparent"){
         bgColor = computedStyle.backgroundColor;
       }
       
-      // Get text color - prioritize inline style
       let textColor = cell.style.color || "";
       if(!textColor && computedStyle.color){
         textColor = computedStyle.color;
@@ -1310,6 +1400,7 @@ function switchLang(lang){
   submitBtn.textContent = lang === "GR" ? "Υποβολή" : "Submit";
   adminBtn.textContent = lang === "GR" ? "Διαχειριστής" : "Admin GUI";
   scheduleBtn.textContent = lang === "GR" ? "Πρόγραμμα" : "Schedule GUI";
+  historyBtn.textContent = lang === "GR" ? "Ιστορικό" : "My History";
   if(storeContainer.classList.contains("show")){
       updateStores(locationSelect.value);
   }
@@ -1338,7 +1429,7 @@ submitBtn.addEventListener("click", ()=>{
   const store=storeContainer.classList.contains("show")?storeSelect.value:"filled";
 
   if(name && day && shift && month && location && store){
-    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp:Date.now()});
+    push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp:Date.now(), deviceId: deviceId, status: 'pending'});
     showPopup(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
     document.getElementById("zorbas-form").reset();
     storeContainer.classList.remove("show");
@@ -1355,6 +1446,106 @@ adminBtn.addEventListener("click", ()=>{
 scheduleBtn.addEventListener("click", ()=>{ 
   scheduleGui.style.display="flex"; 
   document.getElementById("submit-gui").style.display="none";
+});
+
+let historyListener = null;
+
+historyBtn.addEventListener("click", () => {
+  document.getElementById("submit-gui").style.display="none";
+  historyGui.style.display="flex";
+  historyContainer.innerHTML = "";
+  
+  if(historyListener) historyListener();
+  
+  const displayedKeys = new Set();
+  
+  historyListener = onValue(ref(db, 'submissions'), snapshot => {
+    const data = snapshot.val();
+    
+    if(data){
+      const userSubmissions = [];
+      for(let key in data){
+        const sub = data[key];
+        if(sub.deviceId === deviceId){
+          userSubmissions.push({...sub, key});
+        }
+      }
+      
+      userSubmissions.sort((a, b) => b.timestamp - a.timestamp);
+      
+      if(userSubmissions.length === 0){
+        historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${currentLang === "GR" ? "Δεν υπάρχει ιστορικό" : "No submission history"}</p>`;
+        displayedKeys.clear();
+        return;
+      }
+      
+      const currentKeys = new Set(userSubmissions.map(s => s.key));
+      
+      for(let key of displayedKeys){
+        if(!currentKeys.has(key)){
+          const cardToRemove = document.querySelector(`[data-submission-key="${key}"]`);
+          if(cardToRemove){
+            cardToRemove.style.animation = "fadeOut 0.3s ease";
+            setTimeout(() => cardToRemove.remove(), 300);
+          }
+          displayedKeys.delete(key);
+        }
+      }
+      
+      userSubmissions.forEach((sub, index) => {
+        let card = document.querySelector(`[data-submission-key="${sub.key}"]`);
+        
+        if(!card){
+          card = document.createElement("div");
+          card.className = "history-card";
+          card.setAttribute("data-submission-key", sub.key);
+          card.style.animationDelay = `${index * 0.1}s`;
+          historyContainer.appendChild(card);
+          displayedKeys.add(sub.key);
+        }
+        
+        const status = sub.status || 'pending';
+        const statusText = status === 'accepted' ? (currentLang === "GR" ? "Αποδεκτή" : "Accepted") :
+                          status === 'declined' ? (currentLang === "GR" ? "Απορρίφθηκε" : "Declined") :
+                          (currentLang === "GR" ? "Σε αναμονή" : "Pending");
+        
+        const date = new Date(sub.timestamp);
+        const dateStr = date.toLocaleDateString() + " " + date.toLocaleTimeString();
+        
+        card.innerHTML = `
+          <p><strong>${currentLang === "GR" ? "Όνομα:" : "Name:"}</strong> ${sub.name}</p>
+          <p><strong>${currentLang === "GR" ? "Μήνας:" : "Month:"}</strong> ${sub.month}</p>
+          <p><strong>${currentLang === "GR" ? "Ημέρα:" : "Day:"}</strong> ${sub.day}</p>
+          <p><strong>${currentLang === "GR" ? "Βάρδια:" : "Shift:"}</strong> ${sub.shift}</p>
+          <p><strong>${currentLang === "GR" ? "Τοποθεσία:" : "Location:"}</strong> ${sub.location}</p>
+          <p><strong>${currentLang === "GR" ? "Κατάστημα:" : "Store:"}</strong> ${sub.store}</p>
+          <p><strong>${currentLang === "GR" ? "Υποβλήθηκε:" : "Submitted:"}</strong> ${dateStr}</p>
+          <span class="history-status ${status}">${statusText}</span>
+        `;
+        
+        const clearBtn = document.createElement("button");
+        clearBtn.textContent = currentLang === "GR" ? "Διαγραφή" : "Clear";
+        clearBtn.style.cssText = "background:#ff4c4c;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-top:15px;transition:all 0.3s ease;";
+        clearBtn.addEventListener("mouseover", () => clearBtn.style.transform = "translateY(-2px)");
+        clearBtn.addEventListener("mouseout", () => clearBtn.style.transform = "translateY(0)");
+        clearBtn.addEventListener("click", () => {
+          remove(ref(db, `submissions/${sub.key}`));
+          showPopup(currentLang === "GR" ? "Η υποβολή διαγράφηκε" : "Submission cleared", "success");
+        });
+        
+        card.appendChild(clearBtn);
+      });
+    } else {
+      historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${currentLang === "GR" ? "Δεν υπάρχει ιστορικό" : "No submission history"}</p>`;
+      displayedKeys.clear();
+    }
+  });
+});
+
+backHistoryBtn.addEventListener("click", () => {
+  if(historyListener) historyListener();
+  historyGui.style.display="none";
+  document.getElementById("submit-gui").style.display="block";
 });
 
 backAdmin.addEventListener("click", ()=>{ 
@@ -1531,7 +1722,7 @@ storeButtonsContainer.addEventListener("click",(e)=>{
         let cardIndex = 0;
         for(let key in data){
           const sub=data[key];
-          if(sub.store===storeName){
+          if(sub.store===storeName && sub.status === 'pending'){
             const card=document.createElement("div");
             card.className="submission-card";
             card.style.cssText=`background:#fff;padding:20px;margin:10px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:80%;max-width:500px;animation:slideInLeft 0.4s ease forwards;animation-delay:${cardIndex * 0.1}s;opacity:0;`;
@@ -1548,7 +1739,7 @@ storeButtonsContainer.addEventListener("click",(e)=>{
             acceptBtn.addEventListener("mouseover", () => acceptBtn.style.transform = "scale(1.1)");
             acceptBtn.addEventListener("mouseout", () => acceptBtn.style.transform = "scale(1)");
             acceptBtn.addEventListener("click", () => {
-              remove(ref(db,'submissions/' + key));
+              set(ref(db, `submissions/${key}/status`), 'accepted');
               card.style.animation = "fadeOut 0.3s ease";
               setTimeout(() => card.remove(), 300);
               showPopup(currentLang==="GR" ? "Η υποβολή έγινε αποδεκτή!" : "You successfully accepted this submission", "success");
@@ -1560,7 +1751,7 @@ storeButtonsContainer.addEventListener("click",(e)=>{
             declineBtn.addEventListener("mouseover", () => declineBtn.style.transform = "scale(1.1)");
             declineBtn.addEventListener("mouseout", () => declineBtn.style.transform = "scale(1)");
             declineBtn.addEventListener("click", () => {
-              remove(ref(db,'submissions/' + key));
+              set(ref(db, `submissions/${key}/status`), 'declined');
               card.style.animation = "fadeOut 0.3s ease";
               setTimeout(() => card.remove(), 300);
               showPopup(currentLang==="GR" ? "Η υποβολή απορρίφθηκε!" : "You successfully declined this submission", "success");
@@ -1584,6 +1775,7 @@ storeButtonsContainerSchedule.addEventListener("click",(e)=>{
     scheduleTitle.textContent = `${storeName} Schedule`;
     storeGuiSchedule.style.display="none";
     scheduleSubmissionsGui.style.display="flex";
+    printScheduleBtn.style.display = "block";
     
     loadScheduleFromFirebase(location, storeName);
 
@@ -1634,6 +1826,7 @@ window.addEventListener("load", () => {
   storeGui.style.display = "none";
   storeGuiSchedule.style.display = "none";
   devicesGui.style.display = "none";
+  historyGui.style.display = "none";
   storeSubmissionsGui.style.display = "none";
   scheduleSubmissionsGui.style.display = "none";
   document.getElementById("submit-gui").style.display = "block";
