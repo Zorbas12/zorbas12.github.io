@@ -66,11 +66,12 @@ body {
 }
 
 .lang-buttons { 
-    position: absolute; 
+    position: fixed; 
     top: 15px; 
     right: 15px; 
     font-size: 14px;
     animation: slideInRight 0.6s ease;
+    z-index: 10001;
 }
 .lang-buttons button { 
     background-color: #DAD9D7; 
@@ -664,7 +665,7 @@ input:focus, select:focus {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, set, get, update } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB08KDzXF6rgvqPJGaaD1SYPycAecaH8Vg",
@@ -685,6 +686,53 @@ function getDeviceType() {
   if(/Mobi|Android/i.test(ua)) return "Phone";
   if(/Tablet|iPad/i.test(ua)) return "Tablet";
   return "PC";
+}
+
+function getBrowserInfo() {
+  const ua = navigator.userAgent;
+  if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) return "Chrome";
+  if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
+  if (/Firefox/i.test(ua)) return "Firefox";
+  if (/Edg/i.test(ua)) return "Edge";
+  if (/Opera|OPR/i.test(ua)) return "Opera";
+  return "Unknown Browser";
+}
+
+async function getOSInfo() {
+  const ua = navigator.userAgent;
+  
+  // Try to detect Windows 11 using userAgentData API
+  if (/Windows/i.test(ua)) {
+    try {
+      if (navigator.userAgentData) {
+        const platformData = await navigator.userAgentData.getHighEntropyValues(['platformVersion']);
+        if (platformData.platformVersion) {
+          const majorVersion = parseInt(platformData.platformVersion.split('.')[0]);
+          if (majorVersion >= 13) return "Windows 11";
+        }
+      }
+    } catch (e) {
+      // If userAgentData fails, fall back to checking Windows version
+    }
+    
+    // Fallback: Check if it's Windows NT 10.0 (could be 10 or 11)
+    if (/Windows NT 10/i.test(ua)) return "Windows 10/11";
+    if (/Windows/i.test(ua)) return "Windows";
+  }
+  
+  if (/Mac OS X 10_15/i.test(ua)) return "macOS Catalina";
+  if (/Mac OS X/i.test(ua)) return "macOS";
+  if (/Android 13/i.test(ua)) return "Android 13";
+  if (/Android 12/i.test(ua)) return "Android 12";
+  if (/Android 11/i.test(ua)) return "Android 11";
+  if (/Android 10/i.test(ua)) return "Android 10";
+  if (/Android/i.test(ua)) return "Android";
+  if (/iPhone OS 17/i.test(ua)) return "iOS 17";
+  if (/iPhone OS 16/i.test(ua)) return "iOS 16";
+  if (/iPhone OS/i.test(ua)) return "iOS";
+  if (/iPad/i.test(ua)) return "iPadOS";
+  if (/Linux/i.test(ua)) return "Linux";
+  return "Unknown OS";
 }
 
 function getDeviceName() {
@@ -771,17 +819,57 @@ if (!deviceId) {
 
 const deviceName = getDeviceName();
 const deviceType = getDeviceType();
+const browserInfo = getBrowserInfo();
 const deviceRef = ref(db, `devices/${deviceId}`);
 
-get(deviceRef).then(snapshot => {
-  if (!snapshot.exists()) {
-    set(deviceRef, {
-      name: deviceName,
-      type: deviceType,
-      role: "user"
+// Get OS info and fetch IP address, then save device info
+(async () => {
+  const osInfo = await getOSInfo();
+  
+  fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+      get(deviceRef).then(snapshot => {
+        if (!snapshot.exists()) {
+          set(deviceRef, {
+            name: deviceName,
+            type: deviceType,
+            browser: browserInfo,
+            os: osInfo,
+            ip: data.ip,
+            role: "user",
+            lastActive: new Date().toLocaleString(),
+            timestamp: Date.now()
+          });
+        } else {
+          // Update IP and last active time
+          update(deviceRef, {
+            ip: data.ip,
+            browser: browserInfo,
+            os: osInfo,
+            lastActive: new Date().toLocaleString()
+          });
+        }
+      });
+    })
+    .catch(error => {
+      // If IP fetch fails, save without IP
+      get(deviceRef).then(snapshot => {
+        if (!snapshot.exists()) {
+          set(deviceRef, {
+            name: deviceName,
+            type: deviceType,
+            browser: browserInfo,
+            os: osInfo,
+            ip: "Unable to detect",
+            role: "user",
+            lastActive: new Date().toLocaleString(),
+            timestamp: Date.now()
+          });
+        }
+      });
     });
-  }
-});
+})();
 
 const greekBtn = document.getElementById("greek-btn");
 const engBtn = document.getElementById("eng-btn");
@@ -1105,18 +1193,18 @@ toolbarSidebar.addEventListener("click", (e) => {
         const currentWeight = window.getComputedStyle(selectedCell).fontWeight;
         const isBold = currentWeight === "bold" || parseInt(currentWeight) >= 600;
         selectedCell.style.fontWeight = isBold ? "normal" : "bold";
-        showPopup(currentLang === "GR" ? "Έντονη γραμματοσειρά εφαρμόστηκε" : "Bold applied", "success");
+        showPopup(t("boldApplied"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "italic"){
       if(selectedCell && selectedCell.tagName === "TD"){
         const currentStyle = window.getComputedStyle(selectedCell).fontStyle;
         selectedCell.style.fontStyle = currentStyle === "italic" ? "normal" : "italic";
-        showPopup(currentLang === "GR" ? "Πλάγια γραμματοσειρά εφαρμόστηκε" : "Italic applied", "success");
+        showPopup(t("italicApplied"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "underline"){
@@ -1124,33 +1212,33 @@ toolbarSidebar.addEventListener("click", (e) => {
         const currentDecoration = window.getComputedStyle(selectedCell).textDecoration;
         const hasUnderline = currentDecoration.includes("underline");
         selectedCell.style.textDecoration = hasUnderline ? "none" : "underline";
-        showPopup(currentLang === "GR" ? "Υπογράμμιση εφαρμόστηκε" : "Underline applied", "success");
+        showPopup(t("underlineApplied"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "align-left"){
       if(selectedCell && selectedCell.tagName === "TD"){
         selectedCell.style.textAlign = "left";
-        showPopup(currentLang === "GR" ? "Στοίχιση αριστερά" : "Aligned left", "success");
+        showPopup(t("alignedLeft"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "align-center"){
       if(selectedCell && selectedCell.tagName === "TD"){
         selectedCell.style.textAlign = "center";
-        showPopup(currentLang === "GR" ? "Στοίχιση στο κέντρο" : "Aligned center", "success");
+        showPopup(t("alignedCenter"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "align-right"){
       if(selectedCell && selectedCell.tagName === "TD"){
         selectedCell.style.textAlign = "right";
-        showPopup(currentLang === "GR" ? "Στοίχιση δεξιά" : "Aligned right", "success");
+        showPopup(t("alignedRight"), "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "color-cell"){
@@ -1165,7 +1253,7 @@ toolbarSidebar.addEventListener("click", (e) => {
         
         colorInput.addEventListener("change", (event) => {
           selectedCell.style.backgroundColor = event.target.value;
-          showPopup(currentLang === "GR" ? "Χρώμα κελιού άλλαξε" : "Cell color changed", "success");
+          showPopup(t("cellColorChanged"), "success");
           colorInput.remove();
         });
         
@@ -1175,7 +1263,7 @@ toolbarSidebar.addEventListener("click", (e) => {
         
         colorInput.click();
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "color-text"){
@@ -1190,7 +1278,7 @@ toolbarSidebar.addEventListener("click", (e) => {
         
         colorInput.addEventListener("change", (event) => {
           selectedCell.style.color = event.target.value;
-          showPopup(currentLang === "GR" ? "Χρώμα κειμένου άλλαξε" : "Text color changed", "success");
+          showPopup(t("textColorChanged"), "success");
           colorInput.remove();
         });
         
@@ -1200,7 +1288,7 @@ toolbarSidebar.addEventListener("click", (e) => {
         
         colorInput.click();
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
     else if(action === "add-row"){
@@ -1251,7 +1339,7 @@ toolbarSidebar.addEventListener("click", (e) => {
         selectedCell.textContent = "";
         showPopup(currentLang === "GR" ? "Κελί καθαρίστηκε" : "Cell cleared", "success");
       } else {
-        showPopup(currentLang === "GR" ? "Επιλέξτε ένα κελί πρώτα" : "Select a cell first", "error");
+        showPopup(t("selectCellFirst"), "error");
       }
     }
   }
@@ -1382,6 +1470,173 @@ function loadScheduleFromFirebase(location, store){
 
 let currentLang = "EN";
 
+
+const translations = {
+  EN: {
+    // Main Form
+    name: "Name",
+    month: "Month",
+    day: "Day",
+    shift: "Shift",
+    location: "Location",
+    store: "Store",
+    submit: "Submit",
+    adminGui: "Admin GUI",
+    scheduleGui: "Schedule GUI",
+    myHistory: "My History",
+    namePlaceholder: "Fill out your name",
+    dayPlaceholder: "Fill out your day",
+    selectStore: "Select a store",
+    
+    // Admin GUI
+    adminPanel: "Admin Panel",
+    seeSubmissions: "See Submissions",
+    resetSubmissions: "Reset all submissions",
+    seeUsers: "See Users",
+    back: "Back",
+    
+    // Locations
+    selectLocation: "Select Location",
+    nicosia: "NICOSIA",
+    larnaca: "LARNACA",
+    famagusta: "FAMAGUSTA",
+    limassol: "LIMASSOL",
+    pafos: "PAFOS",
+    
+    // Submissions
+    storeSubmissions: "Submissions",
+    acceptSubmission: "Accept",
+    declineSubmission: "Decline",
+    noSubmissions: "No pending submissions",
+    
+    // Schedule
+    schedule: "Schedule",
+    editSchedule: "Edit Schedule",
+    saveSchedule: "Save Schedule",
+    lockSchedule: "Lock Schedule",
+    printSchedule: "Print Schedule",
+    
+    // Devices
+    devices: "Connected Devices",
+    device: "Device",
+    browser: "Browser",
+    os: "OS",
+    ip: "IP",
+    lastActive: "Last active",
+    user: "User",
+    admin: "Admin",
+    noDevices: "No devices found",
+    
+    // History
+    noHistory: "No submission history",
+    status: "Status",
+    pending: "Pending",
+    accepted: "Accepted",
+    declined: "Declined",
+    
+    // Messages
+    submitSuccess: "You successfully submitted!",
+    fillAllFields: "Please fill in all fields.",
+    acceptedSuccess: "You successfully accepted this submission",
+    declinedSuccess: "You successfully declined this submission",
+    resetSuccess: "All submissions have been reset!",
+    scheduleSaved: "Schedule saved!",
+    selectCellFirst: "Select a cell first",
+    boldApplied: "Bold applied",
+    italicApplied: "Italic applied",
+    underlineApplied: "Underline applied",
+    alignedLeft: "Aligned left",
+    alignedCenter: "Aligned center",
+    alignedRight: "Aligned right",
+    cellColorChanged: "Cell color changed",
+    textColorChanged: "Text color changed"
+  },
+  GR: {
+    // Main Form
+    name: "Όνομα",
+    month: "Μήνας",
+    day: "Ημέρα",
+    shift: "Βάρδια",
+    location: "Τοποθεσία",
+    store: "Κατάστημα",
+    submit: "Υποβολή",
+    adminGui: "Διαχειριστής",
+    scheduleGui: "Πρόγραμμα",
+    myHistory: "Ιστορικό",
+    namePlaceholder: "Συμπληρώστε το όνομά σας",
+    dayPlaceholder: "Συμπληρώστε τη μέρα σας",
+    selectStore: "Επιλέξτε κατάστημα",
+    
+    // Admin GUI
+    adminPanel: "Πίνακας Διαχείρισης",
+    seeSubmissions: "Δείτε Υποβολές",
+    resetSubmissions: "Επαναφορά όλων των υποβολών",
+    seeUsers: "Δείτε Χρήστες",
+    back: "Πίσω",
+    
+    // Locations
+    selectLocation: "Επιλέξτε Τοποθεσία",
+    nicosia: "ΛΕΥΚΩΣΙΑ",
+    larnaca: "ΛΑΡΝΑΚΑ",
+    famagusta: "ΑΜΜΟΧΩΣΤΟΣ",
+    limassol: "ΛΕΜΕΣΟΣ",
+    pafos: "ΠΑΦΟΣ",
+    
+    // Submissions
+    storeSubmissions: "Υποβολές",
+    acceptSubmission: "Αποδοχή",
+    declineSubmission: "Απόρριψη",
+    noSubmissions: "Δεν υπάρχουν εκκρεμείς υποβολές",
+    
+    // Schedule
+    schedule: "Πρόγραμμα",
+    editSchedule: "Επεξεργασία Προγράμματος",
+    saveSchedule: "Αποθήκευση Προγράμματος",
+    lockSchedule: "Κλείδωμα Προγράμματος",
+    printSchedule: "Εκτύπωση Προγράμματος",
+    
+    // Devices
+    devices: "Συνδεδεμένες Συσκευές",
+    device: "Συσκευή",
+    browser: "Περιηγητής",
+    os: "Λειτουργικό",
+    ip: "IP",
+    lastActive: "Τελευταία δραστηριότητα",
+    user: "Χρήστης",
+    admin: "Διαχειριστής",
+    noDevices: "Δεν βρέθηκαν συσκευές",
+    
+    // History
+    noHistory: "Δεν υπάρχει ιστορικό",
+    status: "Κατάσταση",
+    pending: "Εκκρεμεί",
+    accepted: "Αποδεκτή",
+    declined: "Απορρίφθηκε",
+    
+    // Messages
+    submitSuccess: "Υποβλήθηκε με επιτυχία!",
+    fillAllFields: "Παρακαλώ συμπληρώστε όλα τα πεδία.",
+    acceptedSuccess: "Η υποβολή έγινε αποδεκτή!",
+    declinedSuccess: "Η υποβολή απορρίφθηκε!",
+    resetSuccess: "Όλες οι υποβολές διαγράφηκαν!",
+    scheduleSaved: "Το πρόγραμμα αποθηκεύτηκε!",
+    selectCellFirst: "Επιλέξτε ένα κελί πρώτα",
+    boldApplied: "Έντονη γραμματοσειρά εφαρμόστηκε",
+    italicApplied: "Πλάγια γραμματοσειρά εφαρμόστηκε",
+    underlineApplied: "Υπογράμμιση εφαρμόστηκε",
+    alignedLeft: "Στοίχιση αριστερά",
+    alignedCenter: "Στοίχιση στο κέντρο",
+    alignedRight: "Στοίχιση δεξιά",
+    cellColorChanged: "Χρώμα κελιού άλλαξε",
+    textColorChanged: "Χρώμα κειμένου άλλαξε"
+  }
+};
+
+
+function t(key) {
+  return translations[currentLang][key] || key;
+}
+
 const stores = {
   NICOSIA: {EN:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Kokkinotrimithia","Agios Pavlos","Chatziiosif","Pallouriotissa"], GR:["Coffee Berry","Makariou Unihalls","Trinity Shop","Nicosia Mall","Κοκκινοτριμιθιά","Άγιος Παύλος","Χατζηιωσηφ","Παλλουριώτισσα"]},
   LARNACA: {EN:["Timagia","Makariou","Faneromeni","Oroklini","Aradippou","Kiti"], GR:["Τιμάγια","Μακαρίου","Φανερωμένη","Ορόκλινη","Αραδίππου","Κίτι"]},
@@ -1392,22 +1647,87 @@ const stores = {
 
 function switchLang(lang){
   currentLang = lang;
+  const t = translations[lang];
+  
   greekBtn.classList.toggle("active", lang === "GR");
   engBtn.classList.toggle("active", lang === "EN");
-  document.getElementById("label-name").textContent = lang === "GR" ? "Όνομα" : "Name";
-  document.getElementById("label-month").textContent = lang === "GR" ? "Μήνας" : "Month";
-  document.getElementById("label-day").textContent = lang === "GR" ? "Ημέρα" : "Day";
-  document.getElementById("label-shift").textContent = lang === "GR" ? "Βάρδια" : "Shift";
-  document.getElementById("label-location").textContent = lang === "GR" ? "Τοποθεσία" : "Location";
-  document.getElementById("label-store").textContent = lang === "GR" ? "Κατάστημα" : "Store";
-  document.getElementById("name").placeholder = lang === "GR" ? "Συμπληρώστε το όνομά σας" : "Fill out your name";
-  document.getElementById("day").placeholder = lang === "GR" ? "Συμπληρώστε τη μέρα σας" : "Fill out your day";
-  submitBtn.textContent = lang === "GR" ? "Υποβολή" : "Submit";
-  adminBtn.textContent = lang === "GR" ? "Διαχειριστής" : "Admin GUI";
-  scheduleBtn.textContent = lang === "GR" ? "Πρόγραμμα" : "Schedule GUI";
-  historyBtn.textContent = lang === "GR" ? "Ιστορικό" : "My History";
+  
+  // Main Form
+  document.getElementById("label-name").textContent = t.name;
+  document.getElementById("label-month").textContent = t.month;
+  document.getElementById("label-day").textContent = t.day;
+  document.getElementById("label-shift").textContent = t.shift;
+  document.getElementById("label-location").textContent = t.location;
+  document.getElementById("label-store").textContent = t.store;
+  document.getElementById("name").placeholder = t.namePlaceholder;
+  document.getElementById("day").placeholder = t.dayPlaceholder;
+  submitBtn.textContent = t.submit;
+  adminBtn.textContent = t.adminGui;
+  scheduleBtn.textContent = t.scheduleGui;
+  historyBtn.textContent = t.myHistory;
+  
+  // Admin GUI
+  const adminTitle = document.querySelector("#admin-gui h2");
+  if(adminTitle) adminTitle.textContent = t.adminPanel;
+  const seeSubmBtn = document.getElementById("see-submissions");
+  if(seeSubmBtn) seeSubmBtn.textContent = t.seeSubmissions;
+  const resetBtn = document.getElementById("reset-submissions");
+  if(resetBtn) resetBtn.textContent = t.resetSubmissions;
+  const seeUsersBtn = document.getElementById("see-users");
+  if(seeUsersBtn) seeUsersBtn.textContent = t.seeUsers;
+  document.querySelectorAll('[id^="back-"]').forEach(btn => {
+    if(btn.textContent.includes("Back") || btn.textContent.includes("Πίσω")) {
+      btn.textContent = t.back;
+    }
+  });
+  
+  // Locations GUI
+  const locTitle = document.querySelector("#locations-gui h2");
+  if(locTitle) locTitle.textContent = t.selectLocation;
+  const locationBtns = document.querySelectorAll(".location-btn");
+  if(locationBtns.length > 0) {
+    locationBtns[0].textContent = t.nicosia;
+    locationBtns[1].textContent = t.larnaca;
+    locationBtns[2].textContent = t.famagusta;
+    locationBtns[3].textContent = t.limassol;
+    locationBtns[4].textContent = t.pafos;
+  }
+  
+  // Schedule GUI
+  const schedLocTitle = document.querySelector("#schedule-gui h2");
+  if(schedLocTitle) schedLocTitle.textContent = t.selectLocation;
+  const schedLocationBtns = document.querySelectorAll(".schedule-location-btn");
+  if(schedLocationBtns.length > 0) {
+    schedLocationBtns[0].textContent = t.nicosia;
+    schedLocationBtns[1].textContent = t.larnaca;
+    schedLocationBtns[2].textContent = t.famagusta;
+    schedLocationBtns[3].textContent = t.limassol;
+    schedLocationBtns[4].textContent = t.pafos;
+  }
+  
+  // Schedule Editing Buttons
+  const editScheduleBtn = document.getElementById("edit-schedule-btn");
+  if(editScheduleBtn && editScheduleBtn.textContent.includes("Edit")) {
+    editScheduleBtn.textContent = "✏️ " + t.editSchedule;
+  } else if(editScheduleBtn) {
+    editScheduleBtn.textContent = "🔒 " + t.lockSchedule;
+  }
+  const saveScheduleBtn = document.getElementById("save-schedule-btn");
+  if(saveScheduleBtn) saveScheduleBtn.textContent = "💾 " + t.saveSchedule;
+  const printScheduleBtn = document.getElementById("print-schedule-btn");
+  if(printScheduleBtn) printScheduleBtn.textContent = "🖨️ " + t.printSchedule;
+  
+  // Devices GUI
+  const devicesTitle = document.querySelector("#devices-gui h2");
+  if(devicesTitle) devicesTitle.textContent = t.devices;
+  
+  // History GUI
+  const historyTitle = document.querySelector("#history-gui h2");
+  if(historyTitle) historyTitle.textContent = t.myHistory;
+  
+  // Update store dropdown if visible
   if(storeContainer.classList.contains("show")){
-      updateStores(locationSelect.value);
+    updateStores(locationSelect.value);
   }
 }
 
@@ -1417,7 +1737,7 @@ engBtn.addEventListener("click", () => switchLang("EN"));
 locationSelect.addEventListener("change",()=>updateStores(locationSelect.value));
 function updateStores(location){
   if(stores[location]){
-    storeSelect.innerHTML=`<option value="" disabled selected>${currentLang==="GR"?"Επιλέξτε κατάστημα":"Select a store"}</option>`;
+    storeSelect.innerHTML=`<option value="" disabled selected>${t("selectStore")}</option>`;
     stores[location][currentLang].forEach(store=>{
       const opt=document.createElement("option"); opt.value=store; opt.textContent=store; storeSelect.appendChild(opt);
     });
@@ -1435,11 +1755,11 @@ submitBtn.addEventListener("click", ()=>{
 
   if(name && day && shift && month && location && store){
     push(ref(db,'submissions'), {name, day, shift, month, location, store, timestamp:Date.now(), deviceId: deviceId, status: 'pending'});
-    showPopup(currentLang==="GR"?"Υποβλήθηκε με επιτυχία!":"You successfully submitted!", "success");
+    showPopup(t("submitSuccess"), "success");
     document.getElementById("zorbas-form").reset();
     storeContainer.classList.remove("show");
   } else {
-    showPopup(currentLang==="GR"?"Παρακαλώ συμπληρώστε όλα τα πεδία.":"Please fill in all fields.", "error");
+    showPopup(t("fillAllFields"), "error");
   }
 });
 
@@ -1479,7 +1799,7 @@ historyBtn.addEventListener("click", () => {
       userSubmissions.sort((a, b) => b.timestamp - a.timestamp);
       
       if(userSubmissions.length === 0){
-        historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${currentLang === "GR" ? "Δεν υπάρχει ιστορικό" : "No submission history"}</p>`;
+        historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${t("noHistory")}</p>`;
         displayedKeys.clear();
         return;
       }
@@ -1510,9 +1830,9 @@ historyBtn.addEventListener("click", () => {
         }
         
         const status = sub.status || 'pending';
-        const statusText = status === 'accepted' ? (currentLang === "GR" ? "Αποδεκτή" : "Accepted") :
-                          status === 'declined' ? (currentLang === "GR" ? "Απορρίφθηκε" : "Declined") :
-                          (currentLang === "GR" ? "Σε αναμονή" : "Pending");
+        const statusText = status === 'accepted' ? t("accepted") :
+                          status === 'declined' ? t("declined") :
+                          (currentLang === "GR" ? "Εκκρεμεί" : "Pending");
         
         const date = new Date(sub.timestamp);
         const dateStr = date.toLocaleDateString() + " " + date.toLocaleTimeString();
@@ -1541,7 +1861,7 @@ historyBtn.addEventListener("click", () => {
         card.appendChild(clearBtn);
       });
     } else {
-      historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${currentLang === "GR" ? "Δεν υπάρχει ιστορικό" : "No submission history"}</p>`;
+      historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${t("noHistory")}</p>`;
       displayedKeys.clear();
     }
   });
@@ -1618,7 +1938,7 @@ backStoreBtnSchedule.addEventListener("click", ()=>{
 
 resetSubmissionsBtn.addEventListener("click", () => {
   remove(ref(db, 'submissions'));
-  showPopup(currentLang === "GR" ? "Όλες οι υποβολές διαγράφηκαν!" : "All submissions have been reset!", "success");
+  showPopup(t("resetSuccess"), "success");
 });
 
 seeUsersBtn.addEventListener("click", () => {
@@ -1640,13 +1960,33 @@ seeUsersBtn.addEventListener("click", () => {
 
         const deviceEl = document.createElement("p");
         deviceEl.style.cssText = "font-size:18px;font-weight:bold;text-align:center;margin:0;";
-        deviceEl.textContent = `Device: ${d.type}`;
+        deviceEl.textContent = `${t('device')}: ${d.type}`;
         box.appendChild(deviceEl);
 
         const deviceNameEl = document.createElement("p");
-        deviceNameEl.style.cssText = "font-size:14px;color:#666;text-align:center;margin:5px 0 0 0;word-break:break-word;";
+        deviceNameEl.style.cssText = "font-size:16px;color:#333;text-align:center;margin:5px 0 0 0;word-break:break-word;font-weight:600;";
         deviceNameEl.textContent = d.name || "Unknown";
         box.appendChild(deviceNameEl);
+
+        const browserEl = document.createElement("p");
+        browserEl.style.cssText = "font-size:13px;color:#666;text-align:center;margin:8px 0 0 0;";
+        browserEl.innerHTML = `<strong>${t('browser')}:</strong> ${d.browser || 'Unknown'}`;
+        box.appendChild(browserEl);
+
+        const osEl = document.createElement("p");
+        osEl.style.cssText = "font-size:13px;color:#666;text-align:center;margin:5px 0 0 0;";
+        osEl.innerHTML = `<strong>${t('os')}:</strong> ${d.os || 'Unknown'}`;
+        box.appendChild(osEl);
+
+        const ipEl = document.createElement("p");
+        ipEl.style.cssText = "font-size:13px;color:#E8DA89;text-align:center;margin:5px 0 0 0;font-weight:bold;background:#f5f5f5;padding:6px 12px;border-radius:6px;";
+        ipEl.innerHTML = `<strong>${t('ip')}:</strong> ${d.ip || 'Unknown'}`;
+        box.appendChild(ipEl);
+
+        const lastActiveEl = document.createElement("p");
+        lastActiveEl.style.cssText = "font-size:12px;color:#999;text-align:center;margin:8px 0 0 0;font-style:italic;";
+        lastActiveEl.textContent = d.lastActive ? `${t('lastActive')}: ${d.lastActive}` : `${t('lastActive')}: Unknown`;
+        box.appendChild(lastActiveEl);
 
         const spacer = document.createElement("div");
         spacer.style.height = "10px";
@@ -1656,11 +1996,11 @@ seeUsersBtn.addEventListener("click", () => {
         buttons.style.cssText = "display:flex; gap:20px; justify-content:center;";
 
         const userBtn = document.createElement("button");
-        userBtn.textContent = "User";
+        userBtn.textContent = t("user");
         userBtn.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;transition:all 0.3s ease;`;
 
         const adminBtn2 = document.createElement("button");
-        adminBtn2.textContent = "Admin";
+        adminBtn2.textContent = t("admin");
         adminBtn2.style.cssText = `background:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:16px;transition:all 0.3s ease;`;
 
         function updateRoleUI(selectedRole) {
@@ -1702,7 +2042,7 @@ seeUsersBtn.addEventListener("click", () => {
         index++;
       }
     } else {
-      devicesContainer.innerHTML = "<p>No devices found</p>";
+      devicesContainer.innerHTML = `<p>${t("noDevices")}</p>`;
     }
   }, { onlyOnce: true });
 });
@@ -1739,7 +2079,7 @@ storeButtonsContainer.addEventListener("click",(e)=>{
             `;
 
             const acceptBtn = document.createElement("button");
-            acceptBtn.textContent = "Accept";
+            acceptBtn.textContent = t("acceptSubmission");
             acceptBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;";
             acceptBtn.addEventListener("mouseover", () => acceptBtn.style.transform = "scale(1.1)");
             acceptBtn.addEventListener("mouseout", () => acceptBtn.style.transform = "scale(1)");
@@ -1747,11 +2087,11 @@ storeButtonsContainer.addEventListener("click",(e)=>{
               set(ref(db, `submissions/${key}/status`), 'accepted');
               card.style.animation = "fadeOut 0.3s ease";
               setTimeout(() => card.remove(), 300);
-              showPopup(currentLang==="GR" ? "Η υποβολή έγινε αποδεκτή!" : "You successfully accepted this submission", "success");
+              showPopup(t("acceptedSuccess"), "success");
             });
 
             const declineBtn = document.createElement("button");
-            declineBtn.textContent = "Decline";
+            declineBtn.textContent = t("declineSubmission");
             declineBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;transition:all 0.3s ease;";
             declineBtn.addEventListener("mouseover", () => declineBtn.style.transform = "scale(1.1)");
             declineBtn.addEventListener("mouseout", () => declineBtn.style.transform = "scale(1)");
@@ -1759,7 +2099,7 @@ storeButtonsContainer.addEventListener("click",(e)=>{
               set(ref(db, `submissions/${key}/status`), 'declined');
               card.style.animation = "fadeOut 0.3s ease";
               setTimeout(() => card.remove(), 300);
-              showPopup(currentLang==="GR" ? "Η υποβολή απορρίφθηκε!" : "You successfully declined this submission", "success");
+              showPopup(t("declinedSuccess"), "success");
             });
 
             card.appendChild(acceptBtn);
@@ -1835,6 +2175,7 @@ window.addEventListener("load", () => {
   storeSubmissionsGui.style.display = "none";
   scheduleSubmissionsGui.style.display = "none";
   document.getElementById("submit-gui").style.display = "block";
+  switchLang("EN"); // Initialize all translations
 });
 </script>
 </body>
