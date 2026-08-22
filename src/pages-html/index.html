@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.addEventListener('beforeinstallprompt', e => e.preventDefault());</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="darkreader-lock">
+<link rel="icon" type="image/png" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<title>Zorbas</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#E8E6E3">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zorbas">
+<meta name="author" content="KVWX">
+<meta name="generator" content="KVWX">
+<link rel="apple-touch-icon" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+
+<div class="lang-buttons">
+  <button id="greek-btn">ΕΛΛ</button>
+  <span class="lang-divider">/</span>
+  <button id="eng-btn" class="active">ENG</button>
+</div>
+
+<div class="form-title" id="form-title">Zorbas</div>
+
+<div class="form-box" id="submit-gui">
+  <form id="zorbas-form">
+    <label for="name" id="label-name">Name</label>
+    <input type="text" id="name" placeholder="Fill out your name" maxlength="30" required>
+
+    <label for="month" id="label-month">Month</label>
+    <select id="month" required>
+      <option value="" disabled selected id="month-placeholder">Select month</option>
+    </select>
+
+    <label for="day" id="label-day">Day</label>
+    <input type="text" id="day" placeholder="Fill out your day" inputmode="numeric" pattern="[0-9]*" maxlength="2" required>
+
+    <label for="shift" id="label-shift">Shift</label>
+    <select id="shift" required>
+      <option value="" disabled selected id="shift-placeholder">Select shift</option>
+      <option value="off">off</option>
+      <option value="6-2">6-2</option>
+      <option value="2-10">2-10</option>
+    </select>
+
+    <label for="location" id="label-location">Location</label>
+    <select id="location" required>
+      <option value="" disabled selected id="location-placeholder">Select location</option>
+      <option value="NICOSIA">Nicosia</option>
+      <option value="LARNACA">Larnaca</option>
+      <option value="FAMAGUSTA">Ammochostos</option>
+      <option value="LIMASSOL">Limassol</option>
+      <option value="PAFOS">Pafos</option>
+    </select>
+
+    <div id="store-container">
+      <label for="store" id="label-store">Store</label>
+      <select id="store"></select>
+    </div>
+
+    <button type="button" class="submit-btn" id="submit-btn">Submit</button>
+    <div id="message"></div>
+  </form>
+
+  <button type="button" class="submit-btn" id="history-btn" style="margin-top:10px;">My History</button>
+  <button type="button" class="submit-btn" id="schedule-btn" style="margin-top:10px;">Schedule GUI</button>
+  <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px; display:none;">Admin GUI</button>
+</div>
+
+<script>
+// Median/GoNative calls this automatically after every page load
+// Must be a plain global function (not in a module) so the native bridge finds it
+function median_onesignal_info(info) {
+  var id = info && (info.oneSignalUserId || info.userId);
+  if (!id) return;
+  window.__pendingOneSignalId = id;
+  // If the module already loaded, trigger it directly
+  if (typeof window.__saveOneSignalId === 'function') {
+    window.__saveOneSignalId(id);
+  }
+}
+window.gonative_onesignal_info = median_onesignal_info;
+</script>
+<script type="module">
+import {
+  db, ref, push, onValue, get, remove, deviceRef, deviceId,
+  registerDevice, isStaff, months, translations, stores,
+  showPopup, fitToScreen
+} from "/shared.js";
+
+let currentLangLocal = localStorage.getItem('zorbas_lang') || "EN";
+
+function tc(key) { return translations[currentLangLocal][key] || key; }
+
+const greekBtn = document.getElementById("greek-btn");
+const engBtn = document.getElementById("eng-btn");
+const locationSelect = document.getElementById("location");
+const storeContainer = document.getElementById("store-container");
+const storeSelect = document.getElementById("store");
+const submitBtn = document.getElementById("submit-btn");
+const adminBtn = document.getElementById("admin-btn");
+const scheduleBtn = document.getElementById("schedule-btn");
+const historyBtn = document.getElementById("history-btn");
+
+// Show admin button for admins
+onValue(deviceRef, snap => {
+  const d = snap.val();
+  const r = d?.role || "user";
+  const hasStoreRoles = Array.isArray(d?.storeRoles) && d.storeRoles.length > 0;
+  const isLegacyStore = typeof r === "string" && r.startsWith("store:");
+  adminBtn.style.display = (isStaff(d) || isLegacyStore || hasStoreRoles) ? "block" : "none";
+});
+
+registerDevice();
+// Tag this device in OneSignal with our deviceId so we can send targeted notifications
+(function tryOneSignalLogin() {
+  function doLogin() {
+    if (window.median && window.median.onesignal && window.median.onesignal.login) {
+      window.median.onesignal.login(deviceId).then(function() {
+        // Also try to grab and store the subscription ID
+        if (window.median.onesignal.onesignalInfo) {
+          window.median.onesignal.onesignalInfo().then(function(info) {
+            var id = info && (info.oneSignalUserId || info.userId || info.subscriptionId);
+            if (id) {
+              // Save to Firebase via imported update function
+              if (window.__saveOneSignalId) window.__saveOneSignalId(id);
+            }
+          }).catch(function(){});
+        }
+      }).catch(function(){});
+      return true;
+    }
+    return false;
+  }
+  if (!doLogin()) {
+    var attempts = 0;
+    var t = setInterval(function() {
+      if (doLogin() || ++attempts > 20) clearInterval(t);
+    }, 500);
+  }
+})();
+
+
+function updateStores(location) {
+  const storeData = stores[location];
+  if(storeData) {
+    storeSelect.innerHTML = `<option value="" disabled selected>${tc("selectStore")}</option>`;
+    storeData[currentLangLocal].forEach((store, i) => {
+      const opt = document.createElement("option");
+      opt.value = storeData.EN[i];
+      opt.textContent = store;
+      storeSelect.appendChild(opt);
+    });
+    storeContainer.classList.add("show");
+  } else {
+    storeContainer.classList.remove("show");
+  }
+}
+
+// Days per month (index 0 = January). Feb = 28; leap years get 29 handled below.
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+function maxDaysForMonth(monthName) {
+  const idx = months.EN.indexOf(monthName);
+  if (idx === -1) return 31;
+  if (idx === 1) { // February — allow 29 for leap years
+    const year = new Date().getFullYear();
+    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28;
+  }
+  return DAYS_IN_MONTH[idx];
+}
+
+const dayInput = document.getElementById("day");
+dayInput.addEventListener("keydown", e => {
+  // Allow: backspace, delete, arrows, tab, ctrl/cmd combos
+  if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+  if (!/[0-9]/.test(e.key)) { e.preventDefault(); return; }
+  // Block 0 as the first digit — no month has a day 0X
+  if (e.key === "0" && dayInput.value === "") { e.preventDefault(); return; }
+
+  const current = dayInput.value;
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  const proposed = current + e.key;
+  const num = parseInt(proposed, 10);
+
+  // Block zero result (e.g. "0" alone or combined to make 0)
+  if (num === 0) { e.preventDefault(); return; }
+
+  // Block if the proposed number already exceeds the max
+  // (still allow e.g. "1" as first digit even if max is 28, since "14" is fine)
+  if (num > max) { e.preventDefault(); return; }
+
+  // Block a third digit — days are at most 2 digits
+  if (current.length >= 2) { e.preventDefault(); return; }
+});
+// Strip non-digits on paste
+dayInput.addEventListener("input", () => {
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  dayInput.value = dayInput.value.replace(/[^0-9]/g, "").slice(0, 2);
+  if (dayInput.value && parseInt(dayInput.value, 10) > max) dayInput.value = String(max);
+  // Block zero-only values (00, 0)
+  if (dayInput.value !== "" && parseInt(dayInput.value, 10) === 0) dayInput.value = "";
+});
+// If month changes and current day is now too high, clamp it
+document.getElementById("month").addEventListener("change", () => {
+  if (!dayInput.value) return;
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  if (parseInt(dayInput.value, 10) > max) dayInput.value = String(max);
+});
+
+locationSelect.addEventListener("change", () => updateStores(locationSelect.value));
+
+submitBtn.addEventListener("click", async () => {
+  const name = document.getElementById("name").value.trim();
+  const day = document.getElementById("day").value.trim();
+  const shift = document.getElementById("shift").value;
+  const month = document.getElementById("month").value;
+  const location = locationSelect.value;
+  const store = storeContainer.classList.contains("show") ? storeSelect.value : "filled";
+
+  if (!name || !day || !shift || !month || !location || !store) {
+    showPopup(tc("fillAllFields"), "error"); return;
+  }
+
+  const dayNum = parseInt(day, 10);
+  const maxDay = maxDaysForMonth(month);
+  if (!dayNum || dayNum < 1 || dayNum > maxDay) {
+    showPopup(tc("invalidDay"), "error"); return;
+  }
+
+  // Disable button to prevent double-submit
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = "...";
+
+  try {
+    // Check cooldown — owners and admins bypass it
+    const snap = await get(deviceRef);
+    const staff = snap.exists() && isStaff(snap.val());
+    if (!staff) {
+      const lastSubmit = parseInt(localStorage.getItem('zorbas_last_submit') || "0", 10);
+      const elapsed = Date.now() - lastSubmit;
+      const cooldown = 3 * 60 * 1000;
+      if (elapsed < cooldown) {
+        const secsLeft = Math.ceil((cooldown - elapsed) / 1000);
+        const minutes = Math.floor(secsLeft / 60);
+        const seconds = String(secsLeft % 60).padStart(2, "0");
+        const msg = tc("cooldownMsg").replace("{timer}", `${minutes}:${seconds}`);
+        showPopup(msg, "error");
+        return;
+      }
+    }
+
+    await push(ref(db, 'submissions'), { name, day: String(dayNum), shift, month, location, store, timestamp: Date.now(), deviceId, status: 'pending' });
+    if (!staff) localStorage.setItem('zorbas_last_submit', Date.now().toString());
+    showPopup(tc("submitSuccess"), "success");
+
+    document.getElementById("zorbas-form").reset();
+    storeContainer.classList.remove("show");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+});
+
+adminBtn.addEventListener("click", () => { window.location.href = "/admin"; });
+scheduleBtn.addEventListener("click", () => { window.location.href = "/schedule"; });
+historyBtn.addEventListener("click", () => { window.location.href = "/history"; });
+
+function switchLang(lang) {
+  currentLangLocal = lang;
+  localStorage.setItem('zorbas_lang', lang);
+  const tr = translations[lang];
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+
+  document.getElementById("label-name").textContent = tr.name;
+  document.getElementById("label-month").textContent = tr.month;
+  document.getElementById("label-day").textContent = tr.day;
+  document.getElementById("label-shift").textContent = tr.shift;
+  document.getElementById("label-location").textContent = tr.location;
+  document.getElementById("label-store").textContent = tr.store;
+  document.getElementById("name").placeholder = tr.namePlaceholder;
+  document.getElementById("day").placeholder = tr.dayPlaceholder;
+
+  const monthSel = document.getElementById("month");
+  const currentMonthVal = monthSel.value;
+  monthSel.innerHTML = `<option value="" disabled ${!currentMonthVal?"selected":""}>${tr.selectMonth}</option>`;
+  months.EN.forEach((enM, i) => {
+    const opt = document.createElement("option");
+    opt.value = enM;
+    opt.textContent = months[lang][i];
+    if(enM === currentMonthVal) opt.selected = true;
+    monthSel.appendChild(opt);
+  });
+
+  const shiftSel = document.getElementById("shift");
+  const curShift = shiftSel.value;
+  shiftSel.innerHTML = `<option value="" disabled ${!curShift?"selected":""}>${tr.selectShift}</option>
+    <option value="off" ${curShift==="off"?"selected":""}>${tr.off}</option>
+    <option value="6-2" ${curShift==="6-2"?"selected":""}>${tr.shift62}</option>
+    <option value="2-10" ${curShift==="2-10"?"selected":""}>${tr.shift210}</option>`;
+
+  const locSel = document.getElementById("location");
+  const curLoc = locSel.value;
+  locSel.innerHTML = `<option value="" disabled ${!curLoc?"selected":""}>${tr.selectLocation}</option>`;
+  ["NICOSIA","LARNACA","FAMAGUSTA","LIMASSOL","PAFOS"].forEach(k => {
+    const opt = document.createElement("option");
+    opt.value = k; opt.textContent = tr[`loc_${k}`];
+    if(k === curLoc) opt.selected = true;
+    locSel.appendChild(opt);
+  });
+
+  submitBtn.textContent = tr.submit;
+  adminBtn.textContent = tr.adminGui;
+  scheduleBtn.textContent = tr.scheduleGui;
+  historyBtn.textContent = tr.myHistory;
+
+  if(storeContainer.classList.contains("show") && locationSelect.value) updateStores(locationSelect.value);
+}
+
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click", () => switchLang("EN"));
+
+switchLang(localStorage.getItem('zorbas_lang') || "EN");
+
+fitToScreen();
+</script>
+</body>
+</html>

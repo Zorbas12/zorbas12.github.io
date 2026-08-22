@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.addEventListener('beforeinstallprompt', e => e.preventDefault());</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="darkreader-lock">
+<link rel="icon" type="image/png" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<title>Zorbas — Admin</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#E8E6E3">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zorbas">
+<meta name="author" content="KVWX">
+<meta name="generator" content="KVWX">
+<link rel="apple-touch-icon" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+
+<div class="lang-buttons">
+  <button id="greek-btn">ΕΛΛ</button>
+  <span class="lang-divider">/</span>
+  <button id="eng-btn" class="active">ENG</button>
+</div>
+
+<!-- Admin GUI -->
+<div id="admin-gui" style="display:none;">
+  <button id="see-submissions">See all submissions</button>
+  <button id="reset-submissions">Reset all submissions</button>
+  <button id="see-users">See all users</button>
+  <button id="back-admin">Back</button>
+</div>
+
+<!-- Locations GUI -->
+<div id="locations-gui" style="display:none;">
+  <div id="locations-title" class="form-title" style="margin-bottom:24px;">Select Location</div>
+  <button class="location-btn" data-loc="NICOSIA">Nicosia</button>
+  <button class="location-btn" data-loc="LARNACA">Larnaca</button>
+  <button class="location-btn" data-loc="FAMAGUSTA">Ammochostos</button>
+  <button class="location-btn" data-loc="LIMASSOL">Limassol</button>
+  <button class="location-btn" data-loc="PAFOS">Pafos</button>
+  <button id="back-locations">Back</button>
+</div>
+
+<!-- Store GUI -->
+<div class="store-gui" id="store-gui" style="display:none;">
+  <div id="store-gui-title" class="form-title" style="margin-bottom:24px;"></div>
+  <div id="store-buttons-container"></div>
+  <button class="back-store-btn" id="back-store">Back</button>
+</div>
+
+<!-- Devices GUI -->
+<div id="devices-gui" style="display:none;">
+  <div class="devices-search-wrap">
+    <input type="text" id="devices-search-input" placeholder="Search" maxlength="100" autocomplete="off">
+    <span class="devices-search-icon">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+  </div>
+  <div class="devices-scroll-area" id="devices-container"></div>
+  <button class="devices-back-btn" id="back-devices">Back</button>
+</div>
+
+<script type="module">
+import {
+  db, ref, onValue, remove, set, get, deviceRef, deviceId,
+  registerDevice, translations, months, stores, showPopup, showConfirm,
+  initConfirmModal, checkAdminStatus, getDeviceRole, storeRoleKey, getAllStoreNames,
+  deviceIcon, isOnline, formatLastActive,
+  buildNoPermissionPage, updateConfirmLang, triggerNotification, fitToScreen
+} from "/shared.js";
+
+let currentLangLocal = localStorage.getItem('zorbas_lang') || "EN";
+function tr(key) { return translations[currentLangLocal][key] || key; }
+function translateMonth(enMonth) {
+  const idx = months.EN.indexOf(enMonth);
+  return idx !== -1 ? months[currentLangLocal][idx] : enMonth;
+}
+
+registerDevice();
+initConfirmModal();
+
+const noPermPage = buildNoPermissionPage(() => { window.location.href = "/"; });
+
+// ── DOM refs ──
+const adminGui             = document.getElementById("admin-gui");
+const locationsGui         = document.getElementById("locations-gui");
+const storeGui             = document.getElementById("store-gui");
+const devicesGui           = document.getElementById("devices-gui");
+const storeButtonsContainer = document.getElementById("store-buttons-container");
+const devicesContainer     = document.getElementById("devices-container");
+const greekBtn             = document.getElementById("greek-btn");
+const engBtn               = document.getElementById("eng-btn");
+
+// ── Check role & set up UI ──
+let myRole = "user";
+let myStoreRoles = []; // array of store names
+getDeviceRole().then(({ role, storeRoles }) => {
+  myRole = role;
+  myStoreRoles = storeRoles;
+  applyLocationFilter();
+  const isOwner = role === "owner";
+  const isAdmin = role === "admin";
+  const hasStoreRoles = storeRoles.length > 0;
+  const hasAccess = isOwner || isAdmin || hasStoreRoles;
+  if (!hasAccess) { adminGui.style.display = "none"; noPermPage.style.display = "flex"; return; }
+
+  // Only owner sees "See all users"
+  const seeUsersBtn = document.getElementById("see-users");
+  if (!isOwner) seeUsersBtn.style.display = "none";
+
+  // Pure store role (no admin/owner): go straight to their store(s)
+  if (!isOwner && !isAdmin && hasStoreRoles) {
+    if (storeRoles.length === 1) {
+      // Single store — jump straight to submissions
+      setTimeout(() => openSubmissions(storeRoles[0], storeRoles[0]), 100);
+    } else {
+      // Multiple stores — show the locations panel so they can pick
+      setTimeout(() => showPanel("locations"), 100);
+    }
+    adminGui.style.display = "none";
+    return;
+  }
+
+  // Admin: hide the See Submissions button (they get locations panel instead)
+  if (isAdmin && !hasStoreRoles) {
+    document.getElementById("see-submissions").style.display = "none";
+  }
+  // Hide reset submissions if admin has no stores (nothing to reset)
+  if (!isOwner && !hasStoreRoles) {
+    document.getElementById("reset-submissions").style.display = "none";
+  }
+});
+
+// ── Build store-submissions GUI and store refs to inner elements ──
+const storeSubmissionsGui = document.createElement("div");
+storeSubmissionsGui.id = "store-submissions-gui";
+storeSubmissionsGui.style.cssText = `display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#E8E6E3;z-index:9999;isolation:isolate;overflow-y:auto;`;
+const storeSubBg = document.createElement("div");
+storeSubBg.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;border-style:solid;border-width:100vh 100vw 0 0;border-color:#DAD9D7 transparent transparent transparent;z-index:0;pointer-events:none;";
+storeSubmissionsGui.appendChild(storeSubBg);
+const subInnerWrap = document.createElement("div");
+subInnerWrap.style.cssText = "position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:50px 20px 90px;";
+storeSubmissionsGui.appendChild(subInnerWrap);
+
+const storeTitle = document.createElement("div");
+storeTitle.style.cssText = "font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:#fff;text-shadow:-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111,1px 1px 0 #111,3px 4px 0 #555;margin-bottom:14px;text-align:center;";
+subInnerWrap.appendChild(storeTitle);
+
+const subSearchBarWrap = document.createElement("div");
+subSearchBarWrap.className = "sub-search-bar-wrap";
+const subSearchInput = document.createElement("input");
+subSearchInput.type = "text";
+subSearchInput.placeholder = "Search";
+const subSearchIcon = document.createElement("span");
+subSearchIcon.className = "sub-search-icon";
+subSearchIcon.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+subSearchBarWrap.appendChild(subSearchInput);
+subSearchBarWrap.appendChild(subSearchIcon);
+subInnerWrap.appendChild(subSearchBarWrap);
+
+const subCardsArea = document.createElement("div");
+subCardsArea.id = "sub-cards-area";
+subCardsArea.style.cssText = "width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;";
+subInnerWrap.appendChild(subCardsArea);
+
+const storeBackBtn = document.createElement("button");
+storeBackBtn.textContent = tr("back");
+storeBackBtn.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background-color:#ff4c4c;color:#fff;padding:12px 32px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;z-index:10003;transition:background-color 0.2s;display:none;`;
+storeBackBtn.addEventListener("mouseover", () => storeBackBtn.style.backgroundColor = "#e03b3b");
+storeBackBtn.addEventListener("mouseout",  () => storeBackBtn.style.backgroundColor = "#ff4c4c");
+
+document.body.appendChild(storeBackBtn);
+document.body.appendChild(storeSubmissionsGui);
+
+// ── State ──
+let allSubCards = [];
+let allDeviceCards = [];
+let activeSubsUnsub = null;
+let activeDevUnsub = null;
+let currentLocKey = null; // track which location's store panel is open
+
+// ── Panel helpers ──
+function hideAllPanels() {
+  adminGui.style.display = "none";
+  locationsGui.style.display = "none";
+  storeGui.style.display = "none";
+  devicesGui.style.display = "none";
+  storeSubmissionsGui.style.display = "none";
+  storeBackBtn.style.display = "none";
+  if (activeSubsUnsub) { activeSubsUnsub(); activeSubsUnsub = null; }
+  if (activeDevUnsub) { activeDevUnsub(); activeDevUnsub = null; }
+}
+
+const panelPaths = {
+  "admin":       "/admin",
+  "locations":   "/admin/submissions",
+  "store":       "/admin/store",
+  "devices":     "/admin/devices",
+  "submissions": "/admin/submissions/store"
+};
+
+function showPanel(panel, pushState = true) {
+  hideAllPanels();
+  if (pushState) history.pushState({ panel }, "", panelPaths[panel] || "/admin.html");
+  switch (panel) {
+    case "admin":     adminGui.style.display = "flex"; break;
+    case "locations": applyLocationFilter(); locationsGui.style.display = "flex"; break;
+    case "store":     storeGui.style.display = "flex"; break;
+    case "devices":   devicesGui.style.display = "flex"; loadDevices(); break;
+  }
+}
+
+function openSubmissions(storeName, storeLocalized, pushState = true) {
+  hideAllPanels();
+  storeTitle.textContent = storeLocalized;
+  subCardsArea.innerHTML = "";
+  allSubCards = [];
+  subSearchInput.value = "";
+  storeSubmissionsGui.style.display = "block";
+  storeBackBtn.style.display = "block";
+  if (pushState) history.pushState({ panel: "submissions", storeName, storeLocalized }, "", `/admin/submissions/${storeName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "")}`);
+
+  activeSubsUnsub = onValue(ref(db, "submissions"), snap => {
+    const data = snap.val();
+    subCardsArea.innerHTML = "";
+    allSubCards = [];
+    let found = false;
+    if (data) {
+      for (let key in data) {
+        const sub = data[key];
+        const storeMatch = sub.store === storeName;
+          const roleAllowed = myRole === "owner" || myStoreRoles.includes(storeName);
+          if (storeMatch && roleAllowed && sub.status === "pending") {
+          found = true;
+          const card = document.createElement("div");
+          card.className = "submission-card";
+          card.style.cssText = `background:#fff;padding:20px;margin:0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.12);width:90%;max-width:500px;`;
+          function addField(label, value) {
+            const p = document.createElement("p");
+            const strong = document.createElement("strong");
+            strong.textContent = label;
+            p.appendChild(strong);
+            p.appendChild(document.createTextNode(" " + value));
+            card.appendChild(p);
+          }
+          addField(tr("nameLabel"),  sub.name);
+          addField(tr("monthLabel"), translateMonth(sub.month));
+          addField(tr("dayLabel"),   sub.day);
+          addField(tr("shiftLabel"), sub.shift);
+          const accBtn = document.createElement("button");
+          accBtn.textContent = tr("acceptSubmission");
+          accBtn.style.cssText = "background:green;color:#fff;margin-right:10px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+          accBtn.addEventListener("click", () => {
+            set(ref(db, `submissions/${key}/status`), "accepted");
+            showPopup(tr("acceptedSuccess"), "success");
+            // Push notification to the submitter's device
+            if (sub.deviceId) triggerNotification(sub.deviceId, "Zorbas", `Your submission for ${sub.month} ${sub.day} (${sub.shift}) was accepted!`);
+          });
+          const decBtn = document.createElement("button");
+          decBtn.textContent = tr("declineSubmission");
+          decBtn.style.cssText = "background:red;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;";
+          decBtn.addEventListener("click", () => {
+            set(ref(db, `submissions/${key}/status`), "declined");
+            showPopup(tr("declinedSuccess"), "success");
+            // Push notification to the submitter's device
+            if (sub.deviceId) triggerNotification(sub.deviceId, "Zorbas", `Your submission for ${sub.month} ${sub.day} (${sub.shift}) was declined.`);
+          });
+          card.appendChild(accBtn);
+          card.appendChild(decBtn);
+          subCardsArea.appendChild(card);
+          allSubCards.push({ card, sub });
+        }
+      }
+    }
+    if (!found) {
+      const msg = document.createElement("p");
+      msg.style.cssText = "color:#888;font-size:16px;margin-top:20px;";
+      msg.textContent = tr("noSubmissions");
+      subCardsArea.appendChild(msg);
+    }
+    applySubSearch();
+  });
+}
+
+function applySubSearch() {
+  const q = subSearchInput.value.trim().toLowerCase();
+  allSubCards.forEach(({ card, sub }) => {
+    if (!q) { card.style.display = ""; return; }
+    const monthEN = (sub.month || "").toLowerCase();
+    const monthGRIdx = months.EN.findIndex(m => m.toLowerCase() === monthEN);
+    const monthGR = monthGRIdx !== -1 ? months.GR[monthGRIdx].toLowerCase() : "";
+    const match = monthEN.includes(q) || monthGR.includes(q) || (sub.day||"").toLowerCase().includes(q) || (sub.shift||"").toLowerCase().includes(q) || (sub.name||"").toLowerCase().includes(q);
+    card.style.display = match ? "" : "none";
+  });
+}
+subSearchInput.addEventListener("input", applySubSearch);
+
+// ── Store Role Picker Modal ──
+// currentStores: array of already-assigned store names (to grey them out)
+// onStoreAdded(storeName): called when a new store is picked
+function showStoreRolePicker(deviceKey, currentStores, onStoreAdded) {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;";
+  const box = document.createElement("div");
+  box.style.cssText = "background:#fff;border-radius:14px;padding:24px 20px;max-width:340px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.18);";
+  const title = document.createElement("div");
+  title.style.cssText = "font-size:16px;font-weight:700;color:#111;margin-bottom:16px;text-align:center;";
+  title.textContent = tr("assignRole");
+  box.appendChild(title);
+
+  // Search bar — filters the store list as you type
+  const search = document.createElement("input");
+  search.type = "text";
+  search.placeholder = tr("searchPlaceholder");
+  search.style.cssText = "display:block;width:100%;box-sizing:border-box;margin-bottom:12px;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;";
+  search.addEventListener("focus", () => search.style.borderColor = "#E8Da89");
+  search.addEventListener("blur", () => search.style.borderColor = "#ddd");
+  box.appendChild(search);
+
+  const storeButtons = [];
+  const noResults = document.createElement("div");
+  noResults.style.cssText = "display:none;color:#888;font-size:13px;text-align:center;padding:12px 0;";
+  noResults.textContent = "—";
+
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    let visible = 0;
+    storeButtons.forEach(({ btn, name }) => {
+      const n = name.toLowerCase();
+      const match = !q || n.startsWith(q) || n.includes(q);
+      btn.style.display = match ? "block" : "none";
+      if (match) visible++;
+    });
+    noResults.style.display = visible ? "none" : "block";
+  });
+
+  const allStores = getAllStoreNames();
+  allStores.forEach(storeName => {
+    const alreadyHas = currentStores.includes(storeName);
+    const btn = document.createElement("button");
+    btn.textContent = alreadyHas ? "✓ " + storeName : storeName;
+    btn.style.cssText = `display:block;width:100%;margin-bottom:8px;padding:10px 14px;border:none;border-radius:8px;background:${alreadyHas ? "#e0f7e9" : "#E8Da89"};color:${alreadyHas ? "#1a7a3a" : "#111"};font-size:14px;font-weight:600;cursor:${alreadyHas ? "default" : "pointer"};text-align:left;transition:background 0.15s;opacity:${alreadyHas ? "0.7" : "1"};`;
+    if (!alreadyHas) {
+      btn.addEventListener("mouseover", () => btn.style.background = "#d4c15e");
+      btn.addEventListener("mouseout", () => btn.style.background = "#E8Da89");
+      btn.addEventListener("click", () => {
+        // Add to storeRoles array in Firebase
+        get(ref(db, `devices/${deviceKey}`)).then(snap => {
+          const dev = snap.val() || {};
+          let existing = Array.isArray(dev.storeRoles) ? [...dev.storeRoles] : [];
+          // Migrate legacy "store:X" role field
+          if (typeof dev.role === "string" && dev.role.startsWith("store:")) {
+            const legacyStore = dev.role.replace("store:", "");
+            if (!existing.includes(legacyStore)) existing = [legacyStore, ...existing];
+          }
+          if (!existing.includes(storeName)) {
+            const updated = [...existing, storeName];
+            const writes = [
+              set(ref(db, `devices/${deviceKey}/storeRoles`), updated)
+            ];
+            // Reset legacy role field if needed
+            if (typeof dev.role === "string" && dev.role.startsWith("store:")) {
+              writes.push(set(ref(db, `devices/${deviceKey}/role`), "user"));
+            }
+            Promise.all(writes).then(() => {
+              onStoreAdded(storeName, updated);
+              showPopup(storeName + " role assigned!", "success");
+              overlay.remove();
+            });
+          }
+        });
+      });
+    }
+    storeButtons.push({ btn, name: storeName });
+    box.appendChild(btn);
+  });
+
+  box.appendChild(noResults);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = tr("cancel");
+  cancelBtn.style.cssText = "display:block;width:100%;margin-top:8px;padding:10px 14px;border:none;border-radius:8px;background:#eee;color:#555;font-size:14px;font-weight:600;cursor:pointer;";
+  cancelBtn.addEventListener("click", () => overlay.remove());
+  box.appendChild(cancelBtn);
+  overlay.appendChild(box);
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+// ── Devices ──
+function loadDevices() {
+  devicesContainer.innerHTML = "";
+  allDeviceCards = [];
+  if (activeDevUnsub) { activeDevUnsub(); activeDevUnsub = null; }
+  activeDevUnsub = onValue(ref(db, "devices"), snap => {
+    const data = snap.val();
+    devicesContainer.innerHTML = "";
+    allDeviceCards = [];
+    if (data) {
+      Object.entries(data).forEach(([key, d]) => {
+        const card = buildDeviceCard(key, d);
+        devicesContainer.appendChild(card);
+        allDeviceCards.push({ card, d });
+      });
+    } else {
+      devicesContainer.innerHTML = `<p style="color:#888;text-align:center;padding:40px;">${tr("noDevices")}</p>`;
+    }
+  });
+}
+
+function buildDeviceCard(key, d) {
+  const online = isOnline(d.lastActive);
+  const isSelf = (key === deviceId);
+
+  // Normalise base role and storeRoles (handle legacy "store:X" in role field)
+  let currentRole = d.role || "user";
+  let currentStoreRoles = Array.isArray(d.storeRoles) ? [...d.storeRoles] : [];
+  if (typeof currentRole === "string" && currentRole.startsWith("store:")) {
+    const legacyStore = currentRole.replace("store:", "");
+    if (!currentStoreRoles.includes(legacyStore)) currentStoreRoles.unshift(legacyStore);
+    currentRole = "user";
+  }
+
+  const card = document.createElement("div");
+  card.className = "device-card";
+  // Only self with non-owner role gets a tint - actually: same color for all, only self gets tint
+  // Owner, admin, user cards all same color; just YOUR card gets the warm beige
+  if (isSelf) card.style.background = "linear-gradient(135deg, #f5f0e8 0%, #ede8da 100%)";
+  card.dataset.searchIndex = [d.nickname, d.name, d.type, d.model, d.os, d.screen, d.ip].join(" ").toLowerCase();
+
+  // Top row: info on left, pills on right
+  const topRow = document.createElement("div");
+  topRow.style.cssText = "display:flex;align-items:flex-start;gap:12px;width:100%;";
+
+  const iconWrap = document.createElement("div");
+  iconWrap.className = "device-card-icon";
+  const safeType = ["Phone", "Tablet", "PC"].includes(d.type) ? d.type : "PC";
+  iconWrap.innerHTML = deviceIcon(safeType);
+  topRow.appendChild(iconWrap);
+
+  const info = document.createElement("div");
+  info.className = "device-card-info";
+  info.style.flex = "1";
+  function stat(label, value, muted = false) {
+    const s = document.createElement("div");
+    s.className = "device-stat";
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "device-stat-label";
+    labelSpan.textContent = label;
+    const valueSpan = document.createElement("span");
+    valueSpan.className = `device-stat-value${muted ? " muted" : ""}`;
+    valueSpan.textContent = value || "—";
+    s.appendChild(labelSpan);
+    s.appendChild(valueSpan);
+    return s;
+  }
+  // Nickname row (display only at top of card)
+  const nicknameRow = document.createElement("div");
+  nicknameRow.style.cssText = "display:flex;align-items:center;gap:6px;margin-bottom:4px;";
+  const nicknameVal = document.createElement("span");
+  nicknameVal.style.cssText = "font-size:13px;font-weight:800;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+  nicknameVal.textContent = d.nickname || "—";
+  nicknameRow.appendChild(nicknameVal);
+  info.appendChild(nicknameRow);
+
+  info.appendChild(stat(tr("device"),     d.type));
+  info.appendChild(stat(tr("model"),      d.model || tr("unknown")));
+  info.appendChild(stat(tr("os"),         d.os || "—"));
+  info.appendChild(stat(tr("screen"),     d.screen || "—"));
+  info.appendChild(stat(tr("ip"),         d.ip || "—"));
+  info.appendChild(stat(tr("lastActive"), formatLastActive(d.lastActive), true));
+  topRow.appendChild(info);
+
+  const dot = document.createElement("span");
+  dot.className = `device-online-dot${online ? "" : " offline"}`;
+  card.appendChild(topRow);
+  card.appendChild(dot);
+
+  // ── Right-side main role pills (Owner / Admin / User / Delete) ──
+  const pills = document.createElement("div");
+  pills.className = "device-role-pills";
+
+  const oPill = document.createElement("button");
+  oPill.className = `device-role-pill${currentRole === "owner" ? " active-owner" : ""}`;
+  oPill.textContent = tr("owner");
+
+  const aPill = document.createElement("button");
+  aPill.className = `device-role-pill${currentRole === "admin" ? " active-admin" : ""}`;
+  aPill.textContent = tr("admin");
+
+  const uPill = document.createElement("button");
+  uPill.className = `device-role-pill${currentRole === "user" ? " active-user" : ""}`;
+  uPill.textContent = tr("user");
+
+  const delPill = document.createElement("button");
+  delPill.className = "device-role-pill delete-pill";
+  delPill.textContent = tr("delete");
+
+  // Can't demote or delete yourself
+  if (isSelf) {
+    uPill.disabled = true; uPill.style.opacity = "0.35"; uPill.style.cursor = "not-allowed";
+    oPill.disabled = true; oPill.style.opacity = "0.35"; oPill.style.cursor = "not-allowed";
+    delPill.disabled = true; delPill.style.opacity = "0.35"; delPill.style.cursor = "not-allowed";
+    // Owner can't demote themselves to admin either
+    if (currentRole === "owner") { aPill.disabled = true; aPill.style.opacity = "0.35"; aPill.style.cursor = "not-allowed"; }
+  }
+
+  function setBaseRolePills(r) {
+    currentRole = r;
+    oPill.className = `device-role-pill${r === "owner" ? " active-owner" : ""}`;
+    aPill.className = `device-role-pill${r === "admin" ? " active-admin" : ""}`;
+    uPill.className = `device-role-pill${r === "user" ? " active-user" : ""}`;
+  }
+
+  // Note: onclick handlers set below (after setBaseRolePillsWithStoreToggle is defined)
+  // to avoid duplicate listeners
+
+  delPill.addEventListener("click", () => {
+    if (isSelf) return;
+    showConfirm(tr("confirmDeleteDevice"), () => {
+      remove(ref(db, `devices/${key}`));
+      if (d.fp) remove(ref(db, `deviceIndex/${d.fp}`));
+      card.style.animation = "fadeOut 0.3s ease";
+      setTimeout(() => { card.remove(); allDeviceCards = allDeviceCards.filter(x => x.card !== card); }, 300);
+      showPopup(tr("deviceDeleted"), "success");
+    }, "delete");
+  });
+
+  pills.appendChild(oPill);
+  pills.appendChild(aPill);
+  pills.appendChild(uPill);
+  pills.appendChild(delPill);
+  topRow.appendChild(pills);
+
+  // ── Bottom store-roles row (multi-store pills + Add Role button) ──
+  const storeSection = document.createElement("div");
+  storeSection.style.cssText = "display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:6px;";
+
+  function rebuildStorePills() {
+    storeSection.innerHTML = "";
+
+    // One small pill per store role
+    currentStoreRoles.forEach(storeName => {
+      const pill = document.createElement("button");
+      pill.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 9px;border-radius:5px;background:#d4d0c8;color:#333;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:background 0.15s;white-space:nowrap;";
+      pill.innerHTML = `${storeName} <span style="font-size:13px;line-height:1;margin-top:-1px;opacity:0.8;">×</span>`;
+      if (!isSelf) {
+        pill.title = "Remove " + storeName;
+        pill.addEventListener("click", () => {
+          showConfirm(`Remove ${storeName} store role?`, () => {
+            const updated = currentStoreRoles.filter(s => s !== storeName);
+            set(ref(db, `devices/${key}/storeRoles`), updated.length ? updated : null).then(() => {
+              currentStoreRoles = updated;
+              rebuildStorePills();
+              showPopup(storeName + " role removed", "success");
+            });
+          });
+        });
+      } else {
+        pill.style.cursor = "default";
+        pill.style.opacity = "0.7";
+      }
+      storeSection.appendChild(pill);
+    });
+
+    // "Add Role" button — always at the end
+    if (!isSelf) {
+      const addBtn = document.createElement("button");
+      addBtn.style.cssText = "padding:3px 8px;border-radius:5px;background:#f0f0f0;color:#666;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:background 0.15s;white-space:nowrap;";
+      addBtn.textContent = "+ " + tr("addRole");
+      addBtn.addEventListener("mouseover", () => addBtn.style.background = "#e0e0e0");
+      addBtn.addEventListener("mouseout", () => addBtn.style.background = "#f0f0f0");
+      addBtn.addEventListener("click", () => {
+        showStoreRolePicker(key, currentStoreRoles, (newStore, updatedList) => {
+          currentStoreRoles = updatedList;
+          rebuildStorePills();
+        });
+      });
+      storeSection.appendChild(addBtn);
+    }
+  }
+
+  // Only show store section if device is admin or owner (not plain user)
+  // Owner must first promote to admin before assigning store roles
+  const canHaveStoreRoles = currentRole === "admin" || currentRole === "owner" || currentStoreRoles.length > 0;
+  if (canHaveStoreRoles) {
+    rebuildStorePills();
+    card.appendChild(storeSection);
+  }
+
+  // If role changes to/from admin, show/hide store section live
+  const origSetBaseRolePills = setBaseRolePills;
+  function setBaseRolePillsWithStoreToggle(r) {
+    origSetBaseRolePills(r);
+    const shouldShow = r === "admin" || r === "owner" || currentStoreRoles.length > 0;
+    if (shouldShow && !card.contains(storeSection)) {
+      rebuildStorePills();
+      card.appendChild(storeSection);
+    } else if (!shouldShow && card.contains(storeSection)) {
+      card.removeChild(storeSection);
+    }
+  }
+  // Override pill listeners to use the new toggling version
+  oPill.onclick = () => {
+    if (isSelf || currentRole === "owner") return;
+    showConfirm(tr("confirmMakeOwner"), () => { set(ref(db, `devices/${key}/role`), "owner"); setBaseRolePillsWithStoreToggle("owner"); showPopup(tr("switchedToOwner"), "success"); });
+  };
+  aPill.onclick = () => {
+    if (isSelf && currentRole === "owner") return; // owner can't demote self
+    if (currentRole === "admin") return;
+    showConfirm(tr("confirmMakeAdmin"), () => { set(ref(db, `devices/${key}/role`), "admin"); setBaseRolePillsWithStoreToggle("admin"); showPopup(tr("switchedToAdmin"), "success"); });
+  };
+  uPill.onclick = () => {
+    if (isSelf || currentRole === "user") return;
+    showConfirm(tr("confirmMakeUser"), () => { set(ref(db, `devices/${key}/role`), "user"); setBaseRolePillsWithStoreToggle("user"); showPopup(tr("switchedToUser"), "success"); });
+  };
+
+  return card;
+}
+
+const devicesSearchInput = document.getElementById("devices-search-input");
+devicesSearchInput.addEventListener("input", () => {
+  const q = devicesSearchInput.value.trim().toLowerCase();
+  allDeviceCards.forEach(({ card }) => {
+    card.style.display = (!q || card.dataset.searchIndex.includes(q)) ? "" : "none";
+  });
+});
+
+// ── Button wiring ──
+document.getElementById("back-admin").addEventListener("click", () => { window.location.href = "/"; });
+document.getElementById("see-submissions").addEventListener("click", () => { showPanel("locations"); });
+document.getElementById("back-locations").addEventListener("click", () => { showPanel("admin"); });
+document.getElementById("see-users").addEventListener("click", () => { showPanel("devices"); });
+document.getElementById("back-devices").addEventListener("click", () => { showPanel("admin"); });
+document.getElementById("back-store").addEventListener("click", () => { showPanel("locations"); });
+storeBackBtn.addEventListener("click", () => { showPanel("store"); });
+
+document.getElementById("reset-submissions").addEventListener("click", () => {
+  const isOwner = myRole === "owner";
+  const msg = isOwner
+    ? (tr("resetAllSubmissions") || "Reset ALL submissions?")
+    : `Reset submissions for: ${myStoreRoles.join(", ")}?`;
+  showConfirm(msg, () => {
+    if (isOwner) {
+      // Owner — wipe everything
+      remove(ref(db, "submissions"));
+      showPopup(tr("resetSuccess"), "success");
+    } else {
+      // Store role — only delete submissions for their stores
+      get(ref(db, "submissions")).then(snap => {
+        if (!snap.exists()) { showPopup(tr("resetSuccess"), "success"); return; }
+        const all = snap.val();
+        const deletes = [];
+        Object.entries(all).forEach(([id, sub]) => {
+          if (myStoreRoles.includes(sub.store)) {
+            deletes.push(remove(ref(db, `submissions/${id}`)));
+          }
+        });
+        Promise.all(deletes).then(() => showPopup(tr("resetSuccess"), "success"));
+      });
+    }
+  }, "reset");
+});
+
+// Filter location buttons based on role
+function applyLocationFilter() {
+  document.querySelectorAll(".location-btn").forEach(btn => {
+    const loc = btn.dataset.loc;
+    if (myRole === "owner" || myRole === "admin") { btn.style.display = ""; return; }
+    // Check if user has a store role in this location (multi-store array)
+    const hasStoreInLoc = stores[loc].EN.some(s => myStoreRoles.includes(s));
+    btn.style.display = hasStoreInLoc ? "" : "none";
+  });
+}
+// Apply after role loads (and expose it so it can be re-run on demand)
+window.applyLocationFilter = applyLocationFilter;
+setTimeout(applyLocationFilter, 300);
+
+document.querySelectorAll(".location-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const loc = btn.dataset.loc;
+    currentLocKey = loc;
+    storeButtonsContainer.innerHTML = "";
+    document.getElementById("store-gui-title").textContent = btn.textContent;
+    stores[loc].EN.forEach((storeEN, i) => {
+      // Filter stores by role (multi-store array)
+      if (myRole !== "owner" && !myStoreRoles.includes(storeEN)) return;
+      const b = document.createElement("button");
+      b.textContent = stores[loc][currentLangLocal][i];
+      b.dataset.storeName = storeEN;
+      b.dataset.storeLocalized = stores[loc][currentLangLocal][i];
+      storeButtonsContainer.appendChild(b);
+    });
+    showPanel("store");
+  });
+});
+
+storeButtonsContainer.addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    openSubmissions(e.target.dataset.storeName, e.target.dataset.storeLocalized);
+  }
+});
+
+// ── Browser back/forward ──
+window.addEventListener("popstate", e => {
+  const state = e.state || { panel: "admin" };
+  if (state.panel === "submissions") {
+    openSubmissions(state.storeName, state.storeLocalized, false);
+  } else {
+    showPanel(state.panel || "admin", false);
+  }
+});
+
+// Detect which panel to show based on current URL path
+(function applyInitialRoute() {
+  const path = window.location.pathname;
+  if (path.startsWith("/admin/devices")) {
+    history.replaceState({ panel: "devices" }, "", "/admin/devices");
+    showPanel("devices", false);
+  } else if (path.startsWith("/admin/submissions")) {
+    history.replaceState({ panel: "locations" }, "", "/admin/submissions");
+    showPanel("locations", false);
+  } else {
+    history.replaceState({ panel: "admin" }, "", "/admin");
+    showPanel("admin", false);
+  }
+})();
+
+// ── Language ──
+function switchLang(lang) {
+  currentLangLocal = lang;
+  localStorage.setItem("zorbas_lang", lang);
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+  const tr2 = translations[lang];
+  document.getElementById("see-submissions").textContent  = tr2.seeSubmissions;
+  document.getElementById("reset-submissions").textContent = tr2.resetSubmissions;
+  document.getElementById("see-users").textContent        = tr2.seeUsers;
+  document.getElementById("back-admin").textContent       = tr2.back;
+  document.getElementById("back-locations").textContent   = tr2.back;
+  document.getElementById("back-store").textContent       = tr2.back;
+  document.getElementById("back-devices").textContent     = tr2.back;
+  document.getElementById("locations-title").textContent  = tr2.locations;
+  document.querySelectorAll(".location-btn").forEach(b => { b.textContent = tr2[`loc_${b.dataset.loc}`]; });
+  storeBackBtn.textContent = tr2.back;
+  // Rebuild store list and title if the store panel is currently open
+  if (currentLocKey && storeGui.style.display !== "none") {
+    document.getElementById("store-gui-title").textContent = tr2[`loc_${currentLocKey}`];
+    storeButtonsContainer.innerHTML = "";
+    stores[currentLocKey].EN.forEach((storeEN, i) => {
+      const b = document.createElement("button");
+      b.textContent = stores[currentLocKey][lang][i];
+      b.dataset.storeName = storeEN;
+      b.dataset.storeLocalized = stores[currentLocKey][lang][i];
+      storeButtonsContainer.appendChild(b);
+    });
+  }
+  document.getElementById("devices-search-input").placeholder = tr2.searchPlaceholder || "Search";
+  subSearchInput.placeholder = tr2.searchPlaceholder || "Search";
+  noPermPage.updateLang();
+  updateConfirmLang();
+}
+
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click",   () => switchLang("EN"));
+switchLang(currentLangLocal);
+
+fitToScreen();
+</script>
+</body>
+</html>
