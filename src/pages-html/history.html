@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.addEventListener('beforeinstallprompt', e => e.preventDefault());</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="darkreader-lock">
+<link rel="icon" type="image/png" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<title>Zorbas — History</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#E8E6E3">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zorbas">
+<meta name="author" content="KVWX">
+<meta name="generator" content="KVWX">
+<link rel="apple-touch-icon" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<link rel="stylesheet" href="/shared.css">
+</head>
+<body>
+
+<div class="lang-buttons">
+  <button id="greek-btn">ΕΛΛ</button>
+  <span class="lang-divider">/</span>
+  <button id="eng-btn" class="active">ENG</button>
+</div>
+
+<div id="history-gui" style="display:flex;">
+  <div id="history-title" class="history-title" style="font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:#fff;text-shadow:-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111,1px 1px 0 #111,3px 4px 0 #555;margin-bottom:24px;text-align:center;">My History</div>
+  <div id="history-container" style="width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:15px;"></div>
+  <button id="back-history" style="background-color:#ff4c4c;color:#fff;padding:12px 20px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer;margin:30px auto;display:block;">Back</button>
+</div>
+
+<script type="module">
+import {
+  db, ref, onValue, remove, deviceId,
+  registerDevice, translations, months, showPopup, fitToScreen
+} from "/shared.js";
+
+let currentLangLocal = localStorage.getItem('zorbas_lang') || "EN";
+function tr(key) { return translations[currentLangLocal][key] || key; }
+function translateMonth(enMonth) {
+  const idx = months.EN.indexOf(enMonth);
+  return idx !== -1 ? months[currentLangLocal][idx] : enMonth;
+}
+
+registerDevice();
+
+const greekBtn = document.getElementById("greek-btn");
+const engBtn   = document.getElementById("eng-btn");
+const historyContainer = document.getElementById("history-container");
+
+document.getElementById("back-history").addEventListener("click", () => { window.location.href = "/"; });
+
+// Cache of current user submissions — populated once by Firebase, re-rendered on lang switch
+let cachedUserSubs = [];
+// Keys currently animating out — renderHistory will skip re-inserting them
+const pendingRemovals = new Set();
+
+function renderHistory() {
+  historyContainer.innerHTML = "";
+  if(!cachedUserSubs.length) {
+    historyContainer.innerHTML = `<p style="text-align:center;color:#666;font-size:18px;">${tr("noHistory")}</p>`;
+    return;
+  }
+  cachedUserSubs.forEach(sub => {
+    if (pendingRemovals.has(sub.key)) return; // skip cards currently animating out
+    const card = document.createElement("div");
+    card.className = "history-card";
+    card.setAttribute("data-submission-key", sub.key);
+    const status = sub.status || 'pending';
+    const statusText = status==='accepted' ? tr("accepted") : status==='declined' ? tr("declined") : tr("pending");
+    const date = new Date(sub.timestamp);
+    const dateStr = date.toLocaleDateString() + " " + date.toLocaleTimeString();
+
+    function addField(label, value) {
+      const p = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = label;
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(" " + value));
+      card.appendChild(p);
+    }
+    addField(tr("nameLabel"),      sub.name);
+    addField(tr("monthLabel"),     translateMonth(sub.month));
+    addField(tr("dayLabel"),       sub.day);
+    addField(tr("shiftLabel"),     sub.shift);
+    addField(tr("locationLabel"),  sub.location);
+    addField(tr("storeLabel"),     sub.store);
+    addField(tr("submittedLabel"), dateStr);
+
+    const statusSpan = document.createElement("span");
+    statusSpan.className = `history-status ${status}`;
+    statusSpan.textContent = statusText;
+    card.appendChild(statusSpan);
+
+    const clrBtn = document.createElement("button");
+    clrBtn.textContent = tr("clearBtn");
+    clrBtn.style.cssText = "background:#ff4c4c;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-top:15px;";
+    clrBtn.addEventListener("click", () => {
+      pendingRemovals.add(sub.key);
+      card.style.animation = "fadeOut 0.3s ease";
+      setTimeout(() => { card.remove(); pendingRemovals.delete(sub.key); }, 300);
+      remove(ref(db, `submissions/${sub.key}`));
+      showPopup(tr("clearedSuccess"), "success");
+    });
+    card.appendChild(clrBtn);
+    historyContainer.appendChild(card);
+  });
+}
+
+// Single live listener — keeps cache in sync and re-renders, skipping any cards mid-animation
+onValue(ref(db, 'submissions'), snap => {
+  const data = snap.val();
+  if(data) {
+    const userSubs = [];
+    for(let k in data){ const s = data[k]; if(s.deviceId === deviceId) userSubs.push({...s, key: k}); }
+    userSubs.sort((a,b) => b.timestamp - a.timestamp);
+    cachedUserSubs = userSubs;
+  } else {
+    cachedUserSubs = [];
+  }
+  renderHistory();
+});
+
+function switchLang(lang) {
+  currentLangLocal = lang;
+  localStorage.setItem('zorbas_lang', lang);
+  const t = translations[lang];
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+  document.getElementById("history-title").textContent = t.myHistory;
+  document.getElementById("back-history").textContent = t.back;
+  renderHistory(); // re-render with new strings, no Firebase call
+}
+
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click", () => switchLang("EN"));
+switchLang(localStorage.getItem('zorbas_lang') || "EN");
+
+fitToScreen();
+</script>
+</body>
+</html>

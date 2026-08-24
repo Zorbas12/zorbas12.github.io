@@ -1,0 +1,24 @@
+{
+  "name": "Zorbas",
+  "short_name": "Zorbas",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#E8E6E3",
+  "theme_color": "#E8E6E3",
+  "icons": [
+    {
+      "src": "https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png",
+      "sizes": "270x270",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "dir": "ltr"
+}

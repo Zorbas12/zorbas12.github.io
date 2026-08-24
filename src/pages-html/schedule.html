@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.addEventListener('beforeinstallprompt', e => e.preventDefault());</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="darkreader-lock">
+<link rel="icon" type="image/png" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<title>Zorbas — Schedule</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#E8E6E3">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zorbas">
+<meta name="author" content="KVWX">
+<meta name="generator" content="KVWX">
+<link rel="apple-touch-icon" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<link rel="stylesheet" href="/shared.css">
+<style>
+/* ── Schedule table: force-landscape wrapper ── */
+#schedule-landscape-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* When JS detects portrait on a phone, rotate the whole submissions GUI */
+#schedule-submissions-gui.force-landscape {
+  transform-origin: top left;
+  /* JS sets width/height/transform dynamically */
+}
+
+@media (max-width: 768px) {
+  #schedule-submissions-gui .form-title {
+    font-size: 28px !important;
+    margin-bottom: 12px !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="lang-buttons">
+  <button id="greek-btn">ΕΛΛ</button>
+  <span class="lang-divider">/</span>
+  <button id="eng-btn" class="active">ENG</button>
+</div>
+
+<!-- Schedule: location picker -->
+<div id="schedule-gui" style="display:none;">
+  <div class="form-title" style="margin-bottom:24px;" id="schedule-gui-title">Schedule</div>
+  <button class="schedule-location-btn" data-loc="NICOSIA">Nicosia</button>
+  <button class="schedule-location-btn" data-loc="LARNACA">Larnaca</button>
+  <button class="schedule-location-btn" data-loc="FAMAGUSTA">Ammochostos</button>
+  <button class="schedule-location-btn" data-loc="LIMASSOL">Limassol</button>
+  <button class="schedule-location-btn" data-loc="PAFOS">Pafos</button>
+  <button id="back-schedule">Back</button>
+</div>
+
+<!-- Schedule: store picker -->
+<div class="store-gui" id="store-gui-schedule">
+  <div id="store-gui-schedule-title" class="form-title" style="margin-bottom:24px;"></div>
+  <div id="store-buttons-container-schedule"></div>
+  <button class="back-store-btn" id="back-store-schedule">Back</button>
+</div>
+
+<script type="module">
+import {
+  db, ref, onValue, set, get, update, deviceRef,
+  registerDevice, translations, stores, showPopup, buildNoPermissionPage, buildNotFoundPage, fitToScreen, triggerNotification
+} from "/shared.js";
+
+let currentLangLocal = localStorage.getItem('zorbas_lang') || "EN";
+
+// ── Landscape lock — enforced, no way to go portrait while schedule is open ──
+let _landscapeLocked = false;
+
+function lockLandscape() {
+  _landscapeLocked = true;
+  _applyLandscape();
+}
+
+function unlockLandscape() {
+  _landscapeLocked = false;
+  // 1. Median native bridge
+  try { window.median?.screen?.setOrientation("portrait"); } catch(e) {}
+  // 2. W3C Screen Orientation API
+  try { screen.orientation.unlock(); } catch(e) {}
+  // 3. Remove CSS transform
+  const gui = document.getElementById("schedule-submissions-gui");
+  if (!gui) return;
+  gui.classList.remove("force-landscape");
+  gui.style.transform = "";
+  gui.style.width = "";
+  gui.style.height = "";
+  gui.style.top = "";
+  gui.style.left = "";
+  gui.style.position = "";
+  gui.style.overflow = "";
+}
+
+function _applyLandscape() {
+  const gui = document.getElementById("schedule-submissions-gui");
+  if (!gui || !_landscapeLocked) return;
+
+  // 1. Median native bridge (real app) — best option
+  try { window.median?.screen?.setOrientation("landscape"); } catch(e) {}
+
+  // 2. W3C Screen Orientation API (PWA / some browsers)
+  try { screen.orientation.lock("landscape").catch(() => {}); } catch(e) {}
+
+  // 3. CSS transform fallback — rotates the div itself so portrait device shows landscape
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  if (vw < vh) {
+    // We're in portrait — rotate 90deg
+    gui.classList.add("force-landscape");
+    gui.style.position = "fixed";
+    gui.style.top = "0";
+    gui.style.left = "0";
+    gui.style.width = vh + "px";
+    gui.style.height = vw + "px";
+    gui.style.transform = `rotate(90deg) translateY(-${vw}px)`;
+    gui.style.transformOrigin = "top left";
+    gui.style.overflow = "auto";
+  } else {
+    // Already landscape — just clear any transform
+    gui.classList.remove("force-landscape");
+    gui.style.transform = "";
+    gui.style.width = "100%";
+    gui.style.height = "100%";
+    gui.style.position = "fixed";
+    gui.style.top = "0";
+    gui.style.left = "0";
+  }
+}
+
+// Keep reapplying if the user physically rotates the device
+window.addEventListener("resize", () => { if (_landscapeLocked) _applyLandscape(); });
+window.addEventListener("orientationchange", () => {
+  if (_landscapeLocked) setTimeout(_applyLandscape, 100);
+});
+
+// Expose for open/close calls
+function forceLandscape(enable) {
+  if (enable) lockLandscape();
+  else unlockLandscape();
+}
+function tr(key) { return translations[currentLangLocal][key] || key; }
+
+registerDevice();
+
+// ── URL routing helpers ──
+// Converts a store name to a URL slug: "Coffee Berry" → "coffee-berry"
+function toSlug(name) {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+}
+
+// Finds a location key (e.g. "NICOSIA") from a slug (e.g. "nicosia")
+function slugToLocation(slug) {
+  return Object.keys(stores).find(loc => loc.toLowerCase() === slug.toLowerCase()) || null;
+}
+
+// Finds a store EN name from a slug within a location
+function slugToStore(locKey, slug) {
+  if (!stores[locKey]) return null;
+  return stores[locKey].EN.find(s => toSlug(s) === slug) || null;
+}
+
+// Build the routed URL for history API
+function buildRouteUrl(locKey, storeEN) {
+  return `/schedule/${locKey.toLowerCase()}/${toSlug(storeEN)}`;
+}
+
+// ── Build the 403 no-permission page ──
+const noPermPage = buildNoPermissionPage(() => {
+  history.replaceState(null, "", "/schedule");
+  noPermPage.style.display = "none";
+  scheduleGui.style.display = "flex";
+});
+
+const notFoundPage = buildNotFoundPage(() => {
+  history.replaceState(null, "", "/schedule");
+  notFoundPage.style.display = "none";
+  scheduleGui.style.display = "flex";
+});
+
+// ── DOM refs ──
+const greekBtn  = document.getElementById("greek-btn");
+const engBtn    = document.getElementById("eng-btn");
+const scheduleGui  = document.getElementById("schedule-gui");
+const storeGuiSchedule = document.getElementById("store-gui-schedule");
+const storeButtonsContainerSchedule = document.getElementById("store-buttons-container-schedule");
+const backStoreBtnSchedule = document.getElementById("back-store-schedule");
+
+document.getElementById("back-schedule").addEventListener("click", () => { window.location.href = "/"; });
+backStoreBtnSchedule.addEventListener("click", () => {
+  storeGuiSchedule.style.display = "none";
+  scheduleGui.style.display = "flex";
+  history.pushState(null, "", "/schedule");
+});
+
+document.querySelectorAll(".schedule-location-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const loc = btn.dataset.loc;
+    currentLocKey = loc;
+    scheduleGui.style.display = "none";
+    storeButtonsContainerSchedule.innerHTML = "";
+    document.getElementById("store-gui-schedule-title").textContent = btn.textContent;
+    stores[loc][currentLangLocal].forEach((store, i) => {
+      const b = document.createElement("button");
+      b.textContent = store;
+      b.dataset.location = loc;
+      b.dataset.storeEN = stores[loc].EN[i];
+      storeButtonsContainerSchedule.appendChild(b);
+    });
+    storeGuiSchedule.style.display = "flex";
+    history.pushState(null, "", `/schedule/${loc.toLowerCase()}`);
+  });
+});
+
+// ── Schedule submissions GUI ──
+const scheduleSubmissionsGui = document.createElement("div");
+scheduleSubmissionsGui.id = "schedule-submissions-gui";
+scheduleSubmissionsGui.style.cssText = `display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#E8E6E3; z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:50px; overflow-y:auto; isolation:isolate;`;
+const schedSubBg = document.createElement("div");
+schedSubBg.style.cssText = "position:absolute;top:0;left:0;width:0;height:0;border-style:solid;border-width:100vh 100vw 0 0;border-color:#DAD9D7 transparent transparent transparent;z-index:-1;pointer-events:none;";
+scheduleSubmissionsGui.appendChild(schedSubBg);
+
+const scheduleTitle = document.createElement("div");
+scheduleTitle.style.cssText = "font-family:'Playfair Display',serif;font-size:56px;font-weight:900;color:#fff;text-shadow:-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111,1px 1px 0 #111,3px 4px 0 #555;margin-bottom:20px;text-align:center;position:relative;z-index:1;";
+scheduleSubmissionsGui.appendChild(scheduleTitle);
+
+const printScheduleBtn = document.createElement("button");
+printScheduleBtn.className = "print-schedule-btn";
+printScheduleBtn.textContent = tr("printSchedule");
+printScheduleBtn.addEventListener("click", () => window.print());
+document.body.appendChild(printScheduleBtn);
+
+const scheduleTableContainer = document.createElement("div");
+scheduleTableContainer.style.cssText = `background:#fff;padding:15px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-bottom:20px;overflow-x:auto;max-width:90vw;width:auto;position:relative;z-index:1;`;
+const scheduleTable = document.createElement("table");
+scheduleTable.id = "schedule-edit-table";
+scheduleTable.style.cssText = `border-collapse:collapse;background:#fff;width:max-content;margin:0;`;
+for(let i=0;i<12;i++){
+  const row = scheduleTable.insertRow();
+  for(let j=0;j<12;j++){
+    const cell = row.insertCell();
+    cell.style.cssText = `border:1px solid #ccc;padding:8px;min-width:70px;min-height:35px;text-align:center;white-space:nowrap;`;
+    cell.contentEditable = "false";
+  }
+}
+scheduleTableContainer.appendChild(scheduleTable);
+scheduleSubmissionsGui.appendChild(scheduleTableContainer);
+document.body.appendChild(scheduleSubmissionsGui);
+
+let currentEditingStore = "";
+let currentEditingLocation = "";
+let isEditMode = false;
+let currentLocKey = null; // track which location's store panel is open
+
+const editScheduleBtn = document.createElement("button");
+editScheduleBtn.id = "edit-schedule-btn";
+editScheduleBtn.textContent = tr("editSchedule");
+editScheduleBtn.style.cssText = `position:fixed;top:16px;left:148px;background-color:#E8DA89;color:#111;height:36px;padding:0 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:none;z-index:10001;white-space:nowrap;transition:background-color 0.2s;`;
+editScheduleBtn.addEventListener("click", () => {
+  if(!isEditMode){
+    enableTableEditing();
+    editScheduleBtn.textContent = tr("saveSchedule");
+    editScheduleBtn.style.backgroundColor = "#90EE90";
+    document.getElementById("toolbar-toggle").style.display = "flex";
+    isEditMode = true;
+  } else {
+    disableTableEditing();
+    saveScheduleToFirebase();
+    editScheduleBtn.textContent = tr("editSchedule");
+    editScheduleBtn.style.backgroundColor = "#E8DA89";
+    document.getElementById("toolbar-toggle").style.display = "none";
+    document.getElementById("toolbar-sidebar").classList.remove("open");
+    isEditMode = false;
+  }
+});
+document.body.appendChild(editScheduleBtn);
+
+const scheduleBackBtn = document.createElement("button");
+scheduleBackBtn.textContent = tr("back");
+scheduleBackBtn.style.cssText = `position:fixed;bottom:20px;left:20px;background-color:#ff4c4c;color:#fff;height:36px;padding:0 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;z-index:10001;white-space:nowrap;transition:background-color 0.2s;display:none;`;
+scheduleBackBtn.addEventListener("click", () => {
+  autoSaveIfEditing();
+  scheduleSubmissionsGui.style.display = "none";
+  scheduleBackBtn.style.display = "none";
+  // Restore portrait
+  forceLandscape(false);
+  editScheduleBtn.style.display = "none";
+  storeGuiSchedule.style.display = "flex";
+  printScheduleBtn.style.display = "none";
+  cleanupToolbar();
+  if(currentEditingLocation) history.pushState(null, "", `/schedule/${currentEditingLocation.toLowerCase()}`);
+});
+document.body.appendChild(scheduleBackBtn);
+
+// ── Toolbar ──
+const toolbarToggle = document.createElement("button");
+toolbarToggle.id = "toolbar-toggle";
+toolbarToggle.className = "toolbar-toggle";
+toolbarToggle.innerHTML = `<span></span><span></span><span></span>`;
+document.body.appendChild(toolbarToggle);
+
+const toolbarOverlay = document.createElement("div");
+toolbarOverlay.id = "toolbar-overlay";
+toolbarOverlay.style.cssText = "display:none;position:fixed;inset:0;z-index:10001;";
+toolbarOverlay.addEventListener("click", () => {
+  toolbarSidebar.classList.remove("open");
+  toolbarOverlay.style.display = "none";
+});
+document.body.appendChild(toolbarOverlay);
+
+const toolbarSidebar = document.createElement("div");
+toolbarSidebar.id = "toolbar-sidebar";
+toolbarSidebar.className = "toolbar-sidebar";
+toolbarSidebar.innerHTML = `
+  <div style="position:absolute;top:0;left:0;right:0;padding:14px 14px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;">
+    <span style="color:#333;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">${tr("format")}</span>
+    <button class="toolbar-close">✕</button>
+  </div>
+  <div class="toolbar-section">
+    <div class="toolbar-section-title">${tr("textStyle")}</div>
+    <button class="toolbar-button" data-action="bold"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 0 8H6z"/><path d="M6 12h9a4 4 0 0 1 0 8H6z"/></svg></span><span>${tr("bold")}</span></button>
+    <button class="toolbar-button" data-action="italic"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></span><span>${tr("italic")}</span></button>
+    <button class="toolbar-button" data-action="underline"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg></span><span>${tr("underline")}</span></button>
+  </div>
+  <div class="toolbar-section">
+    <div class="toolbar-section-title">${tr("alignment")}</div>
+    <button class="toolbar-button" data-action="align-left"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg></span><span>${tr("alignLeft")}</span></button>
+    <button class="toolbar-button" data-action="align-center"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></span><span>${tr("alignCenter")}</span></button>
+    <button class="toolbar-button" data-action="align-right"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg></span><span>${tr("alignRight")}</span></button>
+  </div>
+  <div class="toolbar-section">
+    <div class="toolbar-section-title">${tr("rowsCols")}</div>
+    <button class="toolbar-button" data-action="add-row"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="16" x2="12" y2="20"/><line x1="9" y1="18" x2="15" y2="18"/></svg></span><span>${tr("addRow")}</span></button>
+    <button class="toolbar-button" data-action="remove-row"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg></span><span>${tr("removeRow")}</span></button>
+    <button class="toolbar-button" data-action="add-column"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="16" y1="12" x2="20" y2="12"/><line x1="18" y1="9" x2="18" y2="15"/></svg></span><span>${tr("addColumn")}</span></button>
+    <button class="toolbar-button" data-action="remove-column"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="16" y1="12" x2="20" y2="12"/></svg></span><span>${tr("removeColumn")}</span></button>
+  </div>
+  <div class="toolbar-section">
+    <div class="toolbar-section-title">${tr("cell")}</div>
+    <button class="toolbar-button" data-action="color-cell"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="15" rx="2"/><rect x="2" y="18" width="20" height="4" rx="1" fill="currentColor" stroke="currentColor"/></svg></span><span>${tr("fillColor")}</span></button>
+    <button class="toolbar-button" data-action="color-text"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11 2L5.5 17h2.25l1.12-3h6.26l1.12 3H18.5L13 2h-2zm-1.38 10L12 5.67 14.38 12H9.62z"/><rect x="3" y="19" width="18" height="3" rx="1"/></svg></span><span>${tr("textColor")}</span></button>
+    <button class="toolbar-button" data-action="clear-cell"><span class="toolbar-button-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></span><span>${tr("clearCell")}</span></button>
+  </div>
+`;
+document.body.appendChild(toolbarSidebar);
+
+toolbarToggle.addEventListener("click", () => {
+  const opening = !toolbarSidebar.classList.contains("open");
+  toolbarSidebar.classList.toggle("open");
+  toolbarOverlay.style.display = opening ? "block" : "none";
+});
+toolbarSidebar.querySelector(".toolbar-close").addEventListener("click", () => {
+  toolbarSidebar.classList.remove("open");
+  toolbarOverlay.style.display = "none";
+});
+
+let lastSelectedCell = null;
+document.addEventListener("click", (e) => {
+  if(e.target.tagName === "TD" && e.target.closest("#schedule-edit-table") && isEditMode) {
+    if(lastSelectedCell) lastSelectedCell.style.outline = "";
+    lastSelectedCell = e.target;
+    lastSelectedCell.style.outline = "3px solid #E8DA89";
+  }
+});
+
+toolbarSidebar.addEventListener("click", (e) => {
+  if(!e.target.closest(".toolbar-button")) return;
+  const action = e.target.closest(".toolbar-button").dataset.action;
+  const table = document.getElementById("schedule-edit-table");
+  const sel = lastSelectedCell;
+  if(action==="bold"){ if(sel){sel.focus();document.execCommand("bold");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="italic"){ if(sel){sel.focus();document.execCommand("italic");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="underline"){ if(sel){sel.focus();document.execCommand("underline");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="align-left"){ if(sel){sel.style.textAlign="left";showPopup(tr("alignedLeft"),"success");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="align-center"){ if(sel){sel.style.textAlign="center";showPopup(tr("alignedCenter"),"success");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="align-right"){ if(sel){sel.style.textAlign="right";showPopup(tr("alignedRight"),"success");}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="color-cell"){ if(sel){const ci=document.createElement("input");ci.type="color";ci.value="#ffffff";ci.style.cssText="position:fixed;opacity:0;pointer-events:none;";document.body.appendChild(ci);ci.addEventListener("change",ev=>{sel.style.backgroundColor=ev.target.value;showPopup(tr("cellColorChanged"),"success");ci.remove();});ci.addEventListener("cancel",()=>ci.remove());ci.click();}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="color-text"){ if(sel){const ci=document.createElement("input");ci.type="color";ci.value="#000000";ci.style.cssText="position:fixed;opacity:0;pointer-events:none;";document.body.appendChild(ci);ci.addEventListener("change",ev=>{sel.style.color=ev.target.value;showPopup(tr("textColorChanged"),"success");ci.remove();});ci.addEventListener("cancel",()=>ci.remove());ci.click();}else showPopup(tr("selectCellFirst"),"error"); }
+  else if(action==="add-row"){ const newRow=table.insertRow();for(let i=0;i<table.rows[0].cells.length;i++){const c=newRow.insertCell();c.style.cssText=`border:1px solid #ccc;padding:8px;min-width:70px;min-height:35px;text-align:center;white-space:nowrap;`;if(isEditMode){c.contentEditable="true";c.classList.add("cell-editing");c.style.cursor="text";}}showPopup(tr("rowAdded"),"success"); }
+  else if(action==="remove-row"){ if(table.rows.length>1){table.deleteRow(table.rows.length-1);showPopup(tr("rowRemoved"),"success");}else showPopup(tr("cannotRemoveLastRow"),"error"); }
+  else if(action==="add-column"){ for(let i=0;i<table.rows.length;i++){const c=table.rows[i].insertCell();c.style.cssText=`border:1px solid #ccc;padding:8px;min-width:70px;min-height:35px;text-align:center;white-space:nowrap;`;if(isEditMode){c.contentEditable="true";c.classList.add("cell-editing");c.style.cursor="text";}}showPopup(tr("colAdded"),"success"); }
+  else if(action==="remove-column"){ if(table.rows[0].cells.length>1){for(let i=0;i<table.rows.length;i++)table.rows[i].deleteCell(table.rows[i].cells.length-1);showPopup(tr("colRemoved"),"success");}else showPopup(tr("cannotRemoveLastCol"),"error"); }
+  else if(action==="clear-cell"){ if(sel){sel.textContent="";showPopup(tr("cellCleared"),"success");}else showPopup(tr("selectCellFirst"),"error"); }
+});
+
+function enableTableEditing(){
+  document.querySelectorAll("#schedule-edit-table td").forEach(c=>{
+    c.contentEditable="true";
+    if(!c.style.backgroundColor) c.classList.add("cell-editing");
+    c.style.cursor="text";
+  });
+}
+function disableTableEditing(){
+  document.querySelectorAll("#schedule-edit-table td").forEach(c=>{
+    c.contentEditable="false";
+    c.classList.remove("cell-editing");
+    c.style.cursor="default";
+  });
+  if(lastSelectedCell){lastSelectedCell.style.outline="";lastSelectedCell=null;}
+}
+
+function saveScheduleToFirebase(){
+  const table=document.getElementById("schedule-edit-table");
+  const data=[];
+  for(let i=0;i<table.rows.length;i++){
+    const row=[];
+    for(let j=0;j<table.rows[i].cells.length;j++){
+      const c=table.rows[i].cells[j];const cs=window.getComputedStyle(c);
+      row.push({text:c.textContent,bold:cs.fontWeight==="bold"||parseInt(cs.fontWeight)>=600,italic:cs.fontStyle==="italic",underline:cs.textDecoration.includes("underline"),align:c.style.textAlign||cs.textAlign||"center",bgColor:c.style.backgroundColor||"",textColor:c.style.color||""});
+    }
+    data.push(row);
+  }
+  set(ref(db,`schedules/${currentEditingLocation}/${currentEditingStore}`),data);
+  showPopup(tr("scheduleSaved"),"success");
+
+  // ── Immediately notify anyone whose last submission was for this store ──
+  const _loc = currentEditingLocation;
+  const _store = currentEditingStore;
+  get(ref(db, "submissions")).then(subsSnap => {
+    const subs = subsSnap.val() || {};
+    // Find each device's most recent submission
+    const latestByDevice = {};
+    Object.values(subs).forEach(sub => {
+      if (!sub.deviceId) return;
+      const prev = latestByDevice[sub.deviceId];
+      if (!prev || sub.timestamp > prev.timestamp) latestByDevice[sub.deviceId] = sub;
+    });
+    // Notify devices whose last submission was for this store
+    const locSlug = _loc.toLowerCase();
+    const storeSlug = _store.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const scheduleUrl = `/schedule/${locSlug}/${storeSlug}`;
+    Object.entries(latestByDevice).forEach(([targetDeviceId, sub]) => {
+      if (sub.store !== _store) return;
+      triggerNotification(
+        targetDeviceId,
+        "🗓 New schedule",
+        `New schedule on ${_store}`,
+        scheduleUrl
+      );
+    });
+  }).catch(() => {});
+}
+
+let scheduleUnsubscribe = null;
+
+function loadScheduleFromFirebase(location, store) {
+  currentEditingLocation = location;
+  currentEditingStore = store;
+  if (scheduleUnsubscribe) { scheduleUnsubscribe(); scheduleUnsubscribe = null; }
+  scheduleUnsubscribe = onValue(ref(db, `schedules/${location}/${store}`), snap => {
+    const table=document.getElementById("schedule-edit-table");
+    if(snap.exists()){
+      const sd=snap.val();
+      // Trim excess rows
+      while(table.rows.length>sd.length) table.deleteRow(table.rows.length-1);
+      // Trim excess columns per row
+      for(let i=0;i<table.rows.length;i++){
+        while(table.rows[i].cells.length>sd[i].length) table.rows[i].deleteCell(table.rows[i].cells.length-1);
+      }
+      // Add missing rows
+      while(table.rows.length<sd.length){const r=table.insertRow();for(let j=0;j<(sd[0].length||12);j++){const c=r.insertCell();c.style.cssText=`border:1px solid #ccc;padding:8px;min-width:70px;min-height:35px;text-align:center;white-space:nowrap;`;c.contentEditable="false";}}
+      for(let i=0;i<sd.length&&i<table.rows.length;i++){
+        // Add missing columns
+        while(table.rows[i].cells.length<sd[i].length){const c=table.rows[i].insertCell();c.style.cssText=`border:1px solid #ccc;padding:8px;min-width:70px;min-height:35px;text-align:center;white-space:nowrap;`;c.contentEditable="false";}
+        for(let j=0;j<sd[i].length&&j<table.rows[i].cells.length;j++){
+          const cd=sd[i][j];const cell=table.rows[i].cells[j];
+          if(typeof cd==="object"){cell.textContent=cd.text||"";cell.style.fontWeight=cd.bold?"bold":"normal";cell.style.fontStyle=cd.italic?"italic":"normal";cell.style.textDecoration=cd.underline?"underline":"none";cell.style.textAlign=cd.align||"center";cell.style.backgroundColor=cd.bgColor||"";cell.style.color=cd.textColor||"";}
+          else cell.textContent=cd||"";
+        }
+      }
+    } else {
+      for(let i=0;i<table.rows.length;i++)for(let j=0;j<table.rows[i].cells.length;j++){const c=table.rows[i].cells[j];c.textContent="";c.style.fontWeight="normal";c.style.fontStyle="normal";c.style.textDecoration="none";c.style.textAlign="center";c.style.backgroundColor="";c.style.color="";}
+    }
+  });
+}
+
+// ── Open a specific store's schedule (shared by click + URL routing) ──
+function openStore(locKey, storeEN, displayName, replaceHistory = false) {
+  scheduleTitle.textContent = `${displayName} — ${tr("schedule")}`;
+  scheduleGui.style.display = "none";
+  storeGuiSchedule.style.display = "none";
+  scheduleSubmissionsGui.style.display = "flex";
+  printScheduleBtn.style.display = "flex";
+  scheduleBackBtn.style.display = "block";
+  // Force landscape on phones via CSS transform
+  forceLandscape(true);
+  const url = buildRouteUrl(locKey, storeEN);
+  if (replaceHistory) history.replaceState(null, "", url);
+  else history.pushState(null, "", url);
+  get(deviceRef).then(snap => {
+    if (!snap.exists()) return;
+    const d = snap.val();
+    const role = d.role || "user";
+    const storeRoles = Array.isArray(d.storeRoles) ? d.storeRoles : [];
+    // Legacy single store: role = "store:X"
+    if (typeof role === "string" && role.startsWith("store:")) {
+      const legacyStore = role.replace("store:", "");
+      if (!storeRoles.includes(legacyStore)) storeRoles.push(legacyStore);
+    }
+    const canEdit = role === "owner" || storeRoles.includes(storeEN);
+    if (canEdit) editScheduleBtn.style.display = "block";
+  });
+  loadScheduleFromFirebase(locKey, storeEN);
+}
+
+storeButtonsContainerSchedule.addEventListener("click", (e) => {
+  if(e.target.tagName === "BUTTON" && !e.target.classList.contains("back-store-btn")){
+    const storeEN = e.target.dataset.storeEN || e.target.textContent;
+    const location = e.target.dataset.location;
+    openStore(location, storeEN, e.target.textContent);
+  }
+});
+
+// ── Hide all views (used before showing the correct one for a route) ──
+// ── Auto-save if user leaves while in edit mode ──
+function autoSaveIfEditing() {
+  if (isEditMode && currentEditingStore && currentEditingLocation) {
+    saveScheduleToFirebase();
+  }
+}
+
+function cleanupToolbar() {
+  toolbarToggle.style.display = "none";
+  toolbarSidebar.classList.remove("open");
+  toolbarOverlay.style.display = "none";
+  if (isEditMode) {
+    autoSaveIfEditing();
+    disableTableEditing();
+    isEditMode = false;
+    editScheduleBtn.textContent = tr("editSchedule");
+    editScheduleBtn.style.backgroundColor = "#E8DA89";
+  }
+}
+
+function hideAllViews() {
+  scheduleGui.style.display = "none";
+  storeGuiSchedule.style.display = "none";
+  scheduleSubmissionsGui.style.display = "none";
+  printScheduleBtn.style.display = "none";
+  scheduleBackBtn.style.display = "none";
+  editScheduleBtn.style.display = "none";
+  noPermPage.style.display = "none";
+  notFoundPage.style.display = "none";
+  cleanupToolbar();
+}
+
+// ── Route to the correct view based on the current URL ──
+function applyRoute() {
+  const raw = window.location.pathname;
+  const scheduleMatch = raw.match(/\/schedule(?:\.html)?\/(.*)/);
+
+  if (!scheduleMatch) {
+    // Just /schedule — show location picker
+    hideAllViews();
+    scheduleGui.style.display = "flex";
+    return;
+  }
+
+  const after = scheduleMatch[1].replace(/^\/+/, "");
+  if (!after) {
+    hideAllViews();
+    scheduleGui.style.display = "flex";
+    return;
+  }
+
+  const parts = after.split("/").filter(Boolean);
+  const locSlug = parts[0] || "";
+  const storeSlug = parts[1] || "";
+
+  const locKey = slugToLocation(locSlug);
+  if (!locKey) {
+    hideAllViews();
+    notFoundPage.style.display = "flex";
+    return;
+  }
+
+  if (!storeSlug) {
+    // Valid location, no store → show store picker
+    hideAllViews();
+    storeButtonsContainerSchedule.innerHTML = "";
+    const locBtn = document.querySelector(`.schedule-location-btn[data-loc="${locKey}"]`);
+    document.getElementById("store-gui-schedule-title").textContent = locBtn ? locBtn.textContent : locKey;
+    stores[locKey][currentLangLocal].forEach((store, i) => {
+      const b = document.createElement("button");
+      b.textContent = store;
+      b.dataset.location = locKey;
+      b.dataset.storeEN = stores[locKey].EN[i];
+      storeButtonsContainerSchedule.appendChild(b);
+    });
+    storeGuiSchedule.style.display = "flex";
+    return;
+  }
+
+  const storeEN = slugToStore(locKey, storeSlug);
+  if (!storeEN) {
+    hideAllViews();
+    notFoundPage.style.display = "flex";
+    return;
+  }
+
+  // Both valid → open store
+  const enIdx = stores[locKey].EN.indexOf(storeEN);
+  const displayName = enIdx !== -1 ? stores[locKey][currentLangLocal][enIdx] : storeEN;
+  openStore(locKey, storeEN, displayName, true);
+}
+
+// Run on page load
+applyRoute();
+
+// Run on browser back/forward (mouse button 4/5, alt+arrow, etc.)
+window.addEventListener("popstate", () => { applyRoute(); });
+// Belt-and-suspenders: hide toolbar whenever page is left or hidden
+window.addEventListener("pagehide", cleanupToolbar);
+document.addEventListener("visibilitychange", () => { if (document.hidden) cleanupToolbar(); });
+window.addEventListener("pagehide", autoSaveIfEditing);
+document.addEventListener("visibilitychange", () => { if (document.hidden) autoSaveIfEditing(); });
+window.addEventListener("popstate", autoSaveIfEditing);
+
+// ── Language ──
+function switchLang(lang) {
+  currentLangLocal = lang;
+  localStorage.setItem('zorbas_lang', lang);
+  const t = translations[lang];
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+  document.getElementById("schedule-gui-title").textContent = t.schedule;
+  document.querySelectorAll(".schedule-location-btn").forEach(b => { b.textContent = t[`loc_${b.dataset.loc}`]; });
+  document.getElementById("back-schedule").textContent = t.back;
+  document.getElementById("back-store-schedule").textContent = t.back;
+  if(scheduleBackBtn) scheduleBackBtn.textContent = t.back;
+  // Rebuild store list and title if the store picker is currently open
+  if (currentLocKey && storeGuiSchedule.style.display !== "none") {
+    document.getElementById("store-gui-schedule-title").textContent = t[`loc_${currentLocKey}`];
+    storeButtonsContainerSchedule.innerHTML = "";
+    stores[currentLocKey].EN.forEach((storeEN, i) => {
+      const b = document.createElement("button");
+      b.textContent = stores[currentLocKey][lang][i];
+      b.dataset.location = currentLocKey;
+      b.dataset.storeEN = storeEN;
+      storeButtonsContainerSchedule.appendChild(b);
+    });
+  }
+  const editBtn = document.getElementById("edit-schedule-btn");
+  if(editBtn && !isEditMode) editBtn.textContent = t.editSchedule;
+  const pBtn = document.querySelector(".print-schedule-btn");
+  if(pBtn) pBtn.textContent = t.printSchedule;
+  const tb = document.getElementById("toolbar-sidebar");
+  if(tb) {
+    const headerSpan = tb.querySelector("span[style*='letter-spacing']");
+    if(headerSpan) headerSpan.textContent = t.format;
+    const sectionTitles = tb.querySelectorAll(".toolbar-section-title");
+    const sectionKeys = ["textStyle","alignment","rowsCols","cell"];
+    sectionTitles.forEach((el, i) => { el.textContent = t[sectionKeys[i]] || el.textContent; });
+    const btnLabels = { bold:t.bold, italic:t.italic, underline:t.underline, "align-left":t.alignLeft, "align-center":t.alignCenter, "align-right":t.alignRight, "add-row":t.addRow, "remove-row":t.removeRow, "add-column":t.addColumn, "remove-column":t.removeColumn, "color-cell":t.fillColor, "color-text":t.textColor, "clear-cell":t.clearCell };
+    tb.querySelectorAll(".toolbar-button[data-action]").forEach(btn => {
+      const lbl = btnLabels[btn.dataset.action];
+      if(lbl) { const span = btn.querySelectorAll("span")[1]; if(span) span.textContent = lbl; }
+    });
+  }
+  noPermPage.updateLang();
+  notFoundPage.updateLang();
+}
+
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click", () => switchLang("EN"));
+switchLang(localStorage.getItem('zorbas_lang') || "EN");
+
+fitToScreen();
+</script>
+</body>
+</html>

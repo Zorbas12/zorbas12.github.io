@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>window.addEventListener('beforeinstallprompt', e => e.preventDefault());</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta name="darkreader-lock">
+<link rel="icon" type="image/png" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<title>Zorbas</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#E8E6E3">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E6E3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zorbas">
+<meta name="author" content="KVWX">
+<meta name="generator" content="KVWX">
+<link rel="apple-touch-icon" href="https://www.zorbas.com.cy/wp-content/uploads/cropped-zorbas-favicon-01-270x270.png">
+<link rel="stylesheet" href="/shared.css">
+
+<style>
+/* ── Name display top-left ── */
+#user-name-badge {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  display: none;
+  align-items: center;
+  gap: 0;
+  z-index: 900;
+}
+#user-name-display {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+  background: #555;
+  border-radius: 20px;
+  padding: 5px 12px;
+  letter-spacing: 0.01em;
+}
+#edit-name-btn {
+  background: none;
+  border: none;
+  padding: 2px 0 2px 6px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+  flex-shrink: 0;
+  display: none; /* shown only for owners */
+}
+#edit-name-btn:hover { color: #444; }
+
+/* ── Name entry popup overlay ── */
+#name-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+#name-popup-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px 24px 28px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  max-width: 360px;
+  animation: popIn 0.22s cubic-bezier(0.34,1.3,0.64,1);
+}
+@keyframes popIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+#name-popup-title {
+  font-size: 21px;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+  margin-bottom: 0;
+}
+#name-popup-subtitle {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  margin-top: -6px;
+  line-height: 1.5;
+}
+#name-popup-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 16px;
+  color: #111;
+  outline: none;
+  background: #fafaf8;
+  transition: border-color 0.18s;
+}
+#name-popup-input:focus { border-color: #E8Da89; }
+#name-popup-input::placeholder { color: #bbb; }
+#name-popup-continue {
+  width: 100%;
+  padding: 15px;
+  background: #E8Da89;
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+#name-popup-continue:hover { background: #d4c567; }
+#name-popup-continue:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- Mandatory name entry popup -->
+<div id="name-popup-overlay">
+  <div id="name-popup-box">
+    <div id="name-popup-title">Enter your name</div>
+    <input id="name-popup-input" type="text" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Fill out your name">
+    <button id="name-popup-continue" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- Name badge top-left -->
+<div id="user-name-badge">
+  <span id="user-name-display"></span>
+  <button id="edit-name-btn" title="Change name">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  </button>
+</div>
+
+<div class="lang-buttons">
+  <button id="greek-btn">ΕΛΛ</button>
+  <span class="lang-divider">/</span>
+  <button id="eng-btn" class="active">ENG</button>
+</div>
+
+<div class="form-title" id="form-title">Zorbas</div>
+
+<div class="form-box" id="submit-gui">
+  <form id="zorbas-form">
+    <label for="month" id="label-month">Month</label>
+    <select id="month" required>
+      <option value="" disabled selected id="month-placeholder">Select month</option>
+    </select>
+
+    <label for="day" id="label-day">Day</label>
+    <input type="text" id="day" placeholder="Fill out your day" inputmode="numeric" pattern="[0-9]*" maxlength="2" required>
+
+    <label for="shift" id="label-shift">Shift</label>
+    <select id="shift" required>
+      <option value="" disabled selected id="shift-placeholder">Select shift</option>
+      <option value="off">off</option>
+      <option value="6-2">6-2</option>
+      <option value="2-10">2-10</option>
+    </select>
+
+    <label for="location" id="label-location">Location</label>
+    <select id="location" required>
+      <option value="" disabled selected id="location-placeholder">Select location</option>
+      <option value="NICOSIA">Nicosia</option>
+      <option value="LARNACA">Larnaca</option>
+      <option value="FAMAGUSTA">Ammochostos</option>
+      <option value="LIMASSOL">Limassol</option>
+      <option value="PAFOS">Pafos</option>
+    </select>
+
+    <div id="store-container">
+      <label for="store" id="label-store">Store</label>
+      <select id="store"></select>
+    </div>
+
+    <button type="button" class="submit-btn" id="submit-btn">Submit</button>
+    <div id="message"></div>
+  </form>
+
+  <button type="button" class="submit-btn" id="history-btn" style="margin-top:10px;">My History</button>
+  <button type="button" class="submit-btn" id="schedule-btn" style="margin-top:10px;">Schedule GUI</button>
+  <button type="button" class="submit-btn" id="admin-btn" style="margin-top:10px; display:none;">Admin GUI</button>
+</div>
+
+<script>
+function median_onesignal_info(info) {
+  var id = info && (info.oneSignalUserId || info.userId);
+  if (!id) return;
+  window.__pendingOneSignalId = id;
+  if (typeof window.__saveOneSignalId === 'function') {
+    window.__saveOneSignalId(id);
+  }
+}
+window.gonative_onesignal_info = median_onesignal_info;
+</script>
+<script type="module">
+import {
+  db, ref, set, push, onValue, get, remove, deviceRef, deviceId,
+  registerDevice, isStaff, months, translations, stores,
+  showPopup, fitToScreen
+} from "/shared.js";
+
+let currentLangLocal = localStorage.getItem('zorbas_lang') || "EN";
+
+function tc(key) { return translations[currentLangLocal][key] || key; }
+
+const greekBtn = document.getElementById("greek-btn");
+const engBtn = document.getElementById("eng-btn");
+const locationSelect = document.getElementById("location");
+const storeContainer = document.getElementById("store-container");
+const storeSelect = document.getElementById("store");
+const submitBtn = document.getElementById("submit-btn");
+const adminBtn = document.getElementById("admin-btn");
+const scheduleBtn = document.getElementById("schedule-btn");
+const historyBtn = document.getElementById("history-btn");
+
+// ── Name badge & popup ──
+const namePopupOverlay  = document.getElementById("name-popup-overlay");
+const namePopupInput    = document.getElementById("name-popup-input");
+const namePopupContinue = document.getElementById("name-popup-continue");
+const userNameDisplay   = document.getElementById("user-name-display");
+const editNameBtn       = document.getElementById("edit-name-btn");
+
+// Start hidden — will show/hide once we read Firebase
+namePopupOverlay.style.display = "none";
+
+let storedUserName = "";
+let myDeviceRole = "user";
+let deviceDataLoaded = false;
+
+function showNamePopup() {
+  namePopupOverlay.style.display = "flex";
+  namePopupInput.value = storedUserName || "";
+  updateContinueBtn();
+  setTimeout(() => namePopupInput.focus(), 80);
+}
+
+function hideNamePopup() {
+  namePopupOverlay.style.display = "none";
+}
+
+function updateContinueBtn() {
+  namePopupContinue.disabled = namePopupInput.value.trim().length === 0;
+}
+
+function applyUserName(name) {
+  storedUserName = name;
+  userNameDisplay.textContent = name;
+  document.getElementById("user-name-badge").style.display = name ? "flex" : "none";
+}
+
+namePopupInput.addEventListener("input", updateContinueBtn);
+namePopupInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !namePopupContinue.disabled) namePopupContinue.click();
+});
+
+// ── Role listener — started only after device is registered ──
+function startDeviceListener() {
+  onValue(deviceRef, snap => {
+    const d = snap.val();
+    const r = d?.role || "user";
+    myDeviceRole = r;
+    const hasStoreRoles = Array.isArray(d?.storeRoles) && d.storeRoles.length > 0;
+    const isLegacyStore = typeof r === "string" && r.startsWith("store:");
+    adminBtn.style.display = (isStaff(d) || isLegacyStore || hasStoreRoles) ? "block" : "none";
+    editNameBtn.style.display = (r === "owner") ? "inline-flex" : "none";
+    if (!deviceDataLoaded) {
+      deviceDataLoaded = true;
+      if (d?.nickname) {
+        applyUserName(d.nickname);
+        hideNamePopup();
+      }
+    } else if (d?.nickname) {
+      applyUserName(d.nickname);
+    }
+  });
+}
+
+namePopupContinue.addEventListener("click", async () => {
+  const name = namePopupInput.value.trim();
+  if (!name) return;
+  namePopupContinue.disabled = true;
+  namePopupContinue.textContent = "...";
+  // Register device NOW for the first time, then save nickname
+  await registerDevice();
+  try {
+    await set(ref(db, `devices/${deviceId}/nickname`), name);
+  } catch(e) { console.warn("Could not save nickname to Firebase", e); }
+  applyUserName(name);
+  namePopupContinue.textContent = "Continue";
+  hideNamePopup();
+  startDeviceListener();
+});
+
+// Edit name button (owners only)
+editNameBtn.addEventListener("click", () => showNamePopup());
+
+// ── On load: check if this device already exists ──
+// Known device (has nickname) → register heartbeat + start listener immediately.
+// New device → show name popup first; Firebase registration happens on Continue.
+get(deviceRef).then(snap => {
+  if (snap.exists() && snap.val()?.nickname) {
+    registerDevice().then(() => startDeviceListener());
+  } else {
+    showNamePopup();
+  }
+}).catch(() => showNamePopup());
+
+(function tryOneSignalLogin() {
+  function doLogin() {
+    if (window.median && window.median.onesignal && window.median.onesignal.login) {
+      window.median.onesignal.login(deviceId).then(function() {
+        if (window.median.onesignal.onesignalInfo) {
+          window.median.onesignal.onesignalInfo().then(function(info) {
+            var id = info && (info.oneSignalUserId || info.userId || info.subscriptionId);
+            if (id && window.__saveOneSignalId) window.__saveOneSignalId(id);
+          }).catch(function(){});
+        }
+      }).catch(function(){});
+      return true;
+    }
+    return false;
+  }
+  if (!doLogin()) {
+    var attempts = 0;
+    var t = setInterval(function() {
+      if (doLogin() || ++attempts > 20) clearInterval(t);
+    }, 500);
+  }
+})();
+
+function updateStores(location) {
+  const storeData = stores[location];
+  if(storeData) {
+    storeSelect.innerHTML = `<option value="" disabled selected>${tc("selectStore")}</option>`;
+    storeData[currentLangLocal].forEach((store, i) => {
+      const opt = document.createElement("option");
+      opt.value = storeData.EN[i];
+      opt.textContent = store;
+      storeSelect.appendChild(opt);
+    });
+    storeContainer.classList.add("show");
+  } else {
+    storeContainer.classList.remove("show");
+  }
+}
+
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+function maxDaysForMonth(monthName) {
+  const idx = months.EN.indexOf(monthName);
+  if (idx === -1) return 31;
+  if (idx === 1) {
+    const year = new Date().getFullYear();
+    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28;
+  }
+  return DAYS_IN_MONTH[idx];
+}
+
+const dayInput = document.getElementById("day");
+dayInput.addEventListener("keydown", e => {
+  if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+  if (!/[0-9]/.test(e.key)) { e.preventDefault(); return; }
+  if (e.key === "0" && dayInput.value === "") { e.preventDefault(); return; }
+  const current = dayInput.value;
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  const proposed = current + e.key;
+  const num = parseInt(proposed, 10);
+  if (num === 0) { e.preventDefault(); return; }
+  if (num > max) { e.preventDefault(); return; }
+  if (current.length >= 2) { e.preventDefault(); return; }
+});
+dayInput.addEventListener("input", () => {
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  dayInput.value = dayInput.value.replace(/[^0-9]/g, "").slice(0, 2);
+  if (dayInput.value && parseInt(dayInput.value, 10) > max) dayInput.value = String(max);
+  if (dayInput.value !== "" && parseInt(dayInput.value, 10) === 0) dayInput.value = "";
+});
+document.getElementById("month").addEventListener("change", () => {
+  if (!dayInput.value) return;
+  const max = maxDaysForMonth(document.getElementById("month").value);
+  if (parseInt(dayInput.value, 10) > max) dayInput.value = String(max);
+});
+
+locationSelect.addEventListener("change", () => updateStores(locationSelect.value));
+
+submitBtn.addEventListener("click", async () => {
+  const name = storedUserName;
+  const day = document.getElementById("day").value.trim();
+  const shift = document.getElementById("shift").value;
+  const month = document.getElementById("month").value;
+  const location = locationSelect.value;
+  const store = storeContainer.classList.contains("show") ? storeSelect.value : "filled";
+
+  if (!name) { showPopup("Please enter your name first", "error"); showNamePopup(); return; }
+  if (!day || !shift || !month || !location || !store) {
+    showPopup(tc("fillAllFields"), "error"); return;
+  }
+
+  const dayNum = parseInt(day, 10);
+  const maxDay = maxDaysForMonth(month);
+  if (!dayNum || dayNum < 1 || dayNum > maxDay) {
+    showPopup(tc("invalidDay"), "error"); return;
+  }
+
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = "...";
+
+  try {
+    const snap = await get(deviceRef);
+    const staff = snap.exists() && isStaff(snap.val());
+    if (!staff) {
+      const lastSubmit = parseInt(localStorage.getItem('zorbas_last_submit') || "0", 10);
+      const elapsed = Date.now() - lastSubmit;
+      const cooldown = 3 * 60 * 1000;
+      if (elapsed < cooldown) {
+        const secsLeft = Math.ceil((cooldown - elapsed) / 1000);
+        const minutes = Math.floor(secsLeft / 60);
+        const seconds = String(secsLeft % 60).padStart(2, "0");
+        const msg = tc("cooldownMsg").replace("{timer}", `${minutes}:${seconds}`);
+        showPopup(msg, "error");
+        return;
+      }
+    }
+
+    await push(ref(db, 'submissions'), { name, day: String(dayNum), shift, month, location, store, timestamp: Date.now(), deviceId, status: 'pending' });
+    if (!staff) localStorage.setItem('zorbas_last_submit', Date.now().toString());
+    showPopup(tc("submitSuccess"), "success");
+
+    document.getElementById("zorbas-form").reset();
+    storeContainer.classList.remove("show");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+});
+
+adminBtn.addEventListener("click", () => { window.location.href = "/admin"; });
+scheduleBtn.addEventListener("click", () => { window.location.href = "/schedule"; });
+historyBtn.addEventListener("click", () => { window.location.href = "/history"; });
+
+function switchLang(lang) {
+  currentLangLocal = lang;
+  localStorage.setItem('zorbas_lang', lang);
+  const tr = translations[lang];
+  greekBtn.classList.toggle("active", lang === "GR");
+  engBtn.classList.toggle("active", lang === "EN");
+
+  document.getElementById("label-month").textContent = tr.month;
+  document.getElementById("label-day").textContent = tr.day;
+  document.getElementById("label-shift").textContent = tr.shift;
+  document.getElementById("label-location").textContent = tr.location;
+  document.getElementById("label-store").textContent = tr.store;
+  document.getElementById("day").placeholder = tr.dayPlaceholder;
+
+  const monthSel = document.getElementById("month");
+  const currentMonthVal = monthSel.value;
+  monthSel.innerHTML = `<option value="" disabled ${!currentMonthVal?"selected":""}>${tr.selectMonth}</option>`;
+  months.EN.forEach((enM, i) => {
+    const opt = document.createElement("option");
+    opt.value = enM;
+    opt.textContent = months[lang][i];
+    if(enM === currentMonthVal) opt.selected = true;
+    monthSel.appendChild(opt);
+  });
+
+  const shiftSel = document.getElementById("shift");
+  const curShift = shiftSel.value;
+  shiftSel.innerHTML = `<option value="" disabled ${!curShift?"selected":""}>${tr.selectShift}</option>
+    <option value="off" ${curShift==="off"?"selected":""}>${tr.off}</option>
+    <option value="6-2" ${curShift==="6-2"?"selected":""}>${tr.shift62}</option>
+    <option value="2-10" ${curShift==="2-10"?"selected":""}>${tr.shift210}</option>`;
+
+  const locSel = document.getElementById("location");
+  const curLoc = locSel.value;
+  locSel.innerHTML = `<option value="" disabled ${!curLoc?"selected":""}>${tr.selectLocation}</option>`;
+  ["NICOSIA","LARNACA","FAMAGUSTA","LIMASSOL","PAFOS"].forEach(k => {
+    const opt = document.createElement("option");
+    opt.value = k; opt.textContent = tr[`loc_${k}`];
+    if(k === curLoc) opt.selected = true;
+    locSel.appendChild(opt);
+  });
+
+  submitBtn.textContent = tr.submit;
+  adminBtn.textContent = tr.adminGui;
+  scheduleBtn.textContent = tr.scheduleGui;
+  historyBtn.textContent = tr.myHistory;
+
+  if(storeContainer.classList.contains("show") && locationSelect.value) updateStores(locationSelect.value);
+}
+
+greekBtn.addEventListener("click", () => switchLang("GR"));
+engBtn.addEventListener("click", () => switchLang("EN"));
+
+switchLang(localStorage.getItem('zorbas_lang') || "EN");
+
+fitToScreen();
+
+</script>
+</body>
+</html>
